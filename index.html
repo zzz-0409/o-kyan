@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>3レーン・スワイプラン</title>
   <style>
     :root {
@@ -23,11 +23,17 @@
       box-sizing: border-box;
     }
 
+    html {
+      height: 100%;
+      background: var(--bg);
+    }
+
     body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100svh;
+      min-height: 100dvh;
       display: grid;
-      place-items: center;
+      place-items: stretch center;
       background: var(--bg);
       color: var(--ink);
       font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
@@ -36,12 +42,13 @@
 
     .app {
       width: min(100vw, 430px);
-      height: 100vh;
-      min-height: 620px;
+      height: 100svh;
+      height: 100dvh;
+      min-height: 0;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
       gap: 8px;
-      padding: 8px;
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
     }
 
     .hud {
@@ -340,6 +347,59 @@
       background: var(--slow);
       border-radius: inherit;
     }
+
+    @media (max-width: 430px), (max-height: 700px) {
+      .app {
+        gap: 5px;
+        padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px calc(env(safe-area-inset-bottom, 0px) + 6px);
+      }
+
+      .hud {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        min-height: 38px;
+      }
+
+      .hud h1 {
+        display: none;
+      }
+
+      .stat {
+        min-width: 0;
+        padding: 5px 4px;
+      }
+
+      .stat span {
+        font-size: 9px;
+      }
+
+      .stat strong {
+        margin-top: 2px;
+        font-size: 15px;
+      }
+
+      .move-stick {
+        left: 12px;
+        bottom: 12px;
+        width: 88px;
+        height: 88px;
+      }
+
+      .move-stick::before {
+        inset: 20px;
+      }
+
+      .stick-knob {
+        width: 38px;
+        height: 38px;
+      }
+
+      .footer {
+        min-height: 28px;
+        grid-template-columns: 1fr 76px;
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -483,7 +543,13 @@
     const TURN_CLEARANCE = 250;
     const TURN_W = 390;
     const TURN_H = 260;
+    const TURN_APPROACH_GAP = 170;
+    const TURN_SPAWN_Y = -TURN_H - TURN_APPROACH_GAP;
+    const TURN_SLOW_GATE_Y = -96;
+    const TURN_SLOW_GATE_H = 44;
     const TURN_ANIM_DURATION = 1.25;
+    const TURN_SPEED_CAP = 0.72;
+    const TURN_RECOVERY_DURATION = 1.8;
 
     let running = false;
     let gameOver = false;
@@ -503,6 +569,7 @@
     let turnTimer = 0;
     let viewDirection = 0;
     let turnTransition = null;
+    let turnRecoveryTimer = 0;
     let coinTimer = 0;
     let slowGateTimer = 0;
     let panelTimer = 0;
@@ -566,6 +633,7 @@
       turnTimer = 5.2;
       viewDirection = 0;
       turnTransition = null;
+      turnRecoveryTimer = 0;
       coinTimer = 1.25;
       slowGateTimer = 4.4;
       panelTimer = 2.2;
@@ -963,11 +1031,20 @@
           return false;
         }
       }
+      for (const gate of slowGates) {
+        if (rangesTooClose(obstacleTop, obstacleBottom, gate.y, gate.y + gate.h, PANEL_CLEARANCE)) {
+          return false;
+        }
+      }
       return true;
     }
 
     function spawnSlowGate() {
-      slowGates.push({ y: -58, h: 34 });
+      if (!hasSlowGateClearance(-58, 34)) {
+        slowGateTimer = 0.75;
+        return;
+      }
+      slowGates.push({ y: -58, h: 34, forced: false });
     }
 
     function spawnPipe() {
@@ -1007,28 +1084,36 @@
         return;
       }
       const direction = Math.random() < 0.5 ? -1 : 1;
+      slowGates.push({ y: TURN_SLOW_GATE_Y, h: TURN_SLOW_GATE_H, forced: true });
       turns.push({
         x: W / 2 - TURN_W / 2,
-        y: -TURN_H - 28,
+        y: TURN_SPAWN_Y,
         w: TURN_W,
         h: TURN_H,
         direction,
         triggered: false
       });
+      slowGateTimer = Math.max(slowGateTimer, 5.0);
+      panelTimer = Math.max(panelTimer, 2.2);
+      spawnTimer = Math.max(spawnTimer, 1.2);
       hintEl.textContent = direction > 0 ? "右カーブが来た！" : "左カーブが来た！";
     }
 
     function hasTurnClearance() {
-      const turnTop = -TURN_H - 28;
-      const turnBottom = -28;
+      const turnTop = TURN_SPAWN_Y;
+      const turnBottom = TURN_SPAWN_Y + TURN_H;
+      const gateTop = TURN_SLOW_GATE_Y;
+      const gateBottom = TURN_SLOW_GATE_Y + TURN_SLOW_GATE_H;
+      const checkTop = Math.min(turnTop, gateTop);
+      const checkBottom = Math.max(turnBottom, gateBottom);
       const blockers = [...obstacles, ...speedPanels, ...slowGates, ...pipes];
       for (const item of blockers) {
-        if (rangesTooClose(turnTop, turnBottom, item.y, item.y + item.h, TURN_CLEARANCE)) {
+        if (rangesTooClose(checkTop, checkBottom, item.y, item.y + item.h, TURN_CLEARANCE * 0.7)) {
           return false;
         }
       }
       for (const coin of coinItems) {
-        if (rangesTooClose(turnTop, turnBottom, coin.y - coin.r, coin.y + coin.r, TURN_CLEARANCE * 0.55)) {
+        if (rangesTooClose(checkTop, checkBottom, coin.y - coin.r, coin.y + coin.r, TURN_CLEARANCE * 0.55)) {
           return false;
         }
       }
@@ -1080,6 +1165,11 @@
           return false;
         }
       }
+      for (const gate of slowGates) {
+        if (rangesTooClose(coinTop, coinBottom, gate.y, gate.y + gate.h, 70)) {
+          return false;
+        }
+      }
       for (const turn of turns) {
         if (rangesTooClose(coinTop, coinBottom, turn.y, turn.y + turn.h, 120)) {
           return false;
@@ -1119,10 +1209,27 @@
           return false;
         }
       }
+      for (const gate of slowGates) {
+        if (rangesTooClose(panelTop, panelBottom, gate.y, gate.y + gate.h, PANEL_CLEARANCE)) {
+          return false;
+        }
+      }
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
         const obstacleBottom = obstacle.y + obstacle.h;
         if (rangesTooClose(panelTop, panelBottom, obstacleTop, obstacleBottom, PANEL_CLEARANCE)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function hasSlowGateClearance(gateY, gateH) {
+      const gateTop = gateY;
+      const gateBottom = gateY + gateH;
+      const blockers = [...obstacles, ...speedPanels, ...turns, ...pipes];
+      for (const item of blockers) {
+        if (rangesTooClose(gateTop, gateBottom, item.y, item.y + item.h, PANEL_CLEARANCE)) {
           return false;
         }
       }
@@ -1154,9 +1261,11 @@
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
+      turnRecoveryTimer = Math.max(0, turnRecoveryTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
+      speed = Math.min(speed, rawSpeed * turnSpeedFactor());
       jumpTimer = Math.max(0, jumpTimer - dt);
       distance += (speed * dt) / 12;
       roadScroll = (roadScroll + speed * dt) % 80;
@@ -1242,8 +1351,17 @@
       if (turnTransition.elapsed >= turnTransition.duration) {
         viewDirection = (turnTransition.from + turnTransition.direction + 4) % 4;
         turnTransition = null;
+        turnRecoveryTimer = TURN_RECOVERY_DURATION;
         hintEl.textContent = "曲がり終わった！";
       }
+    }
+
+    function turnSpeedFactor() {
+      if (turnTransition) return TURN_SPEED_CAP;
+      if (turnRecoveryTimer <= 0) return 1;
+      const t = 1 - turnRecoveryTimer / TURN_RECOVERY_DURATION;
+      const eased = t * t * (3 - 2 * t);
+      return TURN_SPEED_CAP + (1 - TURN_SPEED_CAP) * eased;
     }
 
     function updatePipeEnterMode(dt) {
@@ -1791,17 +1909,26 @@
         } else {
           drawCurveFallback(turn);
         }
+        drawTurnEntryBlend(turn);
       }
     }
 
     function drawTurnBackdrop(turn) {
-      const y = turn.y + 46;
-      const h = turn.h - 34;
+      const y = Math.min(0, turn.y - 14);
+      const h = turn.y + turn.h + 42 - y;
       const gradient = ctx.createLinearGradient(0, y, 0, y + h);
       gradient.addColorStop(0, "#246f74");
       gradient.addColorStop(0.45, "#2f9184");
       gradient.addColorStop(1, "#246f74");
       ctx.fillStyle = gradient;
+      ctx.fillRect(0, y, W, h);
+
+      const shadow = ctx.createLinearGradient(0, y, 0, y + h);
+      shadow.addColorStop(0, "rgba(0,0,0,0.18)");
+      shadow.addColorStop(0.18, "rgba(0,0,0,0)");
+      shadow.addColorStop(0.82, "rgba(0,0,0,0)");
+      shadow.addColorStop(1, "rgba(0,0,0,0.1)");
+      ctx.fillStyle = shadow;
       ctx.fillRect(0, y, W, h);
 
       ctx.fillStyle = "rgba(35, 102, 70, 0.72)";
@@ -1816,6 +1943,33 @@
         ctx.ellipse(x, y + h - 28 - (x % 2) * 12, 18, 8, -0.2, 0, Math.PI * 2);
         ctx.fill();
       }
+
+    }
+
+    function drawTurnEntryBlend(turn) {
+      const roadX = 44;
+      const roadW = W - 88;
+      const y = turn.y + turn.h - 24;
+      const h = 58;
+      const fade = ctx.createLinearGradient(0, y, 0, y + h);
+      fade.addColorStop(0, "rgba(126,132,121,0.08)");
+      fade.addColorStop(0.32, "rgba(126,132,121,0.78)");
+      fade.addColorStop(1, "rgba(126,132,121,0)");
+      ctx.fillStyle = fade;
+      ctx.fillRect(roadX, y, roadW, h);
+
+      ctx.strokeStyle = "rgba(246,239,217,0.35)";
+      ctx.lineWidth = 5;
+      ctx.setLineDash([26, 36]);
+      ctx.lineDashOffset = roadScroll;
+      for (let i = 1; i < 3; i += 1) {
+        const x = (LANES[i - 1] + LANES[i]) / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y + 8);
+        ctx.lineTo(x, y + h - 8);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
     }
 
     function drawCurveFallback(turn) {
