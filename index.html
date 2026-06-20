@@ -1259,7 +1259,16 @@
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
+      clearLaneFlowObjects();
       hintEl.textContent = turn.direction > 0 ? "右へ曲がる！" : "左へ曲がる！";
+    }
+
+    function clearLaneFlowObjects() {
+      obstacles = [];
+      pipes = [];
+      coinItems = [];
+      slowGates = [];
+      speedPanels = [];
     }
 
     function spawnCoins() {
@@ -1402,37 +1411,37 @@
       const targetX = LANES[player.lane];
       player.x += (targetX - player.x) * Math.min(1, dt * 14);
 
-      spawnTimer -= dt;
-      if (spawnTimer <= 0) {
-        spawnObstacle();
-        const rate = speed / BASE_SPEED;
-        spawnTimer = Math.max(0.72, 1.2 - rate * 0.07 + Math.random() * 0.42);
-      }
-
       if (!turnTransition) {
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          spawnObstacle();
+          const rate = speed / BASE_SPEED;
+          spawnTimer = Math.max(0.72, 1.2 - rate * 0.07 + Math.random() * 0.42);
+        }
+
         turnTimer -= dt;
-      }
-      if (!turnTransition && turnTimer <= 0) {
-        spawnTurn();
-        turnTimer = 6.2 + Math.random() * 4.4;
-      }
+        if (turnTimer <= 0) {
+          spawnTurn();
+          turnTimer = 6.2 + Math.random() * 4.4;
+        }
 
-      coinTimer -= dt;
-      if (coinTimer <= 0) {
-        spawnCoins();
-        coinTimer = 1.55 + Math.random() * 1.35;
-      }
+        coinTimer -= dt;
+        if (coinTimer <= 0) {
+          spawnCoins();
+          coinTimer = 1.55 + Math.random() * 1.35;
+        }
 
-      slowGateTimer -= dt;
-      if (slowGateTimer <= 0) {
-        spawnSlowGate();
-        slowGateTimer = 6.4 + Math.random() * 3.2;
-      }
+        slowGateTimer -= dt;
+        if (slowGateTimer <= 0) {
+          spawnSlowGate();
+          slowGateTimer = 6.4 + Math.random() * 3.2;
+        }
 
-      panelTimer -= dt;
-      if (panelTimer <= 0) {
-        spawnSpeedPanel();
-        panelTimer = 3.2 + Math.random() * 2.4;
+        panelTimer -= dt;
+        if (panelTimer <= 0) {
+          spawnSpeedPanel();
+          panelTimer = 3.2 + Math.random() * 2.4;
+        }
       }
 
       for (const obstacle of obstacles) {
@@ -1479,7 +1488,12 @@
         viewDirection = (turnTransition.from + turnTransition.direction + 4) % 4;
         turnTransition = null;
         turnRecoveryTimer = TURN_RECOVERY_DURATION;
+        turns = [];
+        roadScroll = 0;
+        loopScroll = 0;
+        clearLaneFlowObjects();
         spawnTimer = Math.max(spawnTimer, 2.2);
+        coinTimer = Math.max(coinTimer, 1.2);
         panelTimer = Math.max(panelTimer, 1.8);
         slowGateTimer = Math.max(slowGateTimer, 2.4);
         hintEl.textContent = "曲がり終わった！";
@@ -1859,6 +1873,11 @@
     }
 
     function drawRoad() {
+      if (turns.length || turnTransition) {
+        drawRouteRoad();
+        return;
+      }
+
       if (imageReady(backgroundSprites.laneLoop)) {
         drawVerticalLoopImage(backgroundSprites.laneLoop, loopScroll, 0, 0, W, H);
         drawLoopVignette();
@@ -1876,6 +1895,95 @@
       }
 
       drawFallbackRoad();
+    }
+
+    function drawRouteRoad() {
+      const turn = turns[0];
+      const entryY = turn ? turn.y + turn.h * 0.58 + 164 : -180;
+      const roadX = 44;
+      const roadW = W - 88;
+      ctx.fillStyle = "#1f2b31";
+      ctx.fillRect(0, 0, W, H);
+
+      const water = ctx.createLinearGradient(0, 0, 0, H);
+      water.addColorStop(0, "#246f74");
+      water.addColorStop(0.5, "#2f9184");
+      water.addColorStop(1, "#246f74");
+      ctx.fillStyle = water;
+      ctx.fillRect(0, 0, W, H);
+
+      drawRouteScenery();
+
+      const roadTop = Math.min(entryY, H + 180);
+      const roadBottom = H + 180;
+      ctx.fillStyle = "rgba(223,209,151,0.95)";
+      ctx.fillRect(roadX - 9, roadTop, roadW + 18, roadBottom - roadTop);
+      ctx.fillStyle = "#80877b";
+      ctx.fillRect(roadX, roadTop, roadW, roadBottom - roadTop);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(roadX, roadTop, roadW, roadBottom - roadTop);
+      ctx.clip();
+      const offset = ((roadScroll * 1.15) % 86 + 86) % 86;
+      ctx.strokeStyle = "rgba(255,247,218,0.72)";
+      ctx.lineWidth = 5;
+      ctx.setLineDash([32, 42]);
+      ctx.lineDashOffset = offset;
+      for (let i = 1; i < 3; i += 1) {
+        const x = (LANES[i - 1] + LANES[i]) / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, roadTop - 90);
+        ctx.lineTo(x, roadBottom + 90);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,255,255,0.14)";
+      for (let y = roadTop - offset; y < roadBottom + 90; y += 86) {
+        ctx.fillRect(roadX + 16, y + 10, roadW - 32, 3);
+        ctx.fillRect(roadX + 58, y + 45, roadW - 116, 2);
+      }
+      ctx.restore();
+
+      if (turn) {
+        drawRoadEndBarrier(entryY);
+      }
+    }
+
+    function drawRouteScenery() {
+      const offset = ((roadScroll * 0.32) % 170 + 170) % 170;
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      for (let y = -offset - 80; y < H + 170; y += 170) {
+        drawLeafCluster(22, y + 30, 1);
+        drawLeafCluster(W - 22, y + 104, -1);
+        drawLeafCluster(76, y + 152, -1);
+        drawLeafCluster(W - 78, y + 16, 1);
+      }
+      ctx.restore();
+    }
+
+    function drawRoadEndBarrier(y) {
+      ctx.save();
+      ctx.fillStyle = "#6f776e";
+      ctx.fillRect(47, y - 28, W - 94, 28);
+      ctx.fillStyle = "rgba(18,27,28,0.38)";
+      ctx.fillRect(47, y - 8, W - 94, 10);
+      ctx.strokeStyle = "rgba(246,239,217,0.88)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(58, y - 21);
+      ctx.lineTo(W - 58, y - 21);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(240,194,71,0.95)";
+      ctx.lineWidth = 5;
+      for (let x = 64; x < W - 64; x += 32) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - 3);
+        ctx.lineTo(x + 18, y - 24);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     function drawFallbackRoad() {
@@ -2070,6 +2178,8 @@
       ctx.translate(cx, cy);
       if (turn.direction < 0) ctx.scale(-1, 1);
 
+      drawTurnExitRoad();
+
       const path = new Path2D();
       path.moveTo(0, 165);
       path.bezierCurveTo(4, 92, 38, 36, 98, 6);
@@ -2115,6 +2225,66 @@
       ctx.fillStyle = entryFade;
       ctx.fillRect(-118, 108, 236, 74);
 
+      drawTurnDeadEnd();
+      ctx.restore();
+    }
+
+    function drawTurnExitRoad() {
+      ctx.save();
+      ctx.lineCap = "butt";
+      ctx.lineJoin = "round";
+      ctx.translate(-18, 14);
+
+      ctx.strokeStyle = "rgba(223,209,151,0.95)";
+      ctx.lineWidth = 166;
+      ctx.beginPath();
+      ctx.moveTo(104, -18);
+      ctx.lineTo(520, -18);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#80877b";
+      ctx.lineWidth = 136;
+      ctx.beginPath();
+      ctx.moveTo(104, -18);
+      ctx.lineTo(520, -18);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(246,239,217,0.82)";
+      ctx.lineWidth = 5;
+      ctx.setLineDash([24, 32]);
+      ctx.lineDashOffset = -roadScroll * 0.9;
+      for (const offset of [-32, 32]) {
+        ctx.beginPath();
+        ctx.moveTo(104, -18 + offset);
+        ctx.lineTo(520, -18 + offset);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    function drawTurnDeadEnd() {
+      const y = 122;
+      ctx.save();
+      ctx.fillStyle = "#6f776e";
+      ctx.fillRect(-76, y, 152, 30);
+      ctx.fillStyle = "rgba(18,27,28,0.38)";
+      ctx.fillRect(-76, y + 22, 152, 10);
+      ctx.strokeStyle = "rgba(246,239,217,0.88)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-65, y + 6);
+      ctx.lineTo(65, y + 6);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(240,194,71,0.95)";
+      ctx.lineWidth = 5;
+      for (let x = -64; x < 76; x += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + 26);
+        ctx.lineTo(x + 18, y + 8);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
