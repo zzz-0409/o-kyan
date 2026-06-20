@@ -113,8 +113,9 @@
       left: 16px;
       bottom: 16px;
       display: grid;
-      grid-template-columns: 54px 54px;
-      gap: 10px;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 4px;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
@@ -138,9 +139,9 @@
     }
 
     .control-button {
-      width: 46px;
-      height: 46px;
-      min-height: 46px;
+      width: 44px;
+      height: 44px;
+      min-height: 44px;
       padding: 0;
       border: 2px solid rgba(246, 239, 217, 0.72);
       border-radius: 50%;
@@ -151,6 +152,26 @@
       line-height: 1;
       display: grid;
       place-items: center;
+    }
+
+    .dir-up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .dir-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .dir-right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .dir-down {
+      grid-column: 2;
+      grid-row: 3;
     }
 
     .jump-control .control-button {
@@ -406,8 +427,9 @@
       .move-controls {
         left: 12px;
         bottom: 12px;
-        grid-template-columns: 48px 48px;
-        gap: 8px;
+        grid-template-columns: repeat(3, 40px);
+        grid-template-rows: repeat(3, 40px);
+        gap: 3px;
       }
 
       .jump-control {
@@ -416,9 +438,9 @@
       }
 
       .control-button {
-        width: 48px;
-        height: 48px;
-        min-height: 48px;
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
       }
 
       .jump-control .control-button {
@@ -447,8 +469,10 @@
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720"></canvas>
       <div class="move-controls" id="moveControls" aria-label="移動ボタン">
-        <button class="control-button" id="leftButton" type="button" aria-label="左へ移動">‹</button>
-        <button class="control-button" id="rightButton" type="button" aria-label="右へ移動">›</button>
+        <button class="control-button dir-up" id="upButton" type="button" aria-label="上へ移動">↑</button>
+        <button class="control-button dir-left" id="leftButton" type="button" aria-label="左へ移動">←</button>
+        <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">→</button>
+        <button class="control-button dir-down" id="downButton" type="button" aria-label="下へ移動">↓</button>
       </div>
       <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
         <button class="control-button" id="jumpButton" type="button">JUMP</button>
@@ -456,7 +480,7 @@
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3レーン・スワイプラン</h2>
-          <p id="overlayText">障害物を避けながら走る。道が曲がってもカメラは固定。左下ボタンで移動、右下ボタンでジャンプ。</p>
+          <p id="overlayText">障害物を避けながら走る。曲道を抜けると道の方向も変わる。左下十字ボタンで移動、右下ボタンでジャンプ。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -471,7 +495,7 @@
     </section>
 
     <footer class="footer">
-      <span id="hint">左下ボタンで移動、右下ボタンでジャンプ</span>
+      <span id="hint">左下十字ボタンで移動、右下ボタンでジャンプ</span>
       <div class="slow-bar" aria-label="スロー効果"><i id="slowFill"></i></div>
     </footer>
   </main>
@@ -495,8 +519,10 @@
     const convertScoreBox = document.getElementById("convertScoreBox");
     const dailyRankingEl = document.getElementById("dailyRanking");
     const startButton = document.getElementById("startButton");
+    const upButton = document.getElementById("upButton");
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
+    const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -586,6 +612,7 @@
     const TURN_SLOW_GATE_Y = -96;
     const TURN_SLOW_GATE_H = 44;
     const TURN_ANIM_DURATION = 1.25;
+    const CAMERA_PIVOT_Y = 520;
     const TURN_SPEED_CAP = 0.72;
     const TURN_RECOVERY_DURATION = 1.8;
 
@@ -707,7 +734,7 @@
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      hintEl.textContent = "左下ボタンで移動、右下ボタンでジャンプ";
+      hintEl.textContent = "左下十字ボタンで移動、右下ボタンでジャンプ";
       requestScreenOrientation("portrait");
       updateHud();
       lastTime = performance.now();
@@ -1801,6 +1828,7 @@
       ctx.fillStyle = "#1f2b31";
       ctx.fillRect(0, 0, W, H);
       ctx.save();
+      applyWorldTransform();
       drawRoad();
       drawTurns();
       drawSpeedPanels();
@@ -1810,6 +1838,24 @@
       drawPlayer();
       if (slowTimer > 0 || boostTimer > 0) drawSpeedLabel();
       ctx.restore();
+    }
+
+    function applyWorldTransform() {
+      const turnUnits = currentViewUnits();
+      const angle = turnUnits * Math.PI / 2;
+      const sideAmount = Math.abs(Math.sin(angle));
+      const cameraScale = 1 - sideAmount * 0.24;
+      ctx.translate(W / 2, CAMERA_PIVOT_Y);
+      ctx.scale(cameraScale, cameraScale);
+      ctx.rotate(angle);
+      ctx.translate(-W / 2, -CAMERA_PIVOT_Y);
+    }
+
+    function currentViewUnits() {
+      if (!turnTransition) return viewDirection;
+      const t = Math.min(1, turnTransition.elapsed / turnTransition.duration);
+      const eased = t * t * (3 - 2 * t);
+      return turnTransition.from + turnTransition.direction * eased;
     }
 
     function drawRoad() {
@@ -1980,20 +2026,7 @@
     function drawTurns() {
       for (const turn of turns) {
         drawTurnBackdrop(turn);
-        if (imageReady(backgroundSprites.curve)) {
-          ctx.save();
-          if (turn.direction < 0) {
-            ctx.translate(turn.x + turn.w / 2, turn.y + turn.h / 2);
-            ctx.scale(-1, 1);
-            ctx.drawImage(backgroundSprites.curve, -turn.w / 2, -turn.h / 2, turn.w, turn.h);
-          } else {
-            ctx.drawImage(backgroundSprites.curve, turn.x, turn.y, turn.w, turn.h);
-          }
-          ctx.restore();
-        } else {
-          drawCurveFallback(turn);
-        }
-        drawTurnEntryBlend(turn);
+        drawProceduralTurn(turn);
       }
     }
 
@@ -2030,58 +2063,58 @@
 
     }
 
-    function drawTurnEntryBlend(turn) {
-      const roadX = 44;
-      const roadW = W - 88;
-      const y = turn.y + turn.h - 24;
-      const h = 58;
-      const fade = ctx.createLinearGradient(0, y, 0, y + h);
-      fade.addColorStop(0, "rgba(126,132,121,0.08)");
-      fade.addColorStop(0.32, "rgba(126,132,121,0.78)");
-      fade.addColorStop(1, "rgba(126,132,121,0)");
-      ctx.fillStyle = fade;
-      ctx.fillRect(roadX, y, roadW, h);
-
-      ctx.strokeStyle = "rgba(246,239,217,0.35)";
-      ctx.lineWidth = 5;
-      ctx.setLineDash([26, 36]);
-      ctx.lineDashOffset = roadScroll;
-      for (let i = 1; i < 3; i += 1) {
-        const x = (LANES[i - 1] + LANES[i]) / 2;
-        ctx.beginPath();
-        ctx.moveTo(x, y + 8);
-        ctx.lineTo(x, y + h - 8);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-    }
-
-    function drawCurveFallback(turn) {
-      const cx = turn.x + turn.w / 2;
-      const cy = turn.y + turn.h / 2;
+    function drawProceduralTurn(turn) {
+      const cx = W / 2;
+      const cy = turn.y + turn.h * 0.58;
       ctx.save();
       ctx.translate(cx, cy);
       if (turn.direction < 0) ctx.scale(-1, 1);
-      ctx.strokeStyle = "rgba(246,239,217,0.88)";
-      ctx.lineWidth = 13;
+
+      const path = new Path2D();
+      path.moveTo(0, 165);
+      path.bezierCurveTo(4, 92, 38, 36, 98, 6);
+      path.bezierCurveTo(144, -17, 194, -18, 282, -18);
+
       ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.strokeStyle = "rgba(223,209,151,0.95)";
+      ctx.lineWidth = 166;
+      ctx.stroke(path);
+
+      ctx.strokeStyle = "#7d8378";
+      ctx.lineWidth = 148;
+      ctx.stroke(path);
+
+      ctx.strokeStyle = "rgba(18,27,28,0.28)";
+      ctx.lineWidth = 148;
+      ctx.stroke(path);
+
+      ctx.strokeStyle = "#80877b";
+      ctx.lineWidth = 136;
+      ctx.stroke(path);
+
+      ctx.strokeStyle = "rgba(246,239,217,0.82)";
+      ctx.lineWidth = 5;
+      ctx.setLineDash([24, 32]);
+      ctx.lineDashOffset = -roadScroll * 0.9;
+      ctx.stroke(path);
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = "rgba(28,37,40,0.48)";
+      ctx.lineWidth = 10;
       ctx.beginPath();
-      ctx.moveTo(-74, 24);
-      ctx.quadraticCurveTo(12, 18, 74, -30);
+      ctx.moveTo(-61, 160);
+      ctx.bezierCurveTo(-56, 78, 4, 0, 88, -42);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(20,22,22,0.28)";
-      ctx.lineWidth = 22;
-      ctx.beginPath();
-      ctx.moveTo(-82, 33);
-      ctx.quadraticCurveTo(10, 24, 84, -37);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(240,194,71,0.9)";
-      ctx.beginPath();
-      ctx.moveTo(76, -42);
-      ctx.lineTo(106, -38);
-      ctx.lineTo(88, -12);
-      ctx.closePath();
-      ctx.fill();
+
+      const entryFade = ctx.createLinearGradient(0, 108, 0, 182);
+      entryFade.addColorStop(0, "rgba(128,135,123,0)");
+      entryFade.addColorStop(0.56, "rgba(128,135,123,0.9)");
+      entryFade.addColorStop(1, "rgba(128,135,123,0)");
+      ctx.fillStyle = entryFade;
+      ctx.fillRect(-118, 108, 236, 74);
+
       ctx.restore();
     }
 
@@ -2522,15 +2555,19 @@
     }
 
     function screenToWorldDelta(dx, dy) {
-      return { x: dx, y: dy };
+      const angle = -currentViewUnits() * Math.PI / 2;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: dx * cos - dy * sin,
+        y: dx * sin + dy * cos
+      };
     }
 
     function handleScreenDirection(dx, dy) {
       const worldDelta = screenToWorldDelta(dx, dy);
       if (Math.abs(worldDelta.x) >= Math.abs(worldDelta.y)) {
         moveSide(worldDelta.x < 0 ? -1 : 1);
-      } else if (worldDelta.y < 0) {
-        jump();
       }
     }
 
@@ -2594,8 +2631,10 @@
     canvas.addEventListener("pointercancel", () => {
       touchStart = null;
     });
-    leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(-1)));
-    rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(1)));
+    upButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(0, -1)));
+    leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(-1, 0)));
+    rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(1, 0)));
+    downButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(0, 1)));
     jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
