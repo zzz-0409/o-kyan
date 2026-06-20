@@ -108,45 +108,57 @@
       user-select: none;
     }
 
-    .move-stick {
+    .move-controls {
       position: absolute;
       left: 16px;
       bottom: 16px;
-      width: 104px;
-      height: 104px;
-      border: 2px solid rgba(246, 239, 217, 0.42);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(246,239,217,0.14), rgba(13,15,16,0.38));
+      display: grid;
+      grid-template-columns: 54px 54px;
+      gap: 10px;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
       z-index: 2;
     }
 
-    .stage.playing .move-stick {
+    .jump-control {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      opacity: 0;
+      pointer-events: none;
+      touch-action: none;
+      z-index: 2;
+    }
+
+    .stage.playing .move-controls,
+    .stage.playing .jump-control {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .move-stick::before {
-      content: "";
-      position: absolute;
-      inset: 24px;
-      border: 1px solid rgba(246, 239, 217, 0.22);
-      border-radius: 50%;
-    }
-
-    .stick-knob {
-      position: absolute;
-      left: 50%;
-      top: 50%;
+    .control-button {
       width: 46px;
       height: 46px;
+      min-height: 46px;
+      padding: 0;
       border: 2px solid rgba(246, 239, 217, 0.72);
       border-radius: 50%;
       background: rgba(240, 194, 71, 0.82);
+      color: #1b1710;
       box-shadow: 0 5px 14px rgba(0,0,0,0.32);
-      transform: translate(-50%, -50%);
+      font-size: 24px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .jump-control .control-button {
+      width: 64px;
+      height: 64px;
+      min-height: 64px;
+      font-size: 18px;
+      font-weight: 900;
     }
 
     .overlay {
@@ -172,6 +184,19 @@
       border-radius: 8px;
       background: rgba(15, 17, 18, 0.92);
       text-align: center;
+    }
+
+    .dialog.new-best {
+      border-color: rgba(240, 194, 71, 0.85);
+      background:
+        linear-gradient(145deg, rgba(240, 194, 71, 0.18), rgba(15, 17, 18, 0.94) 42%),
+        rgba(15, 17, 18, 0.94);
+      box-shadow: 0 0 0 2px rgba(240, 194, 71, 0.22), 0 18px 44px rgba(240, 194, 71, 0.2);
+    }
+
+    .dialog.new-best h2 {
+      color: var(--accent);
+      text-shadow: 0 0 18px rgba(240, 194, 71, 0.5);
     }
 
     .dialog h2 {
@@ -378,20 +403,28 @@
         font-size: 15px;
       }
 
-      .move-stick {
+      .move-controls {
         left: 12px;
         bottom: 12px;
-        width: 88px;
-        height: 88px;
+        grid-template-columns: 48px 48px;
+        gap: 8px;
       }
 
-      .move-stick::before {
-        inset: 20px;
+      .jump-control {
+        right: 12px;
+        bottom: 12px;
       }
 
-      .stick-knob {
-        width: 38px;
-        height: 38px;
+      .control-button {
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+      }
+
+      .jump-control .control-button {
+        width: 58px;
+        height: 58px;
+        min-height: 58px;
       }
 
       .footer {
@@ -413,13 +446,17 @@
 
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720"></canvas>
-      <div class="move-stick" id="moveStick" aria-label="移動スティック">
-        <div class="stick-knob" id="stickKnob"></div>
+      <div class="move-controls" id="moveControls" aria-label="移動ボタン">
+        <button class="control-button" id="leftButton" type="button" aria-label="左へ移動">‹</button>
+        <button class="control-button" id="rightButton" type="button" aria-label="右へ移動">›</button>
+      </div>
+      <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
+        <button class="control-button" id="jumpButton" type="button">JUMP</button>
       </div>
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3レーン・スワイプラン</h2>
-          <p id="overlayText">障害物を避けながら走る。道が曲がると画面の向きも変わる。左下スティックで移動、タップでジャンプ。</p>
+          <p id="overlayText">障害物を避けながら走る。道が曲がってもカメラは固定。左下ボタンで移動、右下ボタンでジャンプ。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -434,7 +471,7 @@
     </section>
 
     <footer class="footer">
-      <span id="hint">左下スティックで移動、タップでジャンプ</span>
+      <span id="hint">左下ボタンで移動、右下ボタンでジャンプ</span>
       <div class="slow-bar" aria-label="スロー効果"><i id="slowFill"></i></div>
     </footer>
   </main>
@@ -458,8 +495,9 @@
     const convertScoreBox = document.getElementById("convertScoreBox");
     const dailyRankingEl = document.getElementById("dailyRanking");
     const startButton = document.getElementById("startButton");
-    const moveStick = document.getElementById("moveStick");
-    const stickKnob = document.getElementById("stickKnob");
+    const leftButton = document.getElementById("leftButton");
+    const rightButton = document.getElementById("rightButton");
+    const jumpButton = document.getElementById("jumpButton");
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
       image.src = `assets/character/runner-${frame}.png`;
@@ -538,7 +576,7 @@
     const PIPE_ENTER_DURATION = 1.25;
     const PIPE_EXIT_DURATION = 1.35;
     const SWIPE_MIN = 36;
-    const OBSTACLE_CLEARANCE = 210;
+    const OBSTACLE_CLEARANCE = 250;
     const PANEL_CLEARANCE = 170;
     const TURN_CLEARANCE = 250;
     const TURN_W = 390;
@@ -577,10 +615,14 @@
     let boostTimer = 0;
     let jumpTimer = 0;
     let touchStart = null;
-    let stickState = {
+    let resultState = {
       active: false,
-      pointerId: 0,
-      lastDirection: 0
+      phase: "none",
+      baseScore: 0,
+      coinCount: 0,
+      finalScore: 0,
+      rank: 0,
+      isBest: false
     };
     let obstacles = [];
     let pipes = [];
@@ -661,10 +703,11 @@
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
-      resetStick();
+      resetResultState();
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
-      hintEl.textContent = "左下スティックで移動、タップでジャンプ";
+      overlay.querySelector(".dialog").classList.remove("new-best");
+      hintEl.textContent = "左下ボタンで移動、右下ボタンでジャンプ";
       requestScreenOrientation("portrait");
       updateHud();
       lastTime = performance.now();
@@ -767,21 +810,43 @@
       running = false;
       gameOver = true;
       stageEl.classList.remove("playing");
-      resetStick();
       requestScreenOrientation("portrait");
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
+      const isBest = score > best;
       const rank = saveDailyScore(score);
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
-      overlayTitle.textContent = "ゲームオーバー";
+      overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = `${distanceScore}点 + ${collectedCoins}コイン換算中`;
-      startButton.textContent = "もう一度";
+      startButton.textContent = collectedCoins > 0 ? "コイン演出スキップ" : "リザルトスキップ";
+      overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       overlay.classList.add("show");
       renderDailyRanking(rank);
       hintEl.textContent = "障害物に当たった";
+      resultState = {
+        active: true,
+        phase: collectedCoins > 0 ? "converting" : "result",
+        baseScore: distanceScore,
+        coinCount: collectedCoins,
+        finalScore: score,
+        rank,
+        isBest
+      };
       startScoreConversion(distanceScore, collectedCoins, score, rank);
+    }
+
+    function resetResultState() {
+      resultState = {
+        active: false,
+        phase: "none",
+        baseScore: 0,
+        coinCount: 0,
+        finalScore: 0,
+        rank: 0,
+        isBest: false
+      };
     }
 
     function clearScoreConversion() {
@@ -808,6 +873,7 @@
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
         overlayText.textContent = `${finalScore}点 / 0コイン / ${Math.floor(distance)}m / Today #${rank}`;
+        startButton.textContent = "リザルトスキップ";
         return;
       }
 
@@ -824,16 +890,54 @@
         convertScoreBox.classList.add("pop");
         overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
         if (remainingCoins <= 0) {
-          clearScoreConversion();
-          scoreConvert.classList.add("show");
-          scoreConvert.setAttribute("aria-hidden", "false");
-          convertCoinsEl.textContent = "0";
-          convertScoreEl.textContent = String(finalScore);
-          distanceEl.textContent = String(finalScore);
-          todayRankEl.textContent = "0";
-          overlayText.textContent = `${finalScore}点 / ${coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${rank}`;
+          finishScoreConversion();
         }
       }, 180);
+    }
+
+    function finishScoreConversion() {
+      if (!resultState.active) return;
+      clearScoreConversion();
+      scoreConvert.classList.add("show");
+      scoreConvert.setAttribute("aria-hidden", "false");
+      convertCoinsEl.textContent = "0";
+      convertScoreEl.textContent = String(resultState.finalScore);
+      distanceEl.textContent = String(resultState.finalScore);
+      todayRankEl.textContent = "0";
+      overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
+      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      startButton.textContent = "リザルトスキップ";
+      resultState.phase = "result";
+    }
+
+    function skipResultDetails() {
+      if (!resultState.active) return;
+      clearScoreConversion();
+      scoreConvert.classList.remove("show");
+      scoreConvert.setAttribute("aria-hidden", "true");
+      overlayTitle.textContent = resultState.isBest ? "NEW BEST" : "READY";
+      overlayText.textContent = resultState.isBest
+        ? `最高スコア ${resultState.finalScore}点！ 次のランでさらに伸ばそう。`
+        : `${resultState.finalScore}点。もう一回いく？`;
+      dailyRankingEl.innerHTML = "";
+      startButton.textContent = "リスタート";
+      resultState.phase = "ready";
+    }
+
+    function handleMainButton() {
+      if (!resultState.active) {
+        resetGame();
+        return;
+      }
+      if (resultState.phase === "converting") {
+        finishScoreConversion();
+        return;
+      }
+      if (resultState.phase === "result") {
+        skipResultDetails();
+        return;
+      }
+      resetGame();
     }
 
     function flyResultCoin() {
@@ -911,10 +1015,6 @@
 
     function moveSide(direction) {
       if (!running || gameMode !== "lane") return;
-      if (jumpTimer > 0) {
-        hintEl.textContent = "ジャンプ中は移動できない";
-        return;
-      }
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
       player.lane = nextLane;
@@ -1352,6 +1452,9 @@
         viewDirection = (turnTransition.from + turnTransition.direction + 4) % 4;
         turnTransition = null;
         turnRecoveryTimer = TURN_RECOVERY_DURATION;
+        spawnTimer = Math.max(spawnTimer, 2.2);
+        panelTimer = Math.max(panelTimer, 1.8);
+        slowGateTimer = Math.max(slowGateTimer, 2.4);
         hintEl.textContent = "曲がり終わった！";
       }
     }
@@ -1698,7 +1801,6 @@
       ctx.fillStyle = "#1f2b31";
       ctx.fillRect(0, 0, W, H);
       ctx.save();
-      applyViewTransform();
       drawRoad();
       drawTurns();
       drawSpeedPanels();
@@ -1708,24 +1810,6 @@
       drawPlayer();
       if (slowTimer > 0 || boostTimer > 0) drawSpeedLabel();
       ctx.restore();
-    }
-
-    function applyViewTransform() {
-      const turnUnits = currentViewUnits();
-      const angle = turnUnits * Math.PI / 2;
-      const sideAmount = Math.abs(Math.sin(angle));
-      const cameraScale = 1 - sideAmount * 0.3;
-      ctx.translate(W / 2, H / 2);
-      ctx.scale(cameraScale, cameraScale);
-      ctx.rotate(angle);
-      ctx.translate(-W / 2, -H / 2);
-    }
-
-    function currentViewUnits() {
-      if (!turnTransition) return viewDirection;
-      const t = Math.min(1, turnTransition.elapsed / turnTransition.duration);
-      const eased = t * t * (3 - 2 * t);
-      return turnTransition.from + turnTransition.direction * eased;
     }
 
     function drawRoad() {
@@ -1914,8 +1998,8 @@
     }
 
     function drawTurnBackdrop(turn) {
-      const y = Math.min(0, turn.y - 14);
-      const h = turn.y + turn.h + 42 - y;
+      const y = turn.y - 18;
+      const h = turn.h + 56;
       const gradient = ctx.createLinearGradient(0, y, 0, y + h);
       gradient.addColorStop(0, "#246f74");
       gradient.addColorStop(0.45, "#2f9184");
@@ -2428,84 +2512,16 @@
 
     function onPointerUp(event) {
       if (!touchStart) return;
-      const dx = event.clientX - touchStart.x;
-      const dy = event.clientY - touchStart.y;
       touchStart = null;
-
-      if (!running && overlay.classList.contains("show")) {
-        resetGame();
-        return;
-      }
-
-      const adx = Math.abs(dx);
-      const ady = Math.abs(dy);
-      if (adx < 18 && ady < 18) {
-        jump();
-      }
     }
 
-    function onStickDown(event) {
-      if (!running) return;
+    function onControlButton(event, action) {
       event.preventDefault();
-      stickState.active = true;
-      stickState.pointerId = event.pointerId;
-      stickState.lastDirection = 0;
-      moveStick.setPointerCapture(event.pointerId);
-      updateStick(event);
-    }
-
-    function onStickMove(event) {
-      if (!stickState.active || event.pointerId !== stickState.pointerId) return;
-      event.preventDefault();
-      updateStick(event);
-    }
-
-    function onStickUp(event) {
-      if (!stickState.active || event.pointerId !== stickState.pointerId) return;
-      event.preventDefault();
-      resetStick();
-    }
-
-    function updateStick(event) {
-      const rect = moveStick.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const dx = event.clientX - centerX;
-      const dy = event.clientY - centerY;
-      const maxRadius = rect.width * 0.34;
-      const distance = Math.hypot(dx, dy);
-      const scale = distance > maxRadius ? maxRadius / distance : 1;
-      const knobX = dx * scale;
-      const knobY = dy * scale;
-      stickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
-
-      if (distance < rect.width * 0.2) {
-        stickState.lastDirection = 0;
-        return;
-      }
-
-      const worldDelta = screenToWorldDelta(dx, dy);
-      const awx = Math.abs(worldDelta.x);
-      const awy = Math.abs(worldDelta.y);
-      if (awx < rect.width * 0.22 || awx < awy * 1.35) return;
-
-      const direction = worldDelta.x < 0 ? -1 : 1;
-      if (direction === stickState.lastDirection) return;
-      moveSide(direction);
-      stickState.lastDirection = direction;
-    }
-
-    function resetStick() {
-      stickState.active = false;
-      stickState.pointerId = 0;
-      stickState.lastDirection = 0;
-      stickKnob.style.transform = "translate(-50%, -50%)";
+      event.stopPropagation();
+      action();
     }
 
     function screenToWorldDelta(dx, dy) {
-      if (viewDirection === 1) return { x: dy, y: -dx };
-      if (viewDirection === 2) return { x: -dx, y: -dy };
-      if (viewDirection === 3) return { x: -dy, y: dx };
       return { x: dx, y: dy };
     }
 
@@ -2522,7 +2538,7 @@
       if (event.repeat) return;
       if (event.code === "Space" && !running && overlay.classList.contains("show")) {
         event.preventDefault();
-        resetGame();
+        handleMainButton();
         return;
       }
       if (event.code === "ArrowUp" || event.code === "Space") {
@@ -2572,16 +2588,15 @@
       requestAnimationFrame(loop);
     }
 
-    startButton.addEventListener("click", resetGame);
+    startButton.addEventListener("click", handleMainButton);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", () => {
       touchStart = null;
     });
-    moveStick.addEventListener("pointerdown", onStickDown);
-    moveStick.addEventListener("pointermove", onStickMove);
-    moveStick.addEventListener("pointerup", onStickUp);
-    moveStick.addEventListener("pointercancel", onStickUp);
+    leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(-1)));
+    rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(1)));
+    jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
 
