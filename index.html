@@ -205,7 +205,7 @@
       border-radius: 8px;
       background:
         linear-gradient(rgba(7, 11, 17, 0.72), rgba(7, 11, 17, 0.78)),
-        url("assets/ui/future-result-panel.svg?v=future-visuals-2") center / 100% 100% no-repeat,
+        url("assets/ui/imagegen-result-panel.png?v=imagegen-1") center / 100% 100% no-repeat,
         rgba(15, 17, 18, 0.92);
       box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 34px rgba(93, 232, 255, 0.18);
       text-align: center;
@@ -537,30 +537,30 @@
     const rightButton = document.getElementById("rightButton");
     const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "future-visuals-2";
+    const ASSET_VERSION = "imagegen-1";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
-      image.src = assetUrl(`assets/character/future-runner-${frame}.svg`);
+      image.src = assetUrl(`assets/character/imagegen-runner-${frame}.png`);
       image.addEventListener("load", draw);
       return image;
     });
     const playerSprite = playerRunSprites[0];
     const sideRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
-      image.src = assetUrl(`assets/character/future-runner-side-${frame}.svg`);
+      image.src = assetUrl(`assets/character/imagegen-runner-side-${frame}.png`);
       image.addEventListener("load", draw);
       return image;
     });
     const sideDuckSprite = new Image();
-    sideDuckSprite.src = assetUrl("assets/character/future-runner-side-duck.svg");
+    sideDuckSprite.src = assetUrl("assets/character/imagegen-runner-side-duck.png");
     sideDuckSprite.addEventListener("load", draw);
     const obstacleSprites = {
       car: new Image(),
       hole: new Image()
     };
-    obstacleSprites.car.src = assetUrl("assets/obstacles/future-car.svg");
-    obstacleSprites.hole.src = assetUrl("assets/obstacles/future-hole.svg");
+    obstacleSprites.car.src = assetUrl("assets/obstacles/imagegen-car.png");
+    obstacleSprites.hole.src = assetUrl("assets/obstacles/imagegen-hole.png");
     Object.values(obstacleSprites).forEach((image) => image.addEventListener("load", draw));
     const gimmickSprites = {
       boost: new Image(),
@@ -569,11 +569,11 @@
       turnRight: new Image(),
       turnLeft: new Image()
     };
-    gimmickSprites.boost.src = assetUrl("assets/gimmicks/boost-pad.svg");
-    gimmickSprites.slow.src = assetUrl("assets/gimmicks/slow-pad.svg");
-    gimmickSprites.slowGate.src = assetUrl("assets/gimmicks/slow-gate.svg");
-    gimmickSprites.turnRight.src = assetUrl("assets/gimmicks/camera-turn-right.svg");
-    gimmickSprites.turnLeft.src = assetUrl("assets/gimmicks/camera-turn-left.svg");
+    gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
+    gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
+    gimmickSprites.slowGate.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
+    gimmickSprites.turnRight.src = assetUrl("assets/gimmicks/imagegen-camera-turn-right.png");
+    gimmickSprites.turnLeft.src = assetUrl("assets/gimmicks/imagegen-camera-turn-left.png");
     Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
     const backgroundSprites = {
       laneBg: new Image(),
@@ -588,8 +588,8 @@
     backgroundSprites.laneRoad.src = assetUrl("assets/backgrounds/lane-road.png");
     backgroundSprites.sideBg.src = assetUrl("assets/backgrounds/side-background.png");
     backgroundSprites.sideRoad.src = assetUrl("assets/backgrounds/side-road.png");
-    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/future-lane-loop.svg");
-    backgroundSprites.sideLoop.src = assetUrl("assets/backgrounds/future-side-loop.svg");
+    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/imagegen-lane-background.png");
+    backgroundSprites.sideLoop.src = assetUrl("assets/backgrounds/imagegen-side-background.png");
     backgroundSprites.curve.src = assetUrl("assets/backgrounds/curve-road.png");
     Object.values(backgroundSprites).forEach((image) => image.addEventListener("load", draw));
 
@@ -1921,7 +1921,12 @@
 
     function drawRoad() {
       if (imageReady(backgroundSprites.laneLoop)) {
-        drawVerticalLoopImage(backgroundSprites.laneLoop, loopScroll, 0, 0, W, H);
+        if (isImagegenAsset(backgroundSprites.laneLoop)) {
+          drawCoverImage(backgroundSprites.laneLoop, 0, 0, W, H, 0.5, 0.5);
+          drawImagegenRoadMotion();
+        } else {
+          drawVerticalLoopImage(backgroundSprites.laneLoop, loopScroll, 0, 0, W, H);
+        }
         drawLoopVignette();
         return;
       }
@@ -2054,6 +2059,27 @@
 
     function imageReady(image) {
       return image.complete && image.naturalWidth > 0;
+    }
+
+    function isImagegenAsset(image) {
+      return image && typeof image.src === "string" && image.src.includes("/imagegen-");
+    }
+
+    function drawImagegenRoadMotion() {
+      const offset = ((loopScroll * 1.2) % 120 + 120) % 120;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = "rgba(165, 245, 255, 0.22)";
+      for (let y = -120 + offset; y < H + 80; y += 120) {
+        ctx.fillRect(116, y, 8, 34);
+        ctx.fillRect(266, y + 52, 8, 34);
+      }
+      ctx.fillStyle = "rgba(255, 214, 107, 0.20)";
+      for (let y = -80 + offset * 0.8; y < H + 80; y += 160) {
+        ctx.fillRect(60, y, 12, 38);
+        ctx.fillRect(318, y + 76, 12, 38);
+      }
+      ctx.restore();
     }
 
     function drawCoverImage(image, x, y, w, h, focusX = 0.5, focusY = 0.5) {
@@ -2633,7 +2659,11 @@
 
     function drawSideMode() {
       if (imageReady(backgroundSprites.sideLoop)) {
-        drawHorizontalLoopImage(backgroundSprites.sideLoop, loopScroll, 0, 0, W, H);
+        if (isImagegenAsset(backgroundSprites.sideLoop)) {
+          drawCoverImage(backgroundSprites.sideLoop, 0, 0, W, H, 0.5, 0.5);
+        } else {
+          drawHorizontalLoopImage(backgroundSprites.sideLoop, loopScroll, 0, 0, W, H);
+        }
       } else if (imageReady(backgroundSprites.sideBg) && imageReady(backgroundSprites.sideRoad)) {
         drawCoverImage(backgroundSprites.sideBg, 0, 0, W, H, 0.5, 0.42);
         drawSideBackgroundFlow();
