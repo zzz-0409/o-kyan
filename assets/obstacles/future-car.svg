@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 82">
+  <defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff6b57"/><stop offset=".55" stop-color="#b21525"/><stop offset="1" stop-color="#4a0712"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="36" cy="72" rx="25" ry="6" fill="#000" opacity=".35"/>
+  <path d="M19 11h34l10 18v33L51 75H21L9 62V29z" fill="#16090d"/>
+  <path d="M22 8h28l11 21v31L49 72H23L11 60V29z" fill="url(#body)"/>
+  <path d="M25 16h22l6 15H19z" fill="#253541" opacity=".86"/>
+  <path d="M21 39h30v21H21z" fill="#6b1218" opacity=".9"/>
+  <path d="M16 30h40M18 62h36" stroke="#ffb1a0" stroke-width="3" opacity=".55"/>
+  <circle cx="16" cy="22" r="5" fill="#f0c247" filter="url(#glow)"/><circle cx="56" cy="22" r="5" fill="#f0c247" filter="url(#glow)"/>
+  <rect x="6" y="30" width="8" height="24" rx="4" fill="#050609"/><rect x="58" y="30" width="8" height="24" rx="4" fill="#050609"/>
+</svg>

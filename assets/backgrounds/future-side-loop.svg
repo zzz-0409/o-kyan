@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#061724"/><stop offset=".58" stop-color="#123748"/><stop offset="1" stop-color="#071016"/></linearGradient>
+    <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#53636b"/><stop offset="1" stop-color="#1f2a31"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="390" height="720" fill="url(#bg)"/>
+  <g opacity=".7">
+    <path d="M-40 360h470v170H-40z" fill="#09212b"/>
+    <g fill="#1b4b5e">
+      <rect x="-10" y="176" width="58" height="210"/><rect x="78" y="116" width="46" height="270"/><rect x="158" y="146" width="62" height="240"/>
+      <rect x="252" y="94" width="50" height="292"/><rect x="338" y="160" width="62" height="226"/>
+    </g>
+    <g fill="#ffd66b" opacity=".72">
+      <rect x="14" y="208" width="7" height="9"/><rect x="31" y="242" width="7" height="9"/><rect x="94" y="154" width="6" height="9"/>
+      <rect x="174" y="190" width="7" height="9"/><rect x="274" y="130" width="6" height="9"/><rect x="355" y="194" width="7" height="9"/>
+    </g>
+    <path d="M0 434c70-26 122-23 188-2s137 20 202-5v72H0z" fill="#11323f" opacity=".72"/>
+    <path d="M0 430c70-26 122-23 188-2s137 20 202-5" fill="none" stroke="#4df0ff" stroke-width="3" opacity=".55" filter="url(#glow)"/>
+  </g>
+  <rect x="-20" y="552" width="430" height="92" rx="12" fill="url(#deck)"/>
+  <rect x="-20" y="550" width="430" height="5" fill="#f2dfa1"/>
+  <rect x="-20" y="560" width="430" height="3" fill="#55e8ff" opacity=".78" filter="url(#glow)"/>
+  <g stroke="#f8f2d8" stroke-width="5" stroke-linecap="round" opacity=".9">
+    <path d="M18 599h42M104 599h42M190 599h42M276 599h42M362 599h42"/>
+  </g>
+</svg>

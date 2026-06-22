@@ -201,9 +201,13 @@
     .dialog {
       width: min(100%, 340px);
       padding: 18px;
-      border: 1px solid rgba(246, 239, 217, 0.18);
+      border: 1px solid rgba(123, 238, 255, 0.24);
       border-radius: 8px;
-      background: rgba(15, 17, 18, 0.92);
+      background:
+        linear-gradient(rgba(7, 11, 17, 0.72), rgba(7, 11, 17, 0.78)),
+        url("assets/ui/future-result-panel.svg") center / 100% 100% no-repeat,
+        rgba(15, 17, 18, 0.92);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 34px rgba(93, 232, 255, 0.18);
       text-align: center;
     }
 
@@ -535,27 +539,40 @@
     const jumpButton = document.getElementById("jumpButton");
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
-      image.src = `assets/character/runner-${frame}.png`;
+      image.src = `assets/character/future-runner-${frame}.svg`;
       image.addEventListener("load", draw);
       return image;
     });
     const playerSprite = playerRunSprites[0];
     const sideRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
-      image.src = `assets/character/runner-side-${frame}.png`;
+      image.src = `assets/character/future-runner-side-${frame}.svg`;
       image.addEventListener("load", draw);
       return image;
     });
     const sideDuckSprite = new Image();
-    sideDuckSprite.src = "assets/character/runner-side-duck.png";
+    sideDuckSprite.src = "assets/character/future-runner-side-duck.svg";
     sideDuckSprite.addEventListener("load", draw);
     const obstacleSprites = {
       car: new Image(),
       hole: new Image()
     };
-    obstacleSprites.car.src = "assets/obstacles/car.png";
-    obstacleSprites.hole.src = "assets/obstacles/hole.png";
+    obstacleSprites.car.src = "assets/obstacles/future-car.svg";
+    obstacleSprites.hole.src = "assets/obstacles/future-hole.svg";
     Object.values(obstacleSprites).forEach((image) => image.addEventListener("load", draw));
+    const gimmickSprites = {
+      boost: new Image(),
+      slow: new Image(),
+      slowGate: new Image(),
+      turnRight: new Image(),
+      turnLeft: new Image()
+    };
+    gimmickSprites.boost.src = "assets/gimmicks/boost-pad.svg";
+    gimmickSprites.slow.src = "assets/gimmicks/slow-pad.svg";
+    gimmickSprites.slowGate.src = "assets/gimmicks/slow-gate.svg";
+    gimmickSprites.turnRight.src = "assets/gimmicks/camera-turn-right.svg";
+    gimmickSprites.turnLeft.src = "assets/gimmicks/camera-turn-left.svg";
+    Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
     const backgroundSprites = {
       laneBg: new Image(),
       laneRoad: new Image(),
@@ -569,8 +586,8 @@
     backgroundSprites.laneRoad.src = "assets/backgrounds/lane-road.png";
     backgroundSprites.sideBg.src = "assets/backgrounds/side-background.png";
     backgroundSprites.sideRoad.src = "assets/backgrounds/side-road.png";
-    backgroundSprites.laneLoop.src = "assets/backgrounds/lane-loop-road.png";
-    backgroundSprites.sideLoop.src = "assets/backgrounds/side-loop-road.png";
+    backgroundSprites.laneLoop.src = "assets/backgrounds/future-lane-loop.svg";
+    backgroundSprites.sideLoop.src = "assets/backgrounds/future-side-loop.svg";
     backgroundSprites.curve.src = "assets/backgrounds/curve-road.png";
     Object.values(backgroundSprites).forEach((image) => image.addEventListener("load", draw));
 
@@ -2161,6 +2178,11 @@
     }
 
     function drawCameraTurnGate(turn) {
+      const gateImage = turn.direction > 0 ? gimmickSprites.turnRight : gimmickSprites.turnLeft;
+      if (imageReady(gateImage)) {
+        ctx.drawImage(gateImage, turn.x, turn.y, turn.w, turn.h);
+        return;
+      }
       const x = turn.x;
       const y = turn.y;
       const w = turn.w;
@@ -2503,6 +2525,11 @@
     function drawSpeedPanels() {
       for (const panel of speedPanels) {
         const r = panelRect(panel);
+        const image = panel.kind === "up" ? gimmickSprites.boost : gimmickSprites.slow;
+        if (imageReady(image)) {
+          ctx.drawImage(image, r.x, r.y, r.w, r.h);
+          continue;
+        }
         ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
         ctx.fillStyle = panel.kind === "up" ? "#f6efd9" : "#e8f8ff";
@@ -2534,6 +2561,10 @@
 
     function drawSlowGates() {
       for (const gate of slowGates) {
+        if (imageReady(gimmickSprites.slowGate)) {
+          ctx.drawImage(gimmickSprites.slowGate, 44, gate.y, W - 88, gate.h);
+          continue;
+        }
         ctx.fillStyle = "rgba(101,183,216,0.34)";
         ctx.fillRect(44, gate.y, W - 88, gate.h);
         ctx.strokeStyle = "#aee6ff";
