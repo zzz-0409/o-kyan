@@ -392,6 +392,15 @@
       height: 100%;
       background: var(--slow);
       border-radius: inherit;
+      transition: width 0.08s linear, background-color 0.15s ease;
+    }
+
+    .slow-bar.boost i {
+      background: var(--boost);
+    }
+
+    .slow-bar.slow i {
+      background: var(--slow);
     }
 
     @media (max-width: 430px), (max-height: 700px) {
@@ -579,8 +588,8 @@
     const JUMP_DURATION = 0.66;
     const SLOW_DURATION = 3.7;
     const SLOW_FACTOR = 0.55;
-    const BOOST_DURATION = 2.4;
-    const BOOST_FACTOR = 1.35;
+    const BOOST_DURATION = 3.0;
+    const BOOST_FACTOR = 1.55;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 9;
     const PIPE_W = 78;
@@ -980,7 +989,16 @@
       distanceEl.textContent = String(Math.floor(distance));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
-      slowFill.style.width = `${Math.min(100, (slowTimer / SLOW_DURATION) * 100)}%`;
+      const boostActive = boostTimer > 0;
+      const slowActive = slowTimer > 0;
+      const effectRatio = boostActive
+        ? boostTimer / BOOST_DURATION
+        : slowActive
+          ? slowTimer / SLOW_DURATION
+          : 0;
+      slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
+      slowFill.parentElement.classList.toggle("boost", boostActive);
+      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive);
     }
 
     async function requestScreenOrientation(orientation) {
@@ -1401,7 +1419,8 @@
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
-      speed = Math.min(speed, rawSpeed * turnSpeedFactor());
+      const turnFactor = turnSpeedFactor();
+      if (turnFactor < 1) speed = Math.min(speed, rawSpeed * turnFactor);
       jumpTimer = Math.max(0, jumpTimer - dt);
       distance += (speed * dt) / 12;
       roadScroll = (roadScroll + speed * dt) % 80;
