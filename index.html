@@ -537,7 +537,7 @@
     const rightButton = document.getElementById("rightButton");
     const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-2";
+    const ASSET_VERSION = "imagegen-3";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -597,9 +597,6 @@
     const H = 720;
     const FRAME_MS = 1000 / 30;
     const LANES = [98, 195, 292];
-    const ROAD_X = 52;
-    const ROAD_W = W - ROAD_X * 2;
-    const ROAD_EDGE_W = 10;
     const CENTER_LANE = 1;
     const PLAYER_Y = 590;
     const PLAYER_W = 46;
@@ -1926,7 +1923,6 @@
       if (imageReady(backgroundSprites.laneLoop)) {
         if (isImagegenAsset(backgroundSprites.laneLoop)) {
           drawCoverImage(backgroundSprites.laneLoop, 0, 0, W, H, 0.5, 0.5);
-          drawUnifiedFutureRoad();
           drawImagegenRoadMotion();
         } else {
           drawVerticalLoopImage(backgroundSprites.laneLoop, loopScroll, 0, 0, W, H);
@@ -2040,81 +2036,24 @@
     function drawFallbackRoad() {
       ctx.fillStyle = "#182025";
       ctx.fillRect(0, 0, W, H);
-      drawUnifiedFutureRoad();
-    }
-
-    function drawUnifiedFutureRoad() {
-      const offset = ((roadScroll * 1.14) % 96 + 96) % 96;
-
-      ctx.save();
-      ctx.fillStyle = "rgba(5, 13, 20, 0.42)";
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.shadowColor = "rgba(61, 222, 255, 0.42)";
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = "rgba(47, 234, 255, 0.72)";
-      ctx.fillRect(ROAD_X - ROAD_EDGE_W, 0, ROAD_EDGE_W, H);
-      ctx.fillRect(ROAD_X + ROAD_W, 0, ROAD_EDGE_W, H);
-      ctx.shadowBlur = 0;
-
-      const roadGradient = ctx.createLinearGradient(ROAD_X, 0, ROAD_X + ROAD_W, 0);
-      roadGradient.addColorStop(0, "rgba(23, 36, 47, 0.98)");
-      roadGradient.addColorStop(0.16, "rgba(38, 56, 68, 0.98)");
-      roadGradient.addColorStop(0.5, "rgba(51, 67, 77, 0.98)");
-      roadGradient.addColorStop(0.84, "rgba(38, 56, 68, 0.98)");
-      roadGradient.addColorStop(1, "rgba(22, 35, 46, 0.98)");
-      ctx.fillStyle = roadGradient;
-      ctx.fillRect(ROAD_X, 0, ROAD_W, H);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(ROAD_X, 0, ROAD_W, H);
-      ctx.clip();
-
-      ctx.fillStyle = "rgba(255,255,255,0.055)";
-      for (let y = -offset; y < H + 100; y += 48) {
-        ctx.fillRect(ROAD_X + 12, y, ROAD_W - 24, 1.5);
-      }
-
-      ctx.strokeStyle = "rgba(178, 218, 255, 0.42)";
-      ctx.lineWidth = 1.5;
-      for (const x of [LANES[0] - 35, LANES[2] + 35]) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
-      }
-
+      ctx.fillStyle = "#273038";
+      ctx.fillRect(44, 0, W - 88, H);
       ctx.strokeStyle = "#53606a";
-      ctx.lineWidth = 3;
-      ctx.setLineDash([28, 32]);
-      ctx.lineDashOffset = offset;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([18, 24]);
       for (let i = 1; i < 3; i += 1) {
         const x = (LANES[i - 1] + LANES[i]) / 2;
         ctx.beginPath();
-        ctx.moveTo(x, -100);
-        ctx.lineTo(x, H + 100);
+        ctx.moveTo(x, -80 + roadScroll);
+        ctx.lineTo(x, H + 80);
         ctx.stroke();
       }
       ctx.setLineDash([]);
 
-      ctx.globalCompositeOperation = "screen";
-      ctx.fillStyle = "rgba(191, 225, 255, 0.36)";
-      for (let y = -offset; y < H + 100; y += 96) {
-        ctx.fillRect((LANES[0] + LANES[1]) / 2 - 3, y + 8, 6, 34);
-        ctx.fillRect((LANES[1] + LANES[2]) / 2 - 3, y + 54, 6, 34);
+      ctx.fillStyle = "rgba(246,239,217,0.16)";
+      for (let y = -roadScroll; y < H; y += 80) {
+        ctx.fillRect(52, y, W - 104, 3);
       }
-      ctx.restore();
-
-      const edgeShade = ctx.createLinearGradient(ROAD_X, 0, ROAD_X + ROAD_W, 0);
-      edgeShade.addColorStop(0, "rgba(0,0,0,0.26)");
-      edgeShade.addColorStop(0.14, "rgba(0,0,0,0)");
-      edgeShade.addColorStop(0.86, "rgba(0,0,0,0)");
-      edgeShade.addColorStop(1, "rgba(0,0,0,0.26)");
-      ctx.fillStyle = edgeShade;
-      ctx.fillRect(ROAD_X, 0, ROAD_W, H);
-
-      ctx.restore();
     }
 
     function imageReady(image) {
