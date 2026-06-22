@@ -1816,6 +1816,57 @@
       return Math.sin(t * Math.PI) * 46;
     }
 
+    function playerCurvePose() {
+      if (!turnTransition) {
+        return {
+          x: player.x,
+          y: PLAYER_Y + PLAYER_H / 2,
+          angle: 0,
+          scale: 1
+        };
+      }
+
+      const rawT = Math.min(1, turnTransition.elapsed / turnTransition.duration);
+      const t = rawT * rawT * (3 - 2 * rawT);
+      const direction = turnTransition.direction;
+      const startX = LANES[CENTER_LANE];
+      const startY = PLAYER_Y + PLAYER_H / 2;
+      const endX = startX + direction * 120;
+      const endY = CAMERA_PIVOT_Y + 3;
+      const control1X = startX;
+      const control1Y = startY - 74;
+      const control2X = startX + direction * 84;
+      const control2Y = endY + 18;
+      const point = cubicPoint(startX, startY, control1X, control1Y, control2X, control2Y, endX, endY, t);
+      const tangent = cubicTangent(startX, startY, control1X, control1Y, control2X, control2Y, endX, endY, t);
+      return {
+        x: point.x,
+        y: point.y,
+        angle: Math.atan2(tangent.y, tangent.x) + Math.PI / 2,
+        scale: 1 - Math.sin(t * Math.PI) * 0.08
+      };
+    }
+
+    function cubicPoint(x0, y0, x1, y1, x2, y2, x3, y3, t) {
+      const u = 1 - t;
+      const tt = t * t;
+      const uu = u * u;
+      const uuu = uu * u;
+      const ttt = tt * t;
+      return {
+        x: uuu * x0 + 3 * uu * t * x1 + 3 * u * tt * x2 + ttt * x3,
+        y: uuu * y0 + 3 * uu * t * y1 + 3 * u * tt * y2 + ttt * y3
+      };
+    }
+
+    function cubicTangent(x0, y0, x1, y1, x2, y2, x3, y3, t) {
+      const u = 1 - t;
+      return {
+        x: 3 * u * u * (x1 - x0) + 6 * u * t * (x2 - x1) + 3 * t * t * (x3 - x2),
+        y: 3 * u * u * (y1 - y0) + 6 * u * t * (y2 - y1) + 3 * t * t * (y3 - y2)
+      };
+    }
+
     function rectsOverlap(a, b) {
       return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
@@ -2475,36 +2526,47 @@
 
     function drawPlayer() {
       const r = playerRect();
+      const pose = playerCurvePose();
       const lift = jumpLift();
       const runPhase = roadScroll * 0.16;
       const bob = isJumping() ? 0 : Math.sin(runPhase) * 3;
-      const lean = isJumping() ? 0 : Math.sin(runPhase) * 0.07;
+      const lean = pose.angle + (isJumping() ? 0 : Math.sin(runPhase) * 0.07);
       const spriteW = 64;
       const spriteH = 84;
       ctx.fillStyle = "rgba(0,0,0,0.28)";
-      ctx.fillRect(r.x + 5, r.y + r.h - 4, r.w - 10, isJumping() ? 5 : 8);
+      ctx.save();
+      ctx.translate(pose.x, pose.y - lift + bob);
+      ctx.rotate(pose.angle);
+      ctx.scale(pose.scale, pose.scale);
+      ctx.fillRect(-PLAYER_W / 2 + 5, -5, PLAYER_W - 10, isJumping() ? 5 : 8);
+      ctx.restore();
 
       const runFrame = playerRunSprites[Math.floor(roadScroll / 20) % playerRunSprites.length];
       const activePlayerSprite = isJumping() ? playerSprite : runFrame;
       if (activePlayerSprite && activePlayerSprite.complete && activePlayerSprite.naturalWidth > 0) {
         ctx.save();
-        ctx.translate(player.x, PLAYER_Y + PLAYER_H / 2 - lift + bob);
+        ctx.translate(pose.x, pose.y - lift + bob);
         ctx.rotate(lean);
         const jumpScale = isJumping() ? 1.05 : 1;
-        ctx.scale(jumpScale, jumpScale);
+        ctx.scale(jumpScale * pose.scale, jumpScale * pose.scale);
         ctx.drawImage(activePlayerSprite, -spriteW / 2, -spriteH, spriteW, spriteH);
         ctx.restore();
       } else {
+        ctx.save();
+        ctx.translate(pose.x, pose.y - lift);
+        ctx.rotate(pose.angle);
+        ctx.scale(pose.scale, pose.scale);
         ctx.fillStyle = "#f0c247";
-        ctx.fillRect(r.x, r.y - lift, r.w, r.h);
+        ctx.fillRect(-PLAYER_W / 2, -PLAYER_H, r.w, r.h);
         ctx.fillStyle = "#f6efd9";
-        ctx.fillRect(r.x + r.w - 15, r.y + 12 - lift, 7, 7);
+        ctx.fillRect(PLAYER_W / 2 - 15, -PLAYER_H + 12, 7, 7);
         ctx.fillStyle = "#8c672a";
-        ctx.fillRect(r.x + 8, r.y + r.h - 10 - lift, 10, 10);
-        ctx.fillRect(r.x + r.w - 18, r.y + r.h - 10 - lift, 10, 10);
+        ctx.fillRect(-PLAYER_W / 2 + 8, -10, 10, 10);
+        ctx.fillRect(PLAYER_W / 2 - 18, -10, 10, 10);
+        ctx.restore();
       }
 
-      if (player.lane !== CENTER_LANE) {
+      if (!turnTransition && player.lane !== CENTER_LANE) {
         ctx.strokeStyle = "rgba(240,194,71,0.9)";
         ctx.lineWidth = 3;
         ctx.strokeRect(LANES[player.lane] - 39, PLAYER_Y - 36, 78, 72);
