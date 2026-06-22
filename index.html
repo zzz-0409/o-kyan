@@ -537,7 +537,7 @@
     const rightButton = document.getElementById("rightButton");
     const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-3";
+    const ASSET_VERSION = "imagegen-4";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -588,8 +588,8 @@
     backgroundSprites.laneRoad.src = assetUrl("assets/backgrounds/lane-road.png");
     backgroundSprites.sideBg.src = assetUrl("assets/backgrounds/side-background.png");
     backgroundSprites.sideRoad.src = assetUrl("assets/backgrounds/side-road.png");
-    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/imagegen-lane-background.png");
-    backgroundSprites.sideLoop.src = assetUrl("assets/backgrounds/imagegen-side-background.png");
+    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/lane-loop-road.png");
+    backgroundSprites.sideLoop.src = assetUrl("assets/backgrounds/side-loop-road.png");
     backgroundSprites.curve.src = assetUrl("assets/backgrounds/curve-road.png");
     Object.values(backgroundSprites).forEach((image) => image.addEventListener("load", draw));
 
