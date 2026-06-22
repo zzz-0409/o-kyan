@@ -604,10 +604,10 @@
     const SWIPE_MIN = 36;
     const OBSTACLE_CLEARANCE = 250;
     const PANEL_CLEARANCE = 170;
-    const TURN_CLEARANCE = 250;
-    const TURN_W = 390;
-    const TURN_H = 260;
-    const TURN_APPROACH_GAP = 170;
+    const TURN_CLEARANCE = 360;
+    const TURN_W = W - 88;
+    const TURN_H = 86;
+    const TURN_APPROACH_GAP = 130;
     const TURN_SPAWN_Y = -TURN_H - TURN_APPROACH_GAP;
     const TURN_SLOW_GATE_Y = -96;
     const TURN_SLOW_GATE_H = 44;
@@ -1213,17 +1213,17 @@
       const direction = Math.random() < 0.5 ? -1 : 1;
       slowGates.push({ y: TURN_SLOW_GATE_Y, h: TURN_SLOW_GATE_H, forced: true });
       turns.push({
-        x: W / 2 - TURN_W / 2,
+        x: 44,
         y: TURN_SPAWN_Y,
         w: TURN_W,
         h: TURN_H,
         direction,
         triggered: false
       });
-      slowGateTimer = Math.max(slowGateTimer, 5.0);
-      panelTimer = Math.max(panelTimer, 2.2);
-      spawnTimer = Math.max(spawnTimer, 1.2);
-      hintEl.textContent = direction > 0 ? "右カーブが来た！" : "左カーブが来た！";
+      slowGateTimer = Math.max(slowGateTimer, 5.6);
+      panelTimer = Math.max(panelTimer, 3.0);
+      spawnTimer = Math.max(spawnTimer, 2.0);
+      hintEl.textContent = direction > 0 ? "右回転ゲート！" : "左回転ゲート！";
     }
 
     function hasTurnClearance() {
@@ -1260,7 +1260,7 @@
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
       clearLaneFlowObjects();
-      hintEl.textContent = turn.direction > 0 ? "右へ曲がる！" : "左へ曲がる！";
+      hintEl.textContent = turn.direction > 0 ? "カメラ右回転！" : "カメラ左回転！";
     }
 
     function clearLaneFlowObjects() {
@@ -1492,11 +1492,11 @@
         roadScroll = 0;
         loopScroll = 0;
         clearLaneFlowObjects();
-        spawnTimer = Math.max(spawnTimer, 2.2);
-        coinTimer = Math.max(coinTimer, 1.2);
-        panelTimer = Math.max(panelTimer, 1.8);
-        slowGateTimer = Math.max(slowGateTimer, 2.4);
-        hintEl.textContent = "曲がり終わった！";
+        spawnTimer = Math.max(spawnTimer, 3.4);
+        coinTimer = Math.max(coinTimer, 1.6);
+        panelTimer = Math.max(panelTimer, 3.0);
+        slowGateTimer = Math.max(slowGateTimer, 3.4);
+        hintEl.textContent = "回転完了！";
       }
     }
 
@@ -1817,53 +1817,11 @@
     }
 
     function playerCurvePose() {
-      if (!turnTransition) {
-        return {
-          x: player.x,
-          y: PLAYER_Y + PLAYER_H / 2,
-          angle: 0,
-          scale: 1
-        };
-      }
-
-      const rawT = Math.min(1, turnTransition.elapsed / turnTransition.duration);
-      const t = rawT * rawT * (3 - 2 * rawT);
-      const direction = turnTransition.direction;
-      const startX = LANES[CENTER_LANE];
-      const startY = PLAYER_Y + PLAYER_H / 2;
-      const endX = startX + direction * 120;
-      const endY = CAMERA_PIVOT_Y + 3;
-      const control1X = startX;
-      const control1Y = startY - 74;
-      const control2X = startX + direction * 84;
-      const control2Y = endY + 18;
-      const point = cubicPoint(startX, startY, control1X, control1Y, control2X, control2Y, endX, endY, t);
-      const tangent = cubicTangent(startX, startY, control1X, control1Y, control2X, control2Y, endX, endY, t);
       return {
-        x: point.x,
-        y: point.y,
-        angle: Math.atan2(tangent.y, tangent.x) + Math.PI / 2,
-        scale: 1 - Math.sin(t * Math.PI) * 0.08
-      };
-    }
-
-    function cubicPoint(x0, y0, x1, y1, x2, y2, x3, y3, t) {
-      const u = 1 - t;
-      const tt = t * t;
-      const uu = u * u;
-      const uuu = uu * u;
-      const ttt = tt * t;
-      return {
-        x: uuu * x0 + 3 * uu * t * x1 + 3 * u * tt * x2 + ttt * x3,
-        y: uuu * y0 + 3 * uu * t * y1 + 3 * u * tt * y2 + ttt * y3
-      };
-    }
-
-    function cubicTangent(x0, y0, x1, y1, x2, y2, x3, y3, t) {
-      const u = 1 - t;
-      return {
-        x: 3 * u * u * (x1 - x0) + 6 * u * t * (x2 - x1) + 3 * t * t * (x3 - x2),
-        y: 3 * u * u * (y1 - y0) + 6 * u * t * (y2 - y1) + 3 * t * t * (y3 - y2)
+        x: player.x,
+        y: PLAYER_Y + PLAYER_H / 2,
+        angle: 0,
+        scale: 1
       };
     }
 
@@ -1924,11 +1882,6 @@
     }
 
     function drawRoad() {
-      if (turns.length || turnTransition) {
-        drawRouteRoad();
-        return;
-      }
-
       if (imageReady(backgroundSprites.laneLoop)) {
         drawVerticalLoopImage(backgroundSprites.laneLoop, loopScroll, 0, 0, W, H);
         drawLoopVignette();
@@ -2184,9 +2137,55 @@
 
     function drawTurns() {
       for (const turn of turns) {
-        drawTurnBackdrop(turn);
-        drawProceduralTurn(turn);
+        drawCameraTurnGate(turn);
       }
+    }
+
+    function drawCameraTurnGate(turn) {
+      const x = turn.x;
+      const y = turn.y;
+      const w = turn.w;
+      const h = turn.h;
+      const pulse = 0.5 + Math.sin(performance.now() * 0.008) * 0.5;
+      const gradient = ctx.createLinearGradient(x, y, x + w, y + h);
+      gradient.addColorStop(0, "rgba(65, 173, 218, 0.18)");
+      gradient.addColorStop(0.5, `rgba(114, 221, 255, ${0.30 + pulse * 0.10})`);
+      gradient.addColorStop(1, "rgba(65, 173, 218, 0.18)");
+
+      ctx.save();
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = "rgba(190, 240, 255, 0.95)";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+      ctx.fillStyle = "rgba(8, 24, 31, 0.34)";
+      for (let lane = 0; lane < 3; lane++) {
+        const laneX = LANES[lane];
+        ctx.beginPath();
+        ctx.arc(laneX, y + h / 2, 25 + pulse * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(246, 239, 217, 0.88)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(laneX, y + h / 2, 17, turn.direction > 0 ? -0.9 : Math.PI + 0.9, turn.direction > 0 ? Math.PI * 1.35 : Math.PI * 0.65, turn.direction < 0);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(246, 239, 217, 0.95)";
+        ctx.beginPath();
+        const arrowX = laneX + turn.direction * 17;
+        const arrowY = y + h / 2 - 9;
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(arrowX - turn.direction * 10, arrowY - 5);
+        ctx.lineTo(arrowX - turn.direction * 5, arrowY + 7);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(246, 239, 217, 0.92)";
+      ctx.font = "800 14px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(turn.direction > 0 ? "CAMERA +90" : "CAMERA -90", W / 2, y + h + 19);
+      ctx.restore();
     }
 
     function drawTurnBackdrop(turn) {
