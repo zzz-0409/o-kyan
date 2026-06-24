@@ -537,7 +537,7 @@
     const rightButton = document.getElementById("rightButton");
     const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-4";
+    const ASSET_VERSION = "imagegen-5";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -2588,15 +2588,23 @@
 
     function drawSlowGates() {
       for (const gate of slowGates) {
-        if (imageReady(gimmickSprites.slowGate)) {
-          ctx.drawImage(gimmickSprites.slowGate, 44, gate.y, W - 88, gate.h);
-          continue;
+        for (let lane = 0; lane < 3; lane += 1) {
+          const r = {
+            x: LANES[lane] - 36,
+            y: gate.y,
+            w: 72,
+            h: gate.h
+          };
+          if (imageReady(gimmickSprites.slowGate)) {
+            ctx.drawImage(gimmickSprites.slowGate, r.x, r.y, r.w, r.h);
+            continue;
+          }
+          ctx.fillStyle = "rgba(101,183,216,0.34)";
+          ctx.fillRect(r.x, r.y, r.w, r.h);
+          ctx.strokeStyle = "#aee6ff";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(r.x, r.y, r.w, r.h);
         }
-        ctx.fillStyle = "rgba(101,183,216,0.34)";
-        ctx.fillRect(44, gate.y, W - 88, gate.h);
-        ctx.strokeStyle = "#aee6ff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(44, gate.y, W - 88, gate.h);
       }
     }
 
