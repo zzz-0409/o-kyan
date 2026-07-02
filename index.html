@@ -113,8 +113,8 @@
       left: 16px;
       bottom: 16px;
       display: grid;
-      grid-template-columns: repeat(3, 44px);
-      grid-template-rows: repeat(3, 44px);
+      grid-template-columns: repeat(2, 44px);
+      grid-template-rows: 44px;
       gap: 4px;
       opacity: 0;
       pointer-events: none;
@@ -154,24 +154,14 @@
       place-items: center;
     }
 
-    .dir-up {
-      grid-column: 2;
+    .dir-left {
+      grid-column: 1;
       grid-row: 1;
     }
 
-    .dir-left {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
     .dir-right {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    .dir-down {
       grid-column: 2;
-      grid-row: 3;
+      grid-row: 1;
     }
 
     .jump-control .control-button {
@@ -440,8 +430,8 @@
       .move-controls {
         left: 12px;
         bottom: 12px;
-        grid-template-columns: repeat(3, 40px);
-        grid-template-rows: repeat(3, 40px);
+        grid-template-columns: repeat(2, 40px);
+        grid-template-rows: 40px;
         gap: 3px;
       }
 
@@ -473,7 +463,7 @@
 <body>
   <main class="app">
     <header class="hud">
-      <h1>3レーン・スワイプラン</h1>
+      <h1>3-Lane Run</h1>
       <div class="stat"><span>SCORE</span><strong id="distance">0</strong></div>
       <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
       <div class="stat"><span>COINS</span><strong id="todayRank">0</strong></div>
@@ -481,19 +471,17 @@
 
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720"></canvas>
-      <div class="move-controls" id="moveControls" aria-label="移動ボタン">
-        <button class="control-button dir-up" id="upButton" type="button" aria-label="上へ移動">↑</button>
-        <button class="control-button dir-left" id="leftButton" type="button" aria-label="左へ移動">←</button>
-        <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">→</button>
-        <button class="control-button dir-down" id="downButton" type="button" aria-label="下へ移動">↓</button>
+      <div class="move-controls" id="moveControls" aria-label="Move buttons">
+        <button class="control-button dir-left" id="leftButton" type="button" aria-label="Left">&larr;</button>
+        <button class="control-button dir-right" id="rightButton" type="button" aria-label="Right">&rarr;</button>
       </div>
-      <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
+      <div class="jump-control" id="jumpControl" aria-label="Jump button">
         <button class="control-button" id="jumpButton" type="button">JUMP</button>
       </div>
       <div class="overlay show" id="overlay">
         <div class="dialog">
-          <h2 id="overlayTitle">3レーン・スワイプラン</h2>
-          <p id="overlayText">障害物を避けながら走る。曲道を抜けると道の方向も変わる。左下十字ボタンで移動、右下ボタンでジャンプ。</p>
+          <h2 id="overlayTitle">3-Lane Run</h2>
+          <p id="overlayText">Move left and right to dodge cars, jump over holes, collect coins, and use speed panels.</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -502,14 +490,14 @@
             </div>
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
-          <button id="startButton" type="button">スタート</button>
+          <button id="startButton" type="button">START</button>
         </div>
       </div>
     </section>
 
     <footer class="footer">
-      <span id="hint">左下十字ボタンで移動、右下ボタンでジャンプ</span>
-      <div class="slow-bar" aria-label="スロー効果"><i id="slowFill"></i></div>
+      <span id="hint">Left/Right to move, JUMP to jump</span>
+      <div class="slow-bar" aria-label="speed effect"><i id="slowFill"></i></div>
     </footer>
   </main>
 
@@ -532,10 +520,8 @@
     const convertScoreBox = document.getElementById("convertScoreBox");
     const dailyRankingEl = document.getElementById("dailyRanking");
     const startButton = document.getElementById("startButton");
-    const upButton = document.getElementById("upButton");
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
-    const downButton = document.getElementById("downButton");
     const jumpButton = document.getElementById("jumpButton");
     const ASSET_VERSION = "imagegen-5";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
@@ -546,15 +532,6 @@
       return image;
     });
     const playerSprite = playerRunSprites[0];
-    const sideRunSprites = ["0", "1", "2", "3"].map((frame) => {
-      const image = new Image();
-      image.src = assetUrl(`assets/character/imagegen-runner-side-${frame}.png`);
-      image.addEventListener("load", draw);
-      return image;
-    });
-    const sideDuckSprite = new Image();
-    sideDuckSprite.src = assetUrl("assets/character/imagegen-runner-side-duck.png");
-    sideDuckSprite.addEventListener("load", draw);
     const obstacleSprites = {
       car: new Image(),
       hole: new Image()
@@ -565,32 +542,20 @@
     const gimmickSprites = {
       boost: new Image(),
       slow: new Image(),
-      slowGate: new Image(),
-      turnRight: new Image(),
-      turnLeft: new Image()
+      slowGate: new Image()
     };
     gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
     gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
     gimmickSprites.slowGate.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
-    gimmickSprites.turnRight.src = assetUrl("assets/gimmicks/imagegen-camera-turn-right.png");
-    gimmickSprites.turnLeft.src = assetUrl("assets/gimmicks/imagegen-camera-turn-left.png");
     Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
     const backgroundSprites = {
       laneBg: new Image(),
       laneRoad: new Image(),
-      sideBg: new Image(),
-      sideRoad: new Image(),
-      laneLoop: new Image(),
-      sideLoop: new Image(),
-      curve: new Image()
+      laneLoop: new Image()
     };
     backgroundSprites.laneBg.src = assetUrl("assets/backgrounds/lane-background.png");
     backgroundSprites.laneRoad.src = assetUrl("assets/backgrounds/lane-road.png");
-    backgroundSprites.sideBg.src = assetUrl("assets/backgrounds/side-background.png");
-    backgroundSprites.sideRoad.src = assetUrl("assets/backgrounds/side-road.png");
     backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/lane-loop-road.png");
-    backgroundSprites.sideLoop.src = assetUrl("assets/backgrounds/side-loop-road.png");
-    backgroundSprites.curve.src = assetUrl("assets/backgrounds/curve-road.png");
     Object.values(backgroundSprites).forEach((image) => image.addEventListener("load", draw));
 
     const W = 390;
@@ -611,45 +576,15 @@
     const BOOST_FACTOR = 1.55;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 9;
-    const PIPE_W = 78;
-    const PIPE_H = 72;
-    const SIDE_DURATION = 10;
-    const SIDE_SPEED = 280;
-    const SIDE_GROUND_Y = 590;
-    const SIDE_PLAYER_X = 82;
-    const SIDE_PLAYER_W = 50;
-    const SIDE_PLAYER_H = 58;
-    const SIDE_DUCK_H = 32;
-    const SIDE_GRAVITY = 1700;
-    const SIDE_JUMP_VELOCITY = -650;
-    const SIDE_DUCK_DURATION = 0.72;
-    const SIDE_EXIT_PIPE_W = 132;
-    const SIDE_EXIT_PIPE_H = 150;
-    const SIDE_EXIT_MIN_TIME = 7.0;
-    const SIDE_EXIT_MAX_TIME = 12.5;
-    const PIPE_ENTER_DURATION = 1.25;
-    const PIPE_EXIT_DURATION = 1.35;
     const SWIPE_MIN = 36;
     const OBSTACLE_CLEARANCE = 250;
     const PANEL_CLEARANCE = 170;
-    const TURN_CLEARANCE = 360;
-    const TURN_W = W - 88;
-    const TURN_H = 86;
-    const TURN_APPROACH_GAP = 130;
-    const TURN_SPAWN_Y = -TURN_H - TURN_APPROACH_GAP;
-    const TURN_SLOW_GATE_Y = -96;
-    const TURN_SLOW_GATE_H = 44;
-    const TURN_ANIM_DURATION = 1.25;
-    const CAMERA_PIVOT_Y = 520;
-    const TURN_SPEED_CAP = 0.72;
-    const TURN_RECOVERY_DURATION = 1.8;
 
     let running = false;
     let gameOver = false;
     let lastTime = 0;
     let frameCarry = 0;
     let loopActive = false;
-    let gameMode = "lane";
     let distance = 0;
     let coins = 0;
     let scoreConvertInterval = 0;
@@ -658,11 +593,6 @@
     let roadScroll = 0;
     let loopScroll = 0;
     let spawnTimer = 0;
-    let pipeTimer = 0;
-    let turnTimer = 0;
-    let viewDirection = 0;
-    let turnTransition = null;
-    let turnRecoveryTimer = 0;
     let coinTimer = 0;
     let slowGateTimer = 0;
     let panelTimer = 0;
@@ -680,31 +610,14 @@
       isBest: false
     };
     let obstacles = [];
-    let pipes = [];
-    let turns = [];
     let coinItems = [];
     let slowGates = [];
     let speedPanels = [];
-    let sideTimer = 0;
-    let sideObstacleTimer = 0;
-    let sideCoinTimer = 0;
-    let sideObstacles = [];
-    let sideCoins = [];
-    let sideExitPipe = null;
-    let pipeEnterTimer = 0;
-    let pipeExitTimer = 0;
-    let transitionPipeLane = CENTER_LANE;
 
     const player = {
       lane: CENTER_LANE,
       x: LANES[CENTER_LANE],
       holdTimer: 0
-    };
-
-    const sidePlayer = {
-      y: SIDE_GROUND_Y - SIDE_PLAYER_H,
-      vy: 0,
-      duckTimer: 0
     };
 
     function resizeCanvas() {
@@ -719,18 +632,12 @@
       clearScoreConversion();
       running = true;
       gameOver = false;
-      gameMode = "lane";
       distance = 0;
       coins = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
       spawnTimer = 0.85;
-      pipeTimer = 0;
-      turnTimer = 5.2;
-      viewDirection = 0;
-      turnTransition = null;
-      turnRecoveryTimer = 0;
       coinTimer = 1.25;
       slowGateTimer = 4.4;
       panelTimer = 2.2;
@@ -738,23 +645,9 @@
       boostTimer = 0;
       jumpTimer = 0;
       obstacles = [];
-      pipes = [];
-      turns = [];
       coinItems = [];
       slowGates = [];
       speedPanels = [];
-      sideTimer = 0;
-      sideObstacleTimer = 0;
-      sideCoinTimer = 0;
-      sideObstacles = [];
-      sideCoins = [];
-      sideExitPipe = null;
-      pipeEnterTimer = 0;
-      pipeExitTimer = 0;
-      transitionPipeLane = CENTER_LANE;
-      sidePlayer.y = SIDE_GROUND_Y - SIDE_PLAYER_H;
-      sidePlayer.vy = 0;
-      sidePlayer.duckTimer = 0;
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -762,110 +655,16 @@
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      hintEl.textContent = "左下十字ボタンで移動、右下ボタンでジャンプ";
-      requestScreenOrientation("portrait");
+      hintEl.textContent = "Left/Right to move, JUMP to jump";
       updateHud();
       lastTime = performance.now();
       frameCarry = 0;
       startLoop();
     }
-
-    function startPipeEnter(lane) {
-      gameMode = "pipeEnter";
-      pipeEnterTimer = PIPE_ENTER_DURATION;
-      transitionPipeLane = lane;
-      player.lane = lane;
-      player.x = LANES[lane];
-      player.holdTimer = 0;
-      jumpTimer = 0;
-      obstacles = [];
-      pipes = [];
-      coinItems = [];
-      slowGates = [];
-      speedPanels = [];
-      requestScreenOrientation("landscape");
-      hintEl.textContent = "横向き準備";
-    }
-
-    function enterSideMode() {
-      gameMode = "side";
-      sideTimer = nextSideExitDelay();
-      sideObstacleTimer = 0.55;
-      sideCoinTimer = 0.8;
-      sideObstacles = [];
-      sideCoins = [];
-      sideExitPipe = null;
-      sidePlayer.y = SIDE_GROUND_Y - SIDE_PLAYER_H;
-      sidePlayer.vy = 0;
-      sidePlayer.duckTimer = 0;
-      jumpTimer = 0;
-      slowTimer = 0;
-      boostTimer = 0;
-      obstacles = [];
-      pipes = [];
-      coinItems = [];
-      slowGates = [];
-      speedPanels = [];
-      hintEl.textContent = "土管ステージ！上でジャンプ、下でしゃがみ";
-    }
-
-    function nextSideExitDelay() {
-      return SIDE_EXIT_MIN_TIME + Math.random() * (SIDE_EXIT_MAX_TIME - SIDE_EXIT_MIN_TIME);
-    }
-
-    function exitSideMode(completed) {
-      if (!completed) {
-        endGame();
-        return;
-      }
-      startPipeExit();
-    }
-
-    function startPipeExit() {
-      gameMode = "pipeExit";
-      pipeExitTimer = PIPE_EXIT_DURATION;
-      transitionPipeLane = CENTER_LANE;
-      sideTimer = 0;
-      sideObstacles = [];
-      sideCoins = [];
-      sideExitPipe = null;
-      sidePlayer.duckTimer = 0;
-      sidePlayer.vy = 0;
-      player.lane = CENTER_LANE;
-      player.x = LANES[CENTER_LANE];
-      player.holdTimer = 0;
-      obstacles = [];
-      pipes = [];
-      coinItems = [];
-      slowGates = [];
-      speedPanels = [];
-      jumpTimer = 0;
-      requestScreenOrientation("portrait");
-      hintEl.textContent = "土管から復帰中";
-    }
-
-    function finishPipeExit() {
-      gameMode = "lane";
-      pipeExitTimer = 0;
-      sideTimer = 0;
-      sideObstacles = [];
-      sideCoins = [];
-      player.lane = CENTER_LANE;
-      player.x = LANES[CENTER_LANE];
-      player.holdTimer = 0;
-      spawnTimer = 0.9;
-      pipeTimer = 8.5;
-      coinTimer = 0.9;
-      slowGateTimer = 4.5;
-      panelTimer = 2.4;
-      hintEl.textContent = "通常ランへ復帰";
-    }
-
-    function endGame() {
+function endGame() {
       running = false;
       gameOver = true;
       stageEl.classList.remove("playing");
-      requestScreenOrientation("portrait");
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
@@ -873,9 +672,9 @@
       const rank = saveDailyScore(score);
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
-      overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${distanceScore}点 + ${collectedCoins}コイン換算中`;
-      startButton.textContent = collectedCoins > 0 ? "コイン演出スキップ" : "リザルトスキップ";
+      overlayTitle.textContent = isBest ? "NEW BEST!" : "GAME OVER";
+      overlayText.textContent = `${distanceScore} pts + ${collectedCoins} coins converting`;
+      startButton.textContent = collectedCoins > 0 ? "SKIP COINS" : "SKIP RESULT";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       overlay.classList.add("show");
       renderDailyRanking(rank);
@@ -927,7 +726,7 @@
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore}点 / 0コイン / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore} pts / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -1019,16 +818,6 @@
       slowFill.parentElement.classList.toggle("boost", boostActive);
       slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive);
     }
-
-    async function requestScreenOrientation(orientation) {
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock(orientation);
-        }
-      } catch {
-      }
-    }
-
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance);
     }
@@ -1078,49 +867,20 @@
     }
 
     function moveSide(direction) {
-      if (!running || gameMode !== "lane") return;
+      if (!running) return;
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
       player.lane = nextLane;
       player.holdTimer = 0;
-      hintEl.textContent = direction < 0 ? "左へ移動" : "右へ移動";
+      hintEl.textContent = direction < 0 ? "Move left" : "Move right";
     }
 
     function jump() {
-      if (gameMode === "side") {
-        sideJump();
-        return;
-      }
-      if (gameMode !== "lane") return;
       if (!running || jumpTimer > 0) return;
       jumpTimer = JUMP_DURATION;
       hintEl.textContent = "ジャンプ";
     }
-
-    function sideJump() {
-      if (!running || gameMode !== "side") return;
-      if (!sideIsGrounded()) return;
-      if (sideIsDucking()) {
-        hintEl.textContent = "しゃがみ中はジャンプできない";
-        return;
-      }
-      sidePlayer.duckTimer = 0;
-      sidePlayer.vy = SIDE_JUMP_VELOCITY;
-      hintEl.textContent = "横ランジャンプ";
-    }
-
-    function sideDuck() {
-      if (!running || gameMode !== "side") return;
-      if (!sideIsGrounded()) {
-        hintEl.textContent = "ジャンプ中はしゃがめない";
-        return;
-      }
-      if (sidePlayer.vy !== 0) return;
-      sidePlayer.duckTimer = SIDE_DUCK_DURATION;
-      hintEl.textContent = "横ランしゃがみ";
-    }
-
-    function spawnObstacle() {
+function spawnObstacle() {
       if (!hasObstacleClearance()) {
         spawnTimer = 0.35;
         return;
@@ -1169,22 +929,10 @@
     function hasObstacleClearance() {
       const obstacleTop = -80;
       const obstacleBottom = -18;
-      for (const pipe of pipes) {
-        const pipeTop = pipe.y;
-        const pipeBottom = pipe.y + pipe.h;
-        if (rangesTooClose(obstacleTop, obstacleBottom, pipeTop, pipeBottom, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
       for (const obstacle of obstacles) {
         const currentTop = obstacle.y;
         const currentBottom = obstacle.y + obstacle.h;
         if (rangesTooClose(obstacleTop, obstacleBottom, currentTop, currentBottom, OBSTACLE_CLEARANCE)) {
-          return false;
-        }
-      }
-      for (const turn of turns) {
-        if (rangesTooClose(obstacleTop, obstacleBottom, turn.y, turn.y + turn.h, TURN_CLEARANCE)) {
           return false;
         }
       }
@@ -1210,105 +958,7 @@
       }
       slowGates.push({ y: -58, h: 34, forced: false });
     }
-
-    function spawnPipe() {
-      if (!hasPipeClearance()) {
-        pipeTimer = 1.1;
-        return;
-      }
-      const lane = Math.floor(Math.random() * 3);
-      pipes.push({ lane, y: -PIPE_H - 18, w: PIPE_W, h: PIPE_H });
-      hintEl.textContent = "土管が来た！入ると横ラン";
-    }
-
-    function hasPipeClearance() {
-      const pipeTop = -PIPE_H - 18;
-      const pipeBottom = -18;
-      for (const obstacle of obstacles) {
-        if (rangesTooClose(pipeTop, pipeBottom, obstacle.y, obstacle.y + obstacle.h, 170)) {
-          return false;
-        }
-      }
-      for (const panel of speedPanels) {
-        if (rangesTooClose(pipeTop, pipeBottom, panel.y, panel.y + panel.h, 150)) {
-          return false;
-        }
-      }
-      for (const coin of coinItems) {
-        if (rangesTooClose(pipeTop, pipeBottom, coin.y - coin.r, coin.y + coin.r, 70)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    function spawnTurn() {
-      if (!hasTurnClearance()) {
-        turnTimer = 1.1;
-        return;
-      }
-      const direction = Math.random() < 0.5 ? -1 : 1;
-      slowGates.push({ y: TURN_SLOW_GATE_Y, h: TURN_SLOW_GATE_H, forced: true });
-      turns.push({
-        x: 44,
-        y: TURN_SPAWN_Y,
-        w: TURN_W,
-        h: TURN_H,
-        direction,
-        triggered: false
-      });
-      slowGateTimer = Math.max(slowGateTimer, 5.6);
-      panelTimer = Math.max(panelTimer, 3.0);
-      spawnTimer = Math.max(spawnTimer, 2.0);
-      hintEl.textContent = direction > 0 ? "右回転ゲート！" : "左回転ゲート！";
-    }
-
-    function hasTurnClearance() {
-      const turnTop = TURN_SPAWN_Y;
-      const turnBottom = TURN_SPAWN_Y + TURN_H;
-      const gateTop = TURN_SLOW_GATE_Y;
-      const gateBottom = TURN_SLOW_GATE_Y + TURN_SLOW_GATE_H;
-      const checkTop = Math.min(turnTop, gateTop);
-      const checkBottom = Math.max(turnBottom, gateBottom);
-      const blockers = [...obstacles, ...speedPanels, ...slowGates, ...pipes];
-      for (const item of blockers) {
-        if (rangesTooClose(checkTop, checkBottom, item.y, item.y + item.h, TURN_CLEARANCE * 0.7)) {
-          return false;
-        }
-      }
-      for (const coin of coinItems) {
-        if (rangesTooClose(checkTop, checkBottom, coin.y - coin.r, coin.y + coin.r, TURN_CLEARANCE * 0.55)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    function takeTurn(turn) {
-      if (turnTransition) return;
-      turn.triggered = true;
-      turnTransition = {
-        direction: turn.direction,
-        elapsed: 0,
-        duration: TURN_ANIM_DURATION,
-        from: viewDirection
-      };
-      player.lane = CENTER_LANE;
-      player.x = LANES[CENTER_LANE];
-      player.holdTimer = 0;
-      clearLaneFlowObjects();
-      hintEl.textContent = turn.direction > 0 ? "カメラ右回転！" : "カメラ左回転！";
-    }
-
-    function clearLaneFlowObjects() {
-      obstacles = [];
-      pipes = [];
-      coinItems = [];
-      slowGates = [];
-      speedPanels = [];
-    }
-
-    function spawnCoins() {
+function spawnCoins() {
       if (!hasCoinClearance()) {
         coinTimer = 0.5;
         return;
@@ -1326,11 +976,6 @@
     function hasCoinClearance() {
       const coinTop = -150;
       const coinBottom = -22;
-      for (const pipe of pipes) {
-        if (rangesTooClose(coinTop, coinBottom, pipe.y, pipe.y + pipe.h, 100)) {
-          return false;
-        }
-      }
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
         const obstacleBottom = obstacle.y + obstacle.h;
@@ -1340,11 +985,6 @@
       }
       for (const gate of slowGates) {
         if (rangesTooClose(coinTop, coinBottom, gate.y, gate.y + gate.h, 70)) {
-          return false;
-        }
-      }
-      for (const turn of turns) {
-        if (rangesTooClose(coinTop, coinBottom, turn.y, turn.y + turn.h, 120)) {
           return false;
         }
       }
@@ -1372,16 +1012,6 @@
     function hasPanelClearance() {
       const panelTop = -72;
       const panelBottom = panelTop + 58;
-      for (const pipe of pipes) {
-        if (rangesTooClose(panelTop, panelBottom, pipe.y, pipe.y + pipe.h, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
-      for (const turn of turns) {
-        if (rangesTooClose(panelTop, panelBottom, turn.y, turn.y + turn.h, TURN_CLEARANCE)) {
-          return false;
-        }
-      }
       for (const gate of slowGates) {
         if (rangesTooClose(panelTop, panelBottom, gate.y, gate.y + gate.h, PANEL_CLEARANCE)) {
           return false;
@@ -1400,7 +1030,7 @@
     function hasSlowGateClearance(gateY, gateH) {
       const gateTop = gateY;
       const gateBottom = gateY + gateH;
-      const blockers = [...obstacles, ...speedPanels, ...turns, ...pipes];
+      const blockers = [...obstacles, ...speedPanels];
       for (const item of blockers) {
         if (rangesTooClose(gateTop, gateBottom, item.y, item.y + item.h, PANEL_CLEARANCE)) {
           return false;
@@ -1415,52 +1045,25 @@
 
     function update(dt) {
       if (!running) return;
-      if (gameMode === "side") {
-        updateSideMode(dt);
-        updateHud();
-        return;
-      }
-      if (gameMode === "pipeEnter") {
-        updatePipeEnterMode(dt);
-        updateHud();
-        return;
-      }
-      if (gameMode === "pipeExit") {
-        updatePipeExitMode(dt);
-        updateHud();
-        return;
-      }
-
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
-      turnRecoveryTimer = Math.max(0, turnRecoveryTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
-      const turnFactor = turnSpeedFactor();
-      if (turnFactor < 1) speed = Math.min(speed, rawSpeed * turnFactor);
       jumpTimer = Math.max(0, jumpTimer - dt);
       distance += (speed * dt) / 12;
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
-      updateTurnTransition(dt);
-
       const targetX = LANES[player.lane];
       player.x += (targetX - player.x) * Math.min(1, dt * 14);
 
-      if (!turnTransition) {
+      {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
           spawnObstacle();
           const rate = speed / BASE_SPEED;
           spawnTimer = Math.max(0.72, 1.2 - rate * 0.07 + Math.random() * 0.42);
-        }
-
-        turnTimer -= dt;
-        if (turnTimer <= 0) {
-          spawnTurn();
-          turnTimer = 6.2 + Math.random() * 4.4;
         }
 
         coinTimer -= dt;
@@ -1487,19 +1090,6 @@
       }
       obstacles = obstacles.filter((obstacle) => obstacle.y < H + 90);
 
-      for (const pipe of pipes) {
-        pipe.y += speed * dt;
-      }
-      pipes = pipes.filter((pipe) => pipe.y < H + 90);
-
-      for (const turn of turns) {
-        turn.y += speed * dt;
-        if (!turn.triggered && turn.y + turn.h * 0.72 >= PLAYER_Y) {
-          takeTurn(turn);
-        }
-      }
-      turns = turns.filter((turn) => turn.y < H + 180);
-
       for (const coin of coinItems) {
         coin.y += speed * dt;
       }
@@ -1518,121 +1108,10 @@
       checkCollisions();
       updateHud();
     }
-
-    function updateTurnTransition(dt) {
-      if (!turnTransition) return;
-      turnTransition.elapsed += dt;
-      if (turnTransition.elapsed >= turnTransition.duration) {
-        viewDirection = (turnTransition.from + turnTransition.direction + 4) % 4;
-        turnTransition = null;
-        turnRecoveryTimer = TURN_RECOVERY_DURATION;
-        turns = [];
-        roadScroll = 0;
-        loopScroll = 0;
-        clearLaneFlowObjects();
-        spawnTimer = Math.max(spawnTimer, 3.4);
-        coinTimer = Math.max(coinTimer, 1.6);
-        panelTimer = Math.max(panelTimer, 3.0);
-        slowGateTimer = Math.max(slowGateTimer, 3.4);
-        hintEl.textContent = "回転完了！";
-      }
-    }
-
-    function turnSpeedFactor() {
-      if (turnTransition) return TURN_SPEED_CAP;
-      if (turnRecoveryTimer <= 0) return 1;
-      const t = 1 - turnRecoveryTimer / TURN_RECOVERY_DURATION;
-      const eased = t * t * (3 - 2 * t);
-      return TURN_SPEED_CAP + (1 - TURN_SPEED_CAP) * eased;
-    }
-
-    function updatePipeEnterMode(dt) {
-      pipeEnterTimer -= dt;
-      roadScroll = (roadScroll + BASE_SPEED * dt * 0.35) % 80;
-      loopScroll += BASE_SPEED * dt * 0.35;
-      if (pipeEnterTimer <= 0) {
-        enterSideMode();
-      }
-    }
-
-    function updatePipeExitMode(dt) {
-      pipeExitTimer -= dt;
-      roadScroll = (roadScroll + BASE_SPEED * dt * 0.45) % 80;
-      loopScroll += BASE_SPEED * dt * 0.45;
-      if (pipeExitTimer <= 0) {
-        finishPipeExit();
-      }
-    }
-
-    function updateSideMode(dt) {
-      if (!sideExitPipe) {
-        sideTimer = Math.max(0, sideTimer - dt);
-        if (sideTimer <= 0) {
-          spawnSideExitPipe();
-        }
-      }
-
-      const sideDistanceSpeed = SIDE_SPEED * (boostTimer > 0 ? BOOST_FACTOR : 1);
-      distance += (sideDistanceSpeed * dt) / 14;
-      roadScroll = (roadScroll + sideDistanceSpeed * dt) % 80;
-      loopScroll += sideDistanceSpeed * dt;
-      sidePlayer.duckTimer = Math.max(0, sidePlayer.duckTimer - dt);
-      sidePlayer.vy += SIDE_GRAVITY * dt;
-      sidePlayer.y += sidePlayer.vy * dt;
-      const standY = SIDE_GROUND_Y - SIDE_PLAYER_H;
-      if (sidePlayer.y >= standY) {
-        sidePlayer.y = standY;
-        sidePlayer.vy = 0;
-      }
-
-      if (!sideExitPipe) {
-        sideObstacleTimer -= dt;
-        if (sideObstacleTimer <= 0) {
-          spawnSideObstacle();
-          sideObstacleTimer = 0.9 + Math.random() * 0.6;
-        }
-
-        sideCoinTimer -= dt;
-        if (sideCoinTimer <= 0) {
-          spawnSideCoins();
-          sideCoinTimer = 1.05 + Math.random() * 0.65;
-        }
-      }
-
-      for (const obstacle of sideObstacles) {
-        obstacle.x -= SIDE_SPEED * dt;
-      }
-      sideObstacles = sideObstacles.filter((obstacle) => obstacle.x + obstacle.w > -30);
-
-      if (sideExitPipe) {
-        sideExitPipe.x -= SIDE_SPEED * dt;
-        if (sideExitPipe.x <= SIDE_PLAYER_X + SIDE_PLAYER_W * 0.75) {
-          exitSideMode(true);
-          return;
-        }
-      }
-
-      for (const coin of sideCoins) {
-        coin.x -= SIDE_SPEED * dt;
-      }
-      sideCoins = sideCoins.filter((coin) => coin.x + coin.r > -30 && !coin.collected);
-
-      checkSideCollisions();
-    }
-
-    function checkCollisions() {
+function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
       const feet = playerFootRect();
-      for (let i = pipes.length - 1; i >= 0; i -= 1) {
-        const pipe = pipes[i];
-        if (laneObjectPassed(pipe) || pipe.y < PLAYER_Y - 120) continue;
-        if (rectsOverlap(hitP, shrinkRect(pipeRect(pipe), 8, 8))) {
-          startPipeEnter(pipe.lane);
-          return;
-        }
-      }
-
       for (let obstacleIndex = obstacles.length - 1; obstacleIndex >= 0; obstacleIndex -= 1) {
         const obstacle = obstacles[obstacleIndex];
         if (laneObjectPassed(obstacle)) continue;
@@ -1662,7 +1141,7 @@
           coins += 1;
           coin.collected = true;
           coinItems.splice(i, 1);
-          hintEl.textContent = `コイン +1 / ${coins}枚`;
+          hintEl.textContent = `Coin +1 / ${coins}`;
         }
       }
 
@@ -1700,69 +1179,7 @@
         }
       }
     }
-
-    function spawnSideObstacle() {
-      const isBar = Math.random() < 0.5;
-      if (isBar) {
-        sideObstacles.push({ type: "bar", x: W + 36, y: SIDE_GROUND_Y - 116, w: 62, h: 78 });
-      } else {
-        sideObstacles.push({ type: "hurdle", x: W + 36, y: SIDE_GROUND_Y - 42, w: 38, h: 42 });
-      }
-    }
-
-    function spawnSideExitPipe() {
-      sideExitPipe = {
-        x: W + 72,
-        y: SIDE_GROUND_Y - SIDE_EXIT_PIPE_H,
-        w: SIDE_EXIT_PIPE_W,
-        h: SIDE_EXIT_PIPE_H
-      };
-      sideObstacles = [];
-      sideCoins = [];
-      sideObstacleTimer = 999;
-      sideCoinTimer = 999;
-      hintEl.textContent = "出口土管が来る！";
-    }
-
-    function spawnSideCoins() {
-      const high = Math.random() < 0.42;
-      const baseY = high ? SIDE_GROUND_Y - 148 : SIDE_GROUND_Y - 86;
-      const count = 1 + Math.floor(Math.random() * 2);
-      for (let i = 0; i < count; i += 1) {
-        sideCoins.push({ x: W + 24 + i * 34, y: baseY + Math.sin(i * 0.9) * 12, r: COIN_RADIUS, collected: false });
-      }
-    }
-
-    function checkSideCollisions() {
-      const p = sidePlayerRect();
-      const hitP = shrinkRect(p, 5, 6);
-      for (let i = sideCoins.length - 1; i >= 0; i -= 1) {
-        const coin = sideCoins[i];
-        if (rectsOverlap(p, sideCoinRect(coin))) {
-          coins += 1;
-          coin.collected = true;
-          sideCoins.splice(i, 1);
-          hintEl.textContent = `コイン +1 / ${coins}枚`;
-        }
-      }
-
-      for (const obstacle of sideObstacles) {
-        if (sideObjectPassed(obstacle)) continue;
-        if (obstacle.type === "bar") {
-          if (!sideIsDucking() && rectsOverlap(hitP, shrinkRect(obstacle, 6, 4))) {
-            exitSideMode(false);
-            return;
-          }
-          continue;
-        }
-        if (rectsOverlap(hitP, shrinkRect(obstacle, 6, 5))) {
-          exitSideMode(false);
-          return;
-        }
-      }
-    }
-
-    function playerRect() {
+function playerRect() {
       return {
         x: player.x - PLAYER_W / 2,
         y: PLAYER_Y - PLAYER_H / 2,
@@ -1798,16 +1215,7 @@
       };
     }
 
-    function pipeRect(pipe) {
-      return {
-        x: LANES[pipe.lane] - pipe.w / 2,
-        y: pipe.y,
-        w: pipe.w,
-        h: pipe.h
-      };
-    }
-
-    function coinRect(coin) {
+function coinRect(coin) {
       return {
         x: LANES[coin.lane] - coin.r,
         y: coin.y - coin.r,
@@ -1815,40 +1223,10 @@
         h: coin.r * 2
       };
     }
-
-    function sidePlayerRect() {
-      const ducking = sideIsDucking();
-      const h = ducking ? SIDE_DUCK_H : SIDE_PLAYER_H;
-      return {
-        x: SIDE_PLAYER_X,
-        y: ducking ? sidePlayer.y + SIDE_PLAYER_H - h : sidePlayer.y,
-        w: SIDE_PLAYER_W,
-        h
-      };
-    }
-
-    function sideCoinRect(coin) {
-      return {
-        x: coin.x - coin.r,
-        y: coin.y - coin.r,
-        w: coin.r * 2,
-        h: coin.r * 2
-      };
-    }
-
-    function isJumping() {
+function isJumping() {
       return jumpTimer > 0;
     }
-
-    function sideIsGrounded() {
-      return sidePlayer.y >= SIDE_GROUND_Y - SIDE_PLAYER_H - 0.5 && sidePlayer.vy >= 0;
-    }
-
-    function sideIsDucking() {
-      return sidePlayer.duckTimer > 0;
-    }
-
-    function jumpLift() {
+function jumpLift() {
       if (!isJumping()) return 0;
       const t = 1 - jumpTimer / JUMP_DURATION;
       return Math.sin(t * Math.PI) * 46;
@@ -1880,18 +1258,12 @@
       return object.y > PLAYER_Y + PLAYER_H / 2 - 8;
     }
 
-    function sideObjectPassed(object) {
-      return object.x + object.w < SIDE_PLAYER_X + 8;
-    }
-
-    function draw() {
+function draw() {
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = "#1f2b31";
       ctx.fillRect(0, 0, W, H);
       ctx.save();
-      applyWorldTransform();
       drawRoad();
-      drawTurns();
       drawSpeedPanels();
       drawCoins();
       drawSlowGates();
@@ -1900,26 +1272,7 @@
       if (slowTimer > 0 || boostTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
-
-    function applyWorldTransform() {
-      const turnUnits = currentViewUnits();
-      const angle = turnUnits * Math.PI / 2;
-      const sideAmount = Math.abs(Math.sin(angle));
-      const cameraScale = 1 - sideAmount * 0.24;
-      ctx.translate(W / 2, CAMERA_PIVOT_Y);
-      ctx.scale(cameraScale, cameraScale);
-      ctx.rotate(angle);
-      ctx.translate(-W / 2, -CAMERA_PIVOT_Y);
-    }
-
-    function currentViewUnits() {
-      if (!turnTransition) return viewDirection;
-      const t = Math.min(1, turnTransition.elapsed / turnTransition.duration);
-      const eased = t * t * (3 - 2 * t);
-      return turnTransition.from + turnTransition.direction * eased;
-    }
-
-    function drawRoad() {
+function drawRoad() {
       if (imageReady(backgroundSprites.laneLoop)) {
         if (isImagegenAsset(backgroundSprites.laneLoop)) {
           drawCoverImage(backgroundSprites.laneLoop, 0, 0, W, H, 0.5, 0.5);
@@ -1944,60 +1297,7 @@
       drawFallbackRoad();
     }
 
-    function drawRouteRoad() {
-      const turn = turns[0];
-      const entryY = turn ? turn.y + turn.h * 0.58 + 164 : -180;
-      const roadX = 44;
-      const roadW = W - 88;
-      ctx.fillStyle = "#1f2b31";
-      ctx.fillRect(0, 0, W, H);
-
-      const water = ctx.createLinearGradient(0, 0, 0, H);
-      water.addColorStop(0, "#246f74");
-      water.addColorStop(0.5, "#2f9184");
-      water.addColorStop(1, "#246f74");
-      ctx.fillStyle = water;
-      ctx.fillRect(0, 0, W, H);
-
-      drawRouteScenery();
-
-      const roadTop = Math.min(entryY, H + 180);
-      const roadBottom = H + 180;
-      ctx.fillStyle = "rgba(223,209,151,0.95)";
-      ctx.fillRect(roadX - 9, roadTop, roadW + 18, roadBottom - roadTop);
-      ctx.fillStyle = "#80877b";
-      ctx.fillRect(roadX, roadTop, roadW, roadBottom - roadTop);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(roadX, roadTop, roadW, roadBottom - roadTop);
-      ctx.clip();
-      const offset = ((roadScroll * 1.15) % 86 + 86) % 86;
-      ctx.strokeStyle = "rgba(255,247,218,0.72)";
-      ctx.lineWidth = 5;
-      ctx.setLineDash([32, 42]);
-      ctx.lineDashOffset = offset;
-      for (let i = 1; i < 3; i += 1) {
-        const x = (LANES[i - 1] + LANES[i]) / 2;
-        ctx.beginPath();
-        ctx.moveTo(x, roadTop - 90);
-        ctx.lineTo(x, roadBottom + 90);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,255,255,0.14)";
-      for (let y = roadTop - offset; y < roadBottom + 90; y += 86) {
-        ctx.fillRect(roadX + 16, y + 10, roadW - 32, 3);
-        ctx.fillRect(roadX + 58, y + 45, roadW - 116, 2);
-      }
-      ctx.restore();
-
-      if (turn) {
-        drawRoadEndBarrier(entryY);
-      }
-    }
-
-    function drawRouteScenery() {
+function drawRouteScenery() {
       const offset = ((roadScroll * 0.32) % 170 + 170) % 170;
       ctx.save();
       ctx.globalAlpha = 0.7;
@@ -2010,30 +1310,7 @@
       ctx.restore();
     }
 
-    function drawRoadEndBarrier(y) {
-      ctx.save();
-      ctx.fillStyle = "#6f776e";
-      ctx.fillRect(47, y - 28, W - 94, 28);
-      ctx.fillStyle = "rgba(18,27,28,0.38)";
-      ctx.fillRect(47, y - 8, W - 94, 10);
-      ctx.strokeStyle = "rgba(246,239,217,0.88)";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(58, y - 21);
-      ctx.lineTo(W - 58, y - 21);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(240,194,71,0.95)";
-      ctx.lineWidth = 5;
-      for (let x = 64; x < W - 64; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x, y - 3);
-        ctx.lineTo(x + 18, y - 24);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawFallbackRoad() {
+function drawFallbackRoad() {
       ctx.fillStyle = "#182025";
       ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = "#273038";
@@ -2191,319 +1468,7 @@
       ctx.fillStyle = glow;
       ctx.fillRect(x - 28, y - 28, 56, 56);
     }
-
-    function drawPipes() {
-      for (const pipe of pipes) {
-        drawPipe(pipeRect(pipe));
-      }
-    }
-
-    function drawTurns() {
-      for (const turn of turns) {
-        drawCameraTurnGate(turn);
-      }
-    }
-
-    function drawCameraTurnGate(turn) {
-      const gateImage = turn.direction > 0 ? gimmickSprites.turnRight : gimmickSprites.turnLeft;
-      if (imageReady(gateImage)) {
-        ctx.drawImage(gateImage, turn.x, turn.y, turn.w, turn.h);
-        return;
-      }
-      const x = turn.x;
-      const y = turn.y;
-      const w = turn.w;
-      const h = turn.h;
-      const pulse = 0.5 + Math.sin(performance.now() * 0.008) * 0.5;
-      const gradient = ctx.createLinearGradient(x, y, x + w, y + h);
-      gradient.addColorStop(0, "rgba(65, 173, 218, 0.18)");
-      gradient.addColorStop(0.5, `rgba(114, 221, 255, ${0.30 + pulse * 0.10})`);
-      gradient.addColorStop(1, "rgba(65, 173, 218, 0.18)");
-
-      ctx.save();
-      ctx.fillStyle = gradient;
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = "rgba(190, 240, 255, 0.95)";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
-
-      ctx.fillStyle = "rgba(8, 24, 31, 0.34)";
-      for (let lane = 0; lane < 3; lane++) {
-        const laneX = LANES[lane];
-        ctx.beginPath();
-        ctx.arc(laneX, y + h / 2, 25 + pulse * 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(246, 239, 217, 0.88)";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(laneX, y + h / 2, 17, turn.direction > 0 ? -0.9 : Math.PI + 0.9, turn.direction > 0 ? Math.PI * 1.35 : Math.PI * 0.65, turn.direction < 0);
-        ctx.stroke();
-        ctx.fillStyle = "rgba(246, 239, 217, 0.95)";
-        ctx.beginPath();
-        const arrowX = laneX + turn.direction * 17;
-        const arrowY = y + h / 2 - 9;
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(arrowX - turn.direction * 10, arrowY - 5);
-        ctx.lineTo(arrowX - turn.direction * 5, arrowY + 7);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      ctx.fillStyle = "rgba(246, 239, 217, 0.92)";
-      ctx.font = "800 14px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(turn.direction > 0 ? "CAMERA +90" : "CAMERA -90", W / 2, y + h + 19);
-      ctx.restore();
-    }
-
-    function drawTurnBackdrop(turn) {
-      const y = turn.y - 18;
-      const h = turn.h + 56;
-      const gradient = ctx.createLinearGradient(0, y, 0, y + h);
-      gradient.addColorStop(0, "#246f74");
-      gradient.addColorStop(0.45, "#2f9184");
-      gradient.addColorStop(1, "#246f74");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, y, W, h);
-
-      const shadow = ctx.createLinearGradient(0, y, 0, y + h);
-      shadow.addColorStop(0, "rgba(0,0,0,0.18)");
-      shadow.addColorStop(0.18, "rgba(0,0,0,0)");
-      shadow.addColorStop(0.82, "rgba(0,0,0,0)");
-      shadow.addColorStop(1, "rgba(0,0,0,0.1)");
-      ctx.fillStyle = shadow;
-      ctx.fillRect(0, y, W, h);
-
-      ctx.fillStyle = "rgba(35, 102, 70, 0.72)";
-      for (let x = 24; x < W; x += 86) {
-        ctx.beginPath();
-        ctx.ellipse(x, y + 32 + (x % 3) * 16, 20, 9, 0.25, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = "rgba(76, 171, 88, 0.68)";
-      for (let x = 58; x < W + 30; x += 96) {
-        ctx.beginPath();
-        ctx.ellipse(x, y + h - 28 - (x % 2) * 12, 18, 8, -0.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-    }
-
-    function drawProceduralTurn(turn) {
-      const cx = W / 2;
-      const cy = turn.y + turn.h * 0.58;
-      ctx.save();
-      ctx.translate(cx, cy);
-      if (turn.direction < 0) ctx.scale(-1, 1);
-
-      drawTurnExitRoad();
-
-      const path = new Path2D();
-      path.moveTo(0, 165);
-      path.bezierCurveTo(4, 92, 38, 36, 98, 6);
-      path.bezierCurveTo(144, -17, 194, -18, 282, -18);
-
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      ctx.strokeStyle = "rgba(223,209,151,0.95)";
-      ctx.lineWidth = 166;
-      ctx.stroke(path);
-
-      ctx.strokeStyle = "#7d8378";
-      ctx.lineWidth = 148;
-      ctx.stroke(path);
-
-      ctx.strokeStyle = "rgba(18,27,28,0.28)";
-      ctx.lineWidth = 148;
-      ctx.stroke(path);
-
-      ctx.strokeStyle = "#80877b";
-      ctx.lineWidth = 136;
-      ctx.stroke(path);
-
-      ctx.strokeStyle = "rgba(246,239,217,0.82)";
-      ctx.lineWidth = 5;
-      ctx.setLineDash([24, 32]);
-      ctx.lineDashOffset = -roadScroll * 0.9;
-      ctx.stroke(path);
-      ctx.setLineDash([]);
-
-      ctx.strokeStyle = "rgba(28,37,40,0.48)";
-      ctx.lineWidth = 10;
-      ctx.beginPath();
-      ctx.moveTo(-61, 160);
-      ctx.bezierCurveTo(-56, 78, 4, 0, 88, -42);
-      ctx.stroke();
-
-      const entryFade = ctx.createLinearGradient(0, 108, 0, 182);
-      entryFade.addColorStop(0, "rgba(128,135,123,0)");
-      entryFade.addColorStop(0.56, "rgba(128,135,123,0.9)");
-      entryFade.addColorStop(1, "rgba(128,135,123,0)");
-      ctx.fillStyle = entryFade;
-      ctx.fillRect(-118, 108, 236, 74);
-
-      drawTurnDeadEnd();
-      ctx.restore();
-    }
-
-    function drawTurnExitRoad() {
-      ctx.save();
-      ctx.lineCap = "butt";
-      ctx.lineJoin = "round";
-      ctx.translate(-18, 14);
-
-      ctx.strokeStyle = "rgba(223,209,151,0.95)";
-      ctx.lineWidth = 166;
-      ctx.beginPath();
-      ctx.moveTo(104, -18);
-      ctx.lineTo(520, -18);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#80877b";
-      ctx.lineWidth = 136;
-      ctx.beginPath();
-      ctx.moveTo(104, -18);
-      ctx.lineTo(520, -18);
-      ctx.stroke();
-
-      ctx.strokeStyle = "rgba(246,239,217,0.82)";
-      ctx.lineWidth = 5;
-      ctx.setLineDash([24, 32]);
-      ctx.lineDashOffset = -roadScroll * 0.9;
-      for (const offset of [-32, 32]) {
-        ctx.beginPath();
-        ctx.moveTo(104, -18 + offset);
-        ctx.lineTo(520, -18 + offset);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-      ctx.restore();
-    }
-
-    function drawTurnDeadEnd() {
-      const y = 122;
-      ctx.save();
-      ctx.fillStyle = "#6f776e";
-      ctx.fillRect(-76, y, 152, 30);
-      ctx.fillStyle = "rgba(18,27,28,0.38)";
-      ctx.fillRect(-76, y + 22, 152, 10);
-      ctx.strokeStyle = "rgba(246,239,217,0.88)";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(-65, y + 6);
-      ctx.lineTo(65, y + 6);
-      ctx.stroke();
-
-      ctx.strokeStyle = "rgba(240,194,71,0.95)";
-      ctx.lineWidth = 5;
-      for (let x = -64; x < 76; x += 28) {
-        ctx.beginPath();
-        ctx.moveTo(x, y + 26);
-        ctx.lineTo(x + 18, y + 8);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawPipe(rect) {
-      ctx.fillStyle = "rgba(0,0,0,0.25)";
-      ctx.fillRect(rect.x + 6, rect.y + rect.h - 4, rect.w - 12, 10);
-      ctx.fillStyle = "#168a44";
-      ctx.fillRect(rect.x + 11, rect.y + 18, rect.w - 22, rect.h - 18);
-      ctx.fillStyle = "#22b45a";
-      ctx.fillRect(rect.x, rect.y + 4, rect.w, 28);
-      ctx.fillStyle = "#5ee37f";
-      ctx.fillRect(rect.x + 7, rect.y + 9, rect.w - 14, 8);
-      ctx.fillStyle = "rgba(8,36,20,0.38)";
-      ctx.fillRect(rect.x + rect.w - 17, rect.y + 18, 7, rect.h - 20);
-      ctx.strokeStyle = "#0d5f2f";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(rect.x, rect.y + 4, rect.w, 28);
-      ctx.strokeRect(rect.x + 11, rect.y + 18, rect.w - 22, rect.h - 18);
-    }
-
-    function drawPipeEnterMode() {
-      drawRoad();
-      const progress = 1 - Math.max(0, pipeEnterTimer) / PIPE_ENTER_DURATION;
-      const eased = progress * progress * (3 - 2 * progress);
-      const pipeRectIn = {
-        x: LANES[transitionPipeLane] - PIPE_W / 2,
-        y: PLAYER_Y + 4,
-        w: PIPE_W,
-        h: PIPE_H
-      };
-      const startY = PLAYER_Y + PLAYER_H / 2;
-      const sinkY = PLAYER_Y + 82;
-      drawEnteringPlayer(startY + (sinkY - startY) * eased, 1 - eased * 0.55);
-      drawPipe(pipeRectIn);
-      ctx.fillStyle = "rgba(8,12,14,0.42)";
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "rgba(246,239,217,0.92)";
-      ctx.font = "850 20px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("横向きに構えて", W / 2, 66);
-      ctx.font = "800 14px Segoe UI, sans-serif";
-      ctx.fillText("次は横スクロール", W / 2, 91);
-    }
-
-    function drawEnteringPlayer(y, scale) {
-      const spriteW = 64 * scale;
-      const spriteH = 84 * scale;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(44, 0, W - 88, PLAYER_Y + PIPE_H);
-      ctx.clip();
-      if (playerSprite.complete && playerSprite.naturalWidth > 0) {
-        ctx.drawImage(playerSprite, LANES[transitionPipeLane] - spriteW / 2, y - spriteH, spriteW, spriteH);
-      } else {
-        ctx.fillStyle = "#f0c247";
-        ctx.fillRect(LANES[transitionPipeLane] - PLAYER_W / 2, y - PLAYER_H, PLAYER_W * scale, PLAYER_H * scale);
-      }
-      ctx.restore();
-    }
-
-    function drawPipeExitMode() {
-      drawRoad();
-      const progress = 1 - Math.max(0, pipeExitTimer) / PIPE_EXIT_DURATION;
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const pipeRectOut = {
-        x: LANES[CENTER_LANE] - PIPE_W / 2,
-        y: PLAYER_Y + 6,
-        w: PIPE_W,
-        h: PIPE_H
-      };
-      const emergeY = PLAYER_Y + 74 - eased * 74;
-      drawExitPlayer(emergeY, eased);
-      drawPipe(pipeRectOut);
-      ctx.fillStyle = "rgba(8,12,14,0.34)";
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "rgba(246,239,217,0.88)";
-      ctx.font = "850 20px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("縦向きに戻して", W / 2, 58);
-      ctx.font = "800 14px Segoe UI, sans-serif";
-      ctx.fillText("土管から復帰中", W / 2, 84);
-    }
-
-    function drawExitPlayer(y, progress) {
-      const spriteW = 64;
-      const spriteH = 84;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(44, 0, W - 88, PLAYER_Y + PIPE_H);
-      ctx.clip();
-      ctx.globalAlpha = Math.min(1, 0.35 + progress * 0.9);
-      if (playerSprite.complete && playerSprite.naturalWidth > 0) {
-        ctx.drawImage(playerSprite, LANES[CENTER_LANE] - spriteW / 2, y - spriteH / 2, spriteW, spriteH);
-      } else {
-        ctx.fillStyle = "#f0c247";
-        ctx.fillRect(LANES[CENTER_LANE] - PLAYER_W / 2, y - PLAYER_H / 2, PLAYER_W, PLAYER_H);
-      }
-      ctx.restore();
-    }
-
-    function drawObstacles() {
+function drawObstacles() {
       for (const obstacle of obstacles) {
         for (const lane of obstacle.lanes) {
           const r = laneRect(lane, obstacle.y, obstacle.h);
@@ -2650,7 +1615,7 @@
         ctx.restore();
       }
 
-      if (!turnTransition && player.lane !== CENTER_LANE) {
+      if (player.lane !== CENTER_LANE) {
         ctx.strokeStyle = "rgba(240,194,71,0.9)";
         ctx.lineWidth = 3;
         ctx.strokeRect(LANES[player.lane] - 39, PLAYER_Y - 36, 78, 72);
@@ -2663,203 +1628,7 @@
       ctx.textAlign = "right";
       ctx.fillText(boostTimer > 0 ? "BOOST" : "SLOW", W - 18, 30);
     }
-
-    function drawSideMode() {
-      if (imageReady(backgroundSprites.sideLoop)) {
-        if (isImagegenAsset(backgroundSprites.sideLoop)) {
-          drawCoverImage(backgroundSprites.sideLoop, 0, 0, W, H, 0.5, 0.5);
-        } else {
-          drawHorizontalLoopImage(backgroundSprites.sideLoop, loopScroll, 0, 0, W, H);
-        }
-      } else if (imageReady(backgroundSprites.sideBg) && imageReady(backgroundSprites.sideRoad)) {
-        drawCoverImage(backgroundSprites.sideBg, 0, 0, W, H, 0.5, 0.42);
-        drawSideBackgroundFlow();
-        drawSideRoadImage();
-      } else {
-        ctx.fillStyle = "#16313a";
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = "#24525b";
-        ctx.fillRect(0, SIDE_GROUND_Y, W, H - SIDE_GROUND_Y);
-        ctx.fillStyle = "rgba(246,239,217,0.16)";
-        for (let x = -roadScroll * 2; x < W + 80; x += 80) {
-          ctx.fillRect(x, SIDE_GROUND_Y + 22, 42, 4);
-        }
-      }
-
-      if (imageReady(backgroundSprites.sideLoop)) {
-        drawSideLoopSpeedLines();
-      }
-
-      ctx.fillStyle = "rgba(246,239,217,0.88)";
-      ctx.font = "800 16px Segoe UI, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(sideExitPipe ? "EXIT PIPE" : `PIPE TRAP ${Math.ceil(sideTimer)}s`, 14, 30);
-
-      for (const coin of sideCoins) {
-        drawSideCoin(coin);
-      }
-      for (const obstacle of sideObstacles) {
-        drawSideObstacle(obstacle);
-      }
-      if (sideExitPipe) {
-        drawSideExitPipe(sideExitPipe);
-      }
-      drawSidePlayer();
-    }
-
-    function drawSideLoopSpeedLines() {
-      const offset = ((loopScroll * 1.35) % 88 + 88) % 88;
-      ctx.fillStyle = "rgba(246,239,217,0.16)";
-      for (let x = -offset; x < W + 88; x += 88) {
-        ctx.fillRect(x, SIDE_GROUND_Y + 22, 42, 4);
-        ctx.fillRect(x + 48, SIDE_GROUND_Y + 54, 24, 3);
-      }
-    }
-
-    function drawSideBackgroundFlow() {
-      const offset = ((roadScroll * 0.65) % 230 + 230) % 230;
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = "rgba(255,247,218,0.2)";
-      for (let x = -offset - 80; x < W + 230; x += 230) {
-        ctx.fillRect(x, 106, 68, 3);
-        ctx.fillRect(x + 104, 162, 44, 2);
-        ctx.fillRect(x + 34, 238, 78, 3);
-      }
-      ctx.fillStyle = "rgba(240,194,71,0.18)";
-      for (let x = -offset * 0.72; x < W + 180; x += 180) {
-        ctx.beginPath();
-        ctx.arc(x, SIDE_GROUND_Y - 122, 18, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawSideRoadImage() {
-      const image = backgroundSprites.sideRoad;
-      const sourceY = image.naturalHeight * 0.49;
-      const sourceH = image.naturalHeight - sourceY;
-      const destY = SIDE_GROUND_Y - 18;
-      ctx.drawImage(image, 0, sourceY, image.naturalWidth, sourceH, 0, destY, W, H - destY);
-      drawSideFlowOverlay(destY);
-    }
-
-    function drawSideFlowOverlay(destY) {
-      const offset = ((roadScroll * 2) % 88 + 88) % 88;
-      ctx.fillStyle = "rgba(246,239,217,0.14)";
-      for (let x = -offset; x < W + 88; x += 88) {
-        ctx.fillRect(x, SIDE_GROUND_Y + 22, 42, 4);
-        ctx.fillRect(x + 48, SIDE_GROUND_Y + 54, 24, 3);
-      }
-
-      const groundGradient = ctx.createLinearGradient(0, destY, 0, H);
-      groundGradient.addColorStop(0, "rgba(255,255,255,0.12)");
-      groundGradient.addColorStop(0.25, "rgba(255,255,255,0)");
-      groundGradient.addColorStop(1, "rgba(0,0,0,0.22)");
-      ctx.fillStyle = groundGradient;
-      ctx.fillRect(0, destY, W, H - destY);
-    }
-
-    function drawSideCoin(coin) {
-      ctx.fillStyle = "rgba(0,0,0,0.2)";
-      ctx.beginPath();
-      ctx.ellipse(coin.x + 2, coin.y + 4, coin.r, coin.r * 0.55, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#f0c247";
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#f6efd9";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, coin.r - 3, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    function drawSideObstacle(obstacle) {
-      if (obstacle.type === "bar") {
-        ctx.fillStyle = "#65b7d8";
-        ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
-        ctx.fillStyle = "rgba(9,12,15,0.34)";
-        ctx.fillRect(obstacle.x + 8, obstacle.y + 9, obstacle.w - 16, 6);
-        ctx.fillRect(obstacle.x + 8, obstacle.y + obstacle.h - 14, obstacle.w - 16, 5);
-        ctx.fillStyle = "#e8f8ff";
-        ctx.font = "850 12px Segoe UI, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("DOWN", obstacle.x + obstacle.w / 2, obstacle.y + obstacle.h / 2 + 4);
-        return;
-      }
-      ctx.fillStyle = "#dd6655";
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
-      ctx.fillStyle = "rgba(20,22,22,0.32)";
-      ctx.fillRect(obstacle.x + 7, obstacle.y + 7, obstacle.w - 14, 7);
-    }
-
-    function drawSideExitPipe(pipe) {
-      const mouthW = 44;
-      ctx.fillStyle = "rgba(0,0,0,0.24)";
-      ctx.fillRect(pipe.x + 14, SIDE_GROUND_Y - 5, pipe.w - 28, 10);
-
-      ctx.fillStyle = "#168a44";
-      ctx.fillRect(pipe.x + mouthW - 8, pipe.y + 30, pipe.w - mouthW, pipe.h - 42);
-      ctx.fillStyle = "#22b45a";
-      ctx.fillRect(pipe.x, pipe.y + 14, mouthW, pipe.h - 18);
-      ctx.fillStyle = "#5ee37f";
-      ctx.fillRect(pipe.x + 8, pipe.y + 23, 11, pipe.h - 36);
-      ctx.fillStyle = "rgba(8,36,20,0.38)";
-      ctx.fillRect(pipe.x + mouthW - 8, pipe.y + 30, 9, pipe.h - 42);
-      ctx.fillRect(pipe.x + pipe.w - 18, pipe.y + 30, 8, pipe.h - 42);
-
-      ctx.strokeStyle = "#0d5f2f";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(pipe.x, pipe.y + 14, mouthW, pipe.h - 18);
-      ctx.strokeRect(pipe.x + mouthW - 8, pipe.y + 30, pipe.w - mouthW, pipe.h - 42);
-
-      ctx.fillStyle = "rgba(4,18,10,0.48)";
-      ctx.fillRect(pipe.x + 11, pipe.y + 28, mouthW - 20, pipe.h - 46);
-      ctx.fillStyle = "rgba(246,239,217,0.86)";
-      ctx.font = "850 12px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("IN", pipe.x + mouthW / 2, pipe.y + pipe.h / 2 + 4);
-    }
-
-    function drawSidePlayer() {
-      const p = sidePlayerRect();
-      const ducking = sideIsDucking();
-      ctx.fillStyle = "rgba(0,0,0,0.3)";
-      ctx.fillRect(p.x + 4, SIDE_GROUND_Y - 4, p.w - 8, 7);
-      if (ducking && sideDuckSprite.complete && sideDuckSprite.naturalWidth > 0) {
-        const spriteW = 88;
-        const spriteH = 54;
-        ctx.drawImage(sideDuckSprite, p.x - 20, SIDE_GROUND_Y - spriteH + 2, spriteW, spriteH);
-        return;
-      }
-      const runFrame = sideRunSprites[Math.floor(roadScroll / 20) % sideRunSprites.length];
-      if (runFrame && runFrame.complete && runFrame.naturalWidth > 0) {
-        const spriteW = 76;
-        const spriteH = ducking ? 44 : 72;
-        const drawX = p.x - 14;
-        const drawY = p.y + p.h - spriteH;
-        ctx.save();
-        if (ducking) {
-          ctx.globalAlpha = 0.98;
-        }
-        ctx.drawImage(runFrame, drawX, drawY, spriteW, spriteH);
-        ctx.restore();
-        return;
-      }
-      ctx.fillStyle = "#f0c247";
-      ctx.fillRect(p.x + 8, p.y + (ducking ? 4 : 20), p.w - 14, ducking ? 18 : 30);
-      ctx.fillStyle = "#f6a21a";
-      ctx.beginPath();
-      ctx.arc(p.x + 24, p.y + (ducking ? 7 : 13), ducking ? 13 : 17, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#8c4f23";
-      ctx.fillRect(p.x + 10, p.y + p.h - 10, 12, 10);
-      ctx.fillRect(p.x + 30, p.y + p.h - 10, 12, 10);
-    }
-
-    function onPointerDown(event) {
+function onPointerDown(event) {
       touchStart = { x: event.clientX, y: event.clientY };
     }
 
@@ -2874,20 +1643,9 @@
       action();
     }
 
-    function screenToWorldDelta(dx, dy) {
-      const angle = -currentViewUnits() * Math.PI / 2;
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
-      return {
-        x: dx * cos - dy * sin,
-        y: dx * sin + dy * cos
-      };
-    }
-
     function handleScreenDirection(dx, dy) {
-      const worldDelta = screenToWorldDelta(dx, dy);
-      if (Math.abs(worldDelta.x) >= Math.abs(worldDelta.y)) {
-        moveSide(worldDelta.x < 0 ? -1 : 1);
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        moveSide(dx < 0 ? -1 : 1);
       }
     }
 
@@ -2900,11 +1658,7 @@
       }
       if (event.code === "ArrowUp" || event.code === "Space") {
         event.preventDefault();
-        if (event.code === "Space") {
-          jump();
-        } else {
-          handleScreenDirection(0, -1);
-        }
+        jump();
       }
       if (event.code === "ArrowLeft") {
         event.preventDefault();
@@ -2913,10 +1667,6 @@
       if (event.code === "ArrowRight") {
         event.preventDefault();
         handleScreenDirection(1, 0);
-      }
-      if (event.code === "ArrowDown") {
-        event.preventDefault();
-        handleScreenDirection(0, 1);
       }
     }
 
@@ -2951,10 +1701,8 @@
     canvas.addEventListener("pointercancel", () => {
       touchStart = null;
     });
-    upButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(0, -1)));
     leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(-1, 0)));
     rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(1, 0)));
-    downButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(0, 1)));
     jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
