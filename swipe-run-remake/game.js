@@ -451,7 +451,13 @@ function draw() {
 
 function drawRoad() {
   if (ready(assets.road)) {
-    drawCover(assets.road, 0, 0, W, H);
+    const worldY = roadScroll * 0.46;
+    const baseIndex = Math.floor(worldY / H);
+    const offset = ((worldY % H) + H) % H;
+    for (let tile = -1; tile <= 1; tile += 1) {
+      const tileIndex = baseIndex - tile;
+      drawCoverTile(assets.road, 0, offset + tile * H, W, H + 1, tileIndex % 2 !== 0);
+    }
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#bfe1ff");
@@ -677,6 +683,18 @@ function drawCover(image, x, y, w, h) {
   const sx = (image.naturalWidth - sw) / 2;
   const sy = (image.naturalHeight - sh) / 2;
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+}
+
+function drawCoverTile(image, x, y, w, h, flipY) {
+  ctx.save();
+  if (flipY) {
+    ctx.translate(0, y + h);
+    ctx.scale(1, -1);
+    drawCover(image, x, 0, w, h);
+  } else {
+    drawCover(image, x, y, w, h);
+  }
+  ctx.restore();
 }
 
 function updateHud() {
