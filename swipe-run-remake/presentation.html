@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3レーン・スワイプラン 発表用QR</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102033;
+      --muted: #486985;
+      --blue: #2477d4;
+      --yellow: #ffd35d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #e2f3ff, #f8fbff);
+      color: var(--ink);
+      font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
+    }
+
+    main {
+      width: min(92vw, 760px);
+      padding: 28px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(32px, 6vw, 58px);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0 auto 22px;
+      max-width: 540px;
+      color: var(--muted);
+      font-size: clamp(16px, 2.4vw, 22px);
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .qr {
+      width: min(72vw, 430px);
+      aspect-ratio: 1;
+      padding: 16px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 18px 52px rgba(36, 119, 212, 0.2);
+    }
+
+    .url {
+      margin: 20px auto 18px;
+      padding: 12px 14px;
+      border: 2px solid rgba(36, 119, 212, 0.24);
+      border-radius: 8px;
+      background: white;
+      color: var(--blue);
+      font-size: clamp(14px, 2.4vw, 20px);
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .steps {
+      margin: 0 auto;
+      padding: 0;
+      max-width: 600px;
+      display: grid;
+      gap: 8px;
+      list-style: none;
+      color: #1c344c;
+      font-size: clamp(15px, 2.1vw, 19px);
+      font-weight: 800;
+    }
+
+    .steps li {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      main {
+        width: 100%;
+      }
+
+      .qr {
+        box-shadow: none;
+        border: 2px solid #d6e8f8;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>3レーン・スワイプラン</h1>
+    <p class="lead">スマホでQRコードを読み取って、縦画面のまま遊べます。</p>
+    <img class="qr" src="assets/qr/play-url.png" alt="3レーン・スワイプランを開くQRコード">
+    <p class="url">https://zzz-0409.github.io/o-kyan/swipe-run-remake/</p>
+    <ul class="steps">
+      <li>左右スワイプでレーン移動</li>
+      <li>画面タップでジャンプ</li>
+      <li>コインを集めてハイスコアを狙おう</li>
+    </ul>
+  </main>
+</body>
+</html>

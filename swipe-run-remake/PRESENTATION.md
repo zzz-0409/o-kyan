@@ -4,6 +4,14 @@
 
 https://zzz-0409.github.io/o-kyan/swipe-run-remake/
 
+発表用QRページ:
+
+https://zzz-0409.github.io/o-kyan/swipe-run-remake/presentation.html
+
+QR画像:
+
+`assets/qr/play-url.png`
+
 ## 当日確認
 
 - スマホを縦向きにしてURLを開く。
@@ -16,6 +24,12 @@ https://zzz-0409.github.io/o-kyan/swipe-run-remake/
 ## 展示時の説明
 
 「3レーンのランゲームです。左右にスワイプして障害物を避け、タップでジャンプします。コインは最後にスコアへ換算されます。」
+
+## 展示方法
+
+- PCやタブレットで `presentation.html` を開いて、QRコードを大きく表示する。
+- QRが読み取れない場合は、同じ画面に表示されているURLを直接入力してもらう。
+- スマホの画面回転は縦向き固定がおすすめ。
 
 ## URLを更新したとき
 
