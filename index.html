@@ -584,6 +584,8 @@
     const CAR_DODGE_BONUS = 35;
     const JUMP_CLEAR_BONUS = 80;
     const COMBO_WINDOW = 3.2;
+    const MAGNET_COMBO_MIN = 2;
+    const MAGNET_RADIUS = 118;
 
     let running = false;
     let gameOver = false;
@@ -1118,6 +1120,7 @@ function spawnCoins() {
 
       for (const coin of coinItems) {
         coin.y += speed * dt;
+        applyCoinMagnet(coin, dt);
       }
       coinItems = coinItems.filter((coin) => coin.y < H + 40 && !coin.collected);
 
@@ -1176,6 +1179,20 @@ function spawnCoins() {
     function comboMultiplier() {
       return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
     }
+
+    function comboMagnetActive() {
+      return comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN;
+    }
+
+    function applyCoinMagnet(coin, dt) {
+      if (!comboMagnetActive()) return;
+      const targetX = LANES[player.lane];
+      const dx = targetX - LANES[coin.lane];
+      const dy = PLAYER_Y - coin.y;
+      const distanceToPlayer = Math.hypot(dx, dy);
+      if (distanceToPlayer > MAGNET_RADIUS || Math.abs(dy) > 72) return;
+      coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * 9);
+    }
 function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
@@ -1215,7 +1232,7 @@ function checkCollisions() {
           const bonus = COIN_VALUE * (multiplier - 1);
           comboBonus += bonus;
           const comboText = multiplier > 1 ? ` x${multiplier}` : "";
-          popups.push({ x: LANES[coin.lane], y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
+          popups.push({ x: coinX(coin), y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
           hintEl.textContent = multiplier > 1 ? `Coin combo x${multiplier} / +${bonus}` : `Coin +1 / ${coins}`;
         }
       }
@@ -1311,11 +1328,15 @@ function playerRect() {
 
 function coinRect(coin) {
       return {
-        x: LANES[coin.lane] - coin.r,
+        x: coinX(coin) - coin.r,
         y: coin.y - coin.r,
         w: coin.r * 2,
         h: coin.r * 2
       };
+    }
+
+    function coinX(coin) {
+      return coin.pullX || LANES[coin.lane];
     }
 function isJumping() {
       return jumpTimer > 0;
@@ -1667,8 +1688,16 @@ function drawObstacles() {
 
     function drawCoins() {
       for (const coin of coinItems) {
-        const x = LANES[coin.lane];
+        const x = coinX(coin);
         const y = coin.y;
+        if (comboMagnetActive() && coin.pullX) {
+          ctx.strokeStyle = "rgba(240,194,71,0.42)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(LANES[coin.lane], y);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
         ctx.fillStyle = "rgba(0,0,0,0.22)";
         ctx.beginPath();
         ctx.ellipse(x + 2, y + 4, COIN_RADIUS, COIN_RADIUS * 0.55, 0, 0, Math.PI * 2);
@@ -1806,6 +1835,12 @@ function drawObstacles() {
       ctx.font = "900 18px Segoe UI, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(`COMBO x${multiplier}`, x + 10, y + 19);
+      if (comboMagnetActive()) {
+        ctx.fillStyle = "rgba(246,239,217,0.86)";
+        ctx.font = "800 10px Segoe UI, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("MAGNET", x + w - 10, y + 18);
+      }
       ctx.fillStyle = "rgba(246,239,217,0.22)";
       ctx.fillRect(x + 10, y + 28, w - 20, 5);
       ctx.fillStyle = "#f0c247";
