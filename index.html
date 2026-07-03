@@ -1579,6 +1579,7 @@ function draw() {
       drawPopups();
       drawComboMeter();
       drawRescueMeter();
+      drawCheckpointMeter();
       drawMissionPanel();
       if (lastChanceTimer > 0) drawLastChancePulse();
       if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0 || lastChanceTimer > 0) drawSpeedLabel();
@@ -2125,6 +2126,35 @@ function drawObstacles() {
         roundedRectPath(x - 4, y - 4, w + 8, h + 8, 10);
         ctx.fill();
       }
+      ctx.restore();
+    }
+
+    function drawCheckpointMeter() {
+      if (!running) return;
+      const previous = (checkpointIndex - 1) * CHECKPOINT_DISTANCE;
+      const next = checkpointIndex * CHECKPOINT_DISTANCE;
+      const progress = Math.max(0, Math.min(1, (distance - previous) / CHECKPOINT_DISTANCE));
+      const x = 137;
+      const y = 16;
+      const w = 116;
+      const h = 34;
+      ctx.save();
+      ctx.fillStyle = "rgba(10, 12, 13, 0.48)";
+      ctx.strokeStyle = "rgba(246, 239, 217, 0.26)";
+      ctx.lineWidth = 1.3;
+      roundedRectPath(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f6efd9";
+      ctx.font = "900 10px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`NEXT ${next}m`, x + 9, y + 13);
+      ctx.fillStyle = "rgba(246,239,217,0.18)";
+      ctx.fillRect(x + 9, y + 22, w - 18, 5);
+      ctx.fillStyle = "#7beeff";
+      ctx.fillRect(x + 9, y + 22, (w - 18) * progress, 5);
+      ctx.fillStyle = "rgba(123,238,255,0.52)";
+      ctx.fillRect(x + 9 + (w - 18) * progress - 2, y + 20, 4, 9);
       ctx.restore();
     }
 
