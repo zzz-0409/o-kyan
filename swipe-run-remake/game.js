@@ -30,6 +30,9 @@ const SPEED_GAIN = 0.0021;
 const JUMP_DURATION = 0.68;
 const COIN_VALUE = 100;
 const FRAME_MS = 1000 / 30;
+const COMBO_WINDOW = 3.2;
+const RESCUE_COST = 5;
+const RESCUE_TIME = 1.4;
 
 const assets = {
   road: loadImage("assets/backgrounds/road-loop.png"),
@@ -53,6 +56,11 @@ let score = 0;
 let distance = 0;
 let coins = 0;
 let runTime = 0;
+let comboCount = 0;
+let comboTimer = 0;
+let comboBonus = 0;
+let rescueUsed = false;
+let invincibleTimer = 0;
 let best = Number(localStorage.getItem("swipeRunRemakeBest") || 0);
 let roadScroll = 0;
 let speed = BASE_SPEED;
@@ -72,6 +80,7 @@ let player = {
 };
 let obstacles = [];
 let pickups = [];
+let popups = [];
 
 function loadImage(src) {
   const image = new Image();
@@ -95,6 +104,11 @@ function resetGame() {
   distance = 0;
   coins = 0;
   runTime = 0;
+  comboCount = 0;
+  comboTimer = 0;
+  comboBonus = 0;
+  rescueUsed = false;
+  invincibleTimer = 0;
   roadScroll = 0;
   speed = BASE_SPEED;
   spawnTimer = 3.2;
@@ -105,6 +119,7 @@ function resetGame() {
   jumpTimer = 0;
   obstacles = [];
   pickups = [];
+  popups = [];
   player.lane = CENTER;
   player.x = LANES[CENTER];
   result = null;
@@ -125,7 +140,7 @@ function endGame() {
   state = "gameover";
   stage.classList.remove("playing");
   const distanceScore = Math.floor(distance);
-  const finalScore = distanceScore + coins * COIN_VALUE;
+  const finalScore = distanceScore + comboBonus + coins * COIN_VALUE;
   const isBest = finalScore > best;
   best = Math.max(best, finalScore);
   localStorage.setItem("swipeRunRemakeBest", String(best));
@@ -133,15 +148,18 @@ function endGame() {
   result = {
     phase: coins > 0 ? "convert" : "done",
     distanceScore,
+    comboBonus,
     finalScore,
-    shownScore: distanceScore,
+    shownScore: distanceScore + comboBonus,
     coinsLeft: coins,
     rank,
     isBest,
     tick: 0
   };
   overlayTitle.textContent = isBest ? "NEW BEST!" : "GAME OVER";
-  overlayText.textContent = `${distanceScore}点 + ${coins}枚のコインを換算中`;
+  overlayText.textContent = coins > 0
+    ? `${distanceScore}点 + コンボ${comboBonus}点 + ${coins}枚のコインを換算中`
+    : `${finalScore}点 / 距離${distanceScore}点 / コンボ${comboBonus}点`;
   mainButton.textContent = coins > 0 ? "SKIP COINS" : "RESTART";
   dialog.classList.toggle("new-best", isBest);
   conversion.classList.toggle("show", coins > 0);
@@ -166,7 +184,7 @@ function updateResult(dt) {
   if (result.coinsLeft <= 0) {
     result.phase = "done";
     conversion.classList.remove("show");
-    overlayText.textContent = `${result.finalScore}点 / 距離${result.distanceScore}点 / コイン${coins}枚 / Today #${result.rank}`;
+    overlayText.textContent = `${result.finalScore}点 / 距離${result.distanceScore}点 / コンボ${result.comboBonus}点 / コイン${coins}枚 / Today #${result.rank}`;
     mainButton.textContent = "RESTART";
     bestEl.textContent = String(best);
   }
@@ -199,10 +217,13 @@ function update(dt) {
   const base = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
   boostTimer = Math.max(0, boostTimer - dt);
   slowTimer = Math.max(0, slowTimer - dt);
+  comboTimer = Math.max(0, comboTimer - dt);
+  invincibleTimer = Math.max(0, invincibleTimer - dt);
+  if (comboTimer <= 0) comboCount = 0;
   speed = base * (boostTimer > 0 ? 1.48 : 1) * (slowTimer > 0 ? 0.58 : 1);
   runTime += dt;
   distance += speed * dt / 12;
-  score = Math.floor(distance) + coins * COIN_VALUE;
+  score = Math.floor(distance) + comboBonus + coins * COIN_VALUE;
   roadScroll += speed * dt;
   jumpTimer = Math.max(0, jumpTimer - dt);
   player.x += (LANES[player.lane] - player.x) * Math.min(1, dt * 15);
@@ -230,6 +251,11 @@ function update(dt) {
   obstacles = obstacles.filter((o) => o.y < H + 120);
   for (const p of pickups) p.y += speed * dt;
   pickups = pickups.filter((p) => p.y < H + 80 && !p.used);
+  for (const popup of popups) {
+    popup.y -= 32 * dt;
+    popup.life -= dt;
+  }
+  popups = popups.filter((popup) => popup.life > 0);
 
   checkCollisions();
   updateHud();
@@ -296,22 +322,24 @@ function rangesClose(aTop, aBottom, bTop, bBottom, gap) {
 function checkCollisions() {
   const p = playerRect();
   const feet = playerFootRect();
-  for (const obstacle of obstacles) {
-    if (obstacle.y > PLAYER_Y + 45) continue;
-    if (obstacle.type === "hole") {
-      if (jumpTimer > 0) continue;
+  if (invincibleTimer <= 0) {
+    for (const obstacle of obstacles) {
+      if (obstacle.y > PLAYER_Y + 45) continue;
+      if (obstacle.type === "hole") {
+        if (jumpTimer > 0) continue;
+        for (const lane of obstacle.lanes) {
+          if (rectsOverlap(feet, shrink(laneRect(lane, obstacle.y, obstacle.h), 10, 8))) {
+            crash();
+            return;
+          }
+        }
+        continue;
+      }
       for (const lane of obstacle.lanes) {
-        if (rectsOverlap(feet, shrink(laneRect(lane, obstacle.y, obstacle.h), 10, 8))) {
-          endGame();
+        if (rectsOverlap(shrink(p, 5, 6), shrink(laneRect(lane, obstacle.y, obstacle.h), 7, 6))) {
+          crash();
           return;
         }
-      }
-      continue;
-    }
-    for (const lane of obstacle.lanes) {
-      if (rectsOverlap(shrink(p, 5, 6), shrink(laneRect(lane, obstacle.y, obstacle.h), 7, 6))) {
-        endGame();
-        return;
       }
     }
   }
@@ -321,8 +349,7 @@ function checkCollisions() {
     if (item.type === "coin") {
       if (rectsOverlap(p, coinRect(item))) {
         item.used = true;
-        coins += 1;
-        hintEl.textContent = `コイン +1 / ${coins}`;
+        collectCoin(item);
       }
       continue;
     }
@@ -339,6 +366,42 @@ function checkCollisions() {
       }
     }
   }
+}
+
+function collectCoin(item) {
+  comboTimer = COMBO_WINDOW;
+  comboCount += 1;
+  const multiplier = comboMultiplier();
+  const bonus = COIN_VALUE * (multiplier - 1);
+  coins += 1;
+  comboBonus += bonus;
+  const text = multiplier > 1 ? `+${COIN_VALUE} x${multiplier}` : `+${COIN_VALUE}`;
+  addPopup(LANES[item.lane], item.y - 12, text, multiplier > 1 ? "#ffd35d" : "#ffffff");
+  hintEl.textContent = multiplier > 1 ? `コンボ x${multiplier} / コイン ${coins}` : `コイン +1 / ${coins}`;
+}
+
+function comboMultiplier() {
+  return Math.min(5, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
+}
+
+function crash() {
+  if (!rescueUsed && coins >= RESCUE_COST) {
+    rescueUsed = true;
+    coins -= RESCUE_COST;
+    comboCount = 0;
+    comboTimer = 0;
+    invincibleTimer = RESCUE_TIME;
+    obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 180 || obstacle.y > PLAYER_Y + 90);
+    addPopup(player.x, PLAYER_Y - 72, "RESCUE!", "#ffd35d");
+    hintEl.textContent = `レスキュー！コイン${RESCUE_COST}枚で復帰`;
+    updateHud();
+    return;
+  }
+  endGame();
+}
+
+function addPopup(x, y, text, color) {
+  popups.push({ x, y, text, color, life: 0.82 });
 }
 
 function playerRect() {
@@ -381,6 +444,8 @@ function draw() {
   drawPickups();
   drawObstacles();
   drawPlayer();
+  drawPopups();
+  drawComboMeter();
   drawEffectLabel();
 }
 
@@ -469,7 +534,31 @@ function drawObstacles() {
         ctx.fillRect(r.x, r.y, r.w, r.h);
       });
     }
+    if (obstacle.type === "hole") drawJumpWarning(obstacle);
   }
+}
+
+function drawJumpWarning(obstacle) {
+  if (obstacle.y < 80 || obstacle.y > PLAYER_Y - 78) return;
+  const pulse = 0.5 + Math.sin(roadScroll * 0.18) * 0.5;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "900 28px Segoe UI, sans-serif";
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "rgba(15,35,58,0.62)";
+  ctx.fillStyle = `rgba(255, 211, 93, ${0.74 + pulse * 0.24})`;
+  ctx.strokeText("JUMP!", W / 2, obstacle.y - 18);
+  ctx.fillText("JUMP!", W / 2, obstacle.y - 18);
+  drawSprite(assets.warning, W / 2 - 16, obstacle.y - 58, 32, 32, () => {
+    ctx.fillStyle = "#ffd35d";
+    ctx.beginPath();
+    ctx.moveTo(W / 2, obstacle.y - 58);
+    ctx.lineTo(W / 2 - 16, obstacle.y - 26);
+    ctx.lineTo(W / 2 + 16, obstacle.y - 26);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
 }
 
 function drawPlayer() {
@@ -481,6 +570,15 @@ function drawPlayer() {
   ctx.beginPath();
   ctx.ellipse(player.x, PLAYER_Y + 25, 20, 7, 0, 0, Math.PI * 2);
   ctx.fill();
+  if (invincibleTimer > 0) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 211, 93, 0.82)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(player.x, PLAYER_Y - 40 - lift + bob, 38, 52, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   drawSprite(image, player.x - 33, PLAYER_Y - 88 - lift + bob, 66, 96, () => {
     ctx.fillStyle = "#2477d4";
     ctx.fillRect(player.x - 18, PLAYER_Y - 60 - lift, 36, 52);
@@ -488,6 +586,62 @@ function drawPlayer() {
     ctx.fillRect(player.x - 14, PLAYER_Y - 12 - lift, 10, 28);
     ctx.fillRect(player.x + 4, PLAYER_Y - 12 - lift, 10, 28);
   });
+}
+
+function drawPopups() {
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "900 18px Segoe UI, sans-serif";
+  for (const popup of popups) {
+    const alpha = Math.max(0, Math.min(1, popup.life / 0.82));
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(15,35,58,0.72)";
+    ctx.fillStyle = popup.color;
+    ctx.strokeText(popup.text, popup.x, popup.y);
+    ctx.fillText(popup.text, popup.x, popup.y);
+  }
+  ctx.restore();
+}
+
+function drawComboMeter() {
+  if (comboTimer <= 0 || comboCount < 2) return;
+  const multiplier = comboMultiplier();
+  const width = 116;
+  const x = 14;
+  const y = 16;
+  ctx.save();
+  ctx.fillStyle = "rgba(14, 30, 48, 0.58)";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+  ctx.lineWidth = 1;
+  roundRect(x, y, width, 42, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ffd35d";
+  ctx.font = "900 18px Segoe UI, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`COMBO x${multiplier}`, x + 10, y + 19);
+  ctx.fillStyle = "rgba(255,255,255,0.24)";
+  roundRect(x + 10, y + 27, width - 20, 5, 99);
+  ctx.fill();
+  ctx.fillStyle = "#ffd35d";
+  roundRect(x + 10, y + 27, (width - 20) * (comboTimer / COMBO_WINDOW), 5, 99);
+  ctx.fill();
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
 }
 
 function drawEffectLabel() {
