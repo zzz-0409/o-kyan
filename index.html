@@ -581,6 +581,8 @@
     const PANEL_CLEARANCE = 170;
     const RESCUE_COST = 5;
     const RESCUE_TIME = 1.45;
+    const CAR_DODGE_BONUS = 35;
+    const JUMP_CLEAR_BONUS = 80;
 
     let running = false;
     let gameOver = false;
@@ -589,6 +591,7 @@
     let loopActive = false;
     let distance = 0;
     let coins = 0;
+    let skillBonus = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let speed = BASE_SPEED;
@@ -617,6 +620,7 @@
     let coinItems = [];
     let slowGates = [];
     let speedPanels = [];
+    let popups = [];
 
     const player = {
       lane: CENTER_LANE,
@@ -638,6 +642,7 @@
       gameOver = false;
       distance = 0;
       coins = 0;
+      skillBonus = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
@@ -654,6 +659,7 @@
       coinItems = [];
       slowGates = [];
       speedPanels = [];
+      popups = [];
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -672,14 +678,14 @@ function endGame() {
       gameOver = true;
       stageEl.classList.remove("playing");
       const score = computeScore();
-      const distanceScore = Math.floor(distance);
+      const distanceScore = Math.floor(distance + skillBonus);
       const collectedCoins = coins;
       const isBest = score > best;
       const rank = saveDailyScore(score);
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "NEW BEST!" : "GAME OVER";
-      overlayText.textContent = `${distanceScore} pts + ${collectedCoins} coins converting`;
+      overlayText.textContent = `${distanceScore} pts including skill + ${collectedCoins} coins converting`;
       startButton.textContent = collectedCoins > 0 ? "SKIP COINS" : "SKIP RESULT";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       overlay.classList.add("show");
@@ -732,7 +738,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore} pts / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -765,7 +771,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -810,7 +816,7 @@ function endGame() {
     }
 
     function updateHud() {
-      distanceEl.textContent = String(Math.floor(distance));
+      distanceEl.textContent = String(Math.floor(distance + skillBonus));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       const boostActive = boostTimer > 0;
@@ -828,7 +834,7 @@ function endGame() {
       slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive);
     }
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance);
+      return coins * COIN_VALUE + Math.floor(distance + skillBonus);
     }
 
     function todayKey() {
@@ -1098,6 +1104,7 @@ function spawnCoins() {
       for (const obstacle of obstacles) {
         obstacle.y += speed * dt;
       }
+      awardPassedObstacles();
       obstacles = obstacles.filter((obstacle) => obstacle.y < H + 90);
 
       for (const coin of coinItems) {
@@ -1115,8 +1122,37 @@ function spawnCoins() {
       }
       speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
 
+      for (const popup of popups) {
+        popup.y -= 34 * dt;
+        popup.life -= dt;
+      }
+      popups = popups.filter((popup) => popup.life > 0);
+
       checkCollisions();
       updateHud();
+    }
+
+    function awardPassedObstacles() {
+      for (const obstacle of obstacles) {
+        if (obstacle.scored || invincibleTimer > 0 || !laneObjectPassed(obstacle)) continue;
+        obstacle.scored = true;
+        if (obstacle.type === "hole") {
+          if (isJumping() && obstacle.lanes.includes(player.lane)) {
+            addSkillBonus(JUMP_CLEAR_BONUS, "JUMP CLEAR", LANES[player.lane], PLAYER_Y - 74);
+          }
+          continue;
+        }
+        if (!obstacle.lanes.includes(player.lane)) {
+          const bonus = obstacle.lanes.length > 1 ? CAR_DODGE_BONUS + 20 : CAR_DODGE_BONUS;
+          addSkillBonus(bonus, "DODGE", player.x, PLAYER_Y - 68);
+        }
+      }
+    }
+
+    function addSkillBonus(points, label, x, y) {
+      skillBonus += points;
+      popups.push({ x, y, text: `${label} +${points}`, life: 0.86, color: "#f0c247" });
+      hintEl.textContent = `${label} +${points}`;
     }
 function checkCollisions() {
       const p = playerRect();
@@ -1299,6 +1335,7 @@ function draw() {
       drawSlowGates();
       drawObstacles();
       drawPlayer();
+      drawPopups();
       if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
@@ -1703,6 +1740,22 @@ function drawObstacles() {
         ctx.lineWidth = 3;
         ctx.strokeRect(LANES[player.lane] - 39, PLAYER_Y - 36, 78, 72);
       }
+    }
+
+    function drawPopups() {
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.font = "900 18px Segoe UI, sans-serif";
+      for (const popup of popups) {
+        const alpha = Math.max(0, Math.min(1, popup.life / 0.86));
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(10, 12, 13, 0.72)";
+        ctx.fillStyle = popup.color;
+        ctx.strokeText(popup.text, popup.x, popup.y);
+        ctx.fillText(popup.text, popup.x, popup.y);
+      }
+      ctx.restore();
     }
 
     function drawSpeedLabel() {
