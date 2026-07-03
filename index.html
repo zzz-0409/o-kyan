@@ -2258,9 +2258,20 @@ function onPointerDown(event) {
       }
     }
 
+    function resultAdvanceRequested() {
+      return !running && overlay.classList.contains("show");
+    }
+
+    function onOverlayPointerUp(event) {
+      if (!resultAdvanceRequested()) return;
+      if (event.target.closest("button")) return;
+      event.preventDefault();
+      handleMainButton();
+    }
+
     function onKeyDown(event) {
       if (event.repeat) return;
-      if (event.code === "Space" && !running && overlay.classList.contains("show")) {
+      if ((event.code === "Space" || event.code === "Enter" || event.code === "KeyR") && resultAdvanceRequested()) {
         event.preventDefault();
         handleMainButton();
         return;
@@ -2305,6 +2316,7 @@ function onPointerDown(event) {
     }
 
     startButton.addEventListener("click", handleMainButton);
+    overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", () => {
