@@ -1534,6 +1534,7 @@ function draw() {
       drawPlayer();
       drawPopups();
       drawComboMeter();
+      drawRescueMeter();
       drawMissionPanel();
       if (lastChanceTimer > 0) drawLastChancePulse();
       if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0 || lastChanceTimer > 0) drawSpeedLabel();
@@ -2039,6 +2040,40 @@ function drawObstacles() {
       ctx.fillRect(x + 10, y + 28, w - 20, 5);
       ctx.fillStyle = "#f0c247";
       ctx.fillRect(x + 10, y + 28, (w - 20) * (comboTimer / COMBO_WINDOW), 5);
+      ctx.restore();
+    }
+
+    function drawRescueMeter() {
+      if (!running) return;
+      if (rescueUsed) return;
+      const progress = Math.max(0, Math.min(1, coins / RESCUE_COST));
+      const ready = coins >= RESCUE_COST;
+      const x = 12;
+      const y = comboTimer > 0 && comboCount >= 2 ? 66 : 16;
+      const w = ready ? 128 : 116;
+      const h = 36;
+      const pulse = ready ? 0.72 + Math.sin(loopScroll * 0.12) * 0.18 : 0.42;
+      ctx.save();
+      ctx.fillStyle = ready ? "rgba(37, 85, 73, 0.72)" : "rgba(10, 12, 13, 0.48)";
+      ctx.strokeStyle = ready ? `rgba(123, 238, 255, ${pulse})` : "rgba(246, 239, 217, 0.28)";
+      ctx.lineWidth = ready ? 2.2 : 1.4;
+      roundedRectPath(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = ready ? "#7beeff" : "#f6efd9";
+      ctx.font = "900 11px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(ready ? "RESCUE READY" : `RESCUE ${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`, x + 10, y + 14);
+      ctx.fillStyle = "rgba(246,239,217,0.18)";
+      ctx.fillRect(x + 10, y + 23, w - 20, 5);
+      ctx.fillStyle = ready ? "#7beeff" : "#f0c247";
+      ctx.fillRect(x + 10, y + 23, (w - 20) * progress, 5);
+      if (ready) {
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "#7beeff";
+        roundedRectPath(x - 4, y - 4, w + 8, h + 8, 10);
+        ctx.fill();
+      }
       ctx.restore();
     }
 
