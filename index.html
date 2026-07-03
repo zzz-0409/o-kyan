@@ -588,6 +588,7 @@
     const MAGNET_RADIUS = 118;
     const FEVER_DURATION = 4.5;
     const FEVER_MAGNET_RADIUS = 170;
+    const SAFE_GUIDE_RANGE = 470;
 
     let running = false;
     let gameOver = false;
@@ -1433,6 +1434,7 @@ function draw() {
       ctx.save();
       drawRoad();
       drawDangerHints();
+      drawSafeLaneGuide();
       drawSpeedPanels();
       drawCoins();
       drawSlowGates();
@@ -1674,6 +1676,51 @@ function drawFallbackRoad() {
           ctx.lineWidth = 2;
           ctx.strokeRect(x - 36, top, 72, bottom - top);
         }
+      }
+      ctx.restore();
+    }
+
+    function upcomingCarThreat() {
+      let best = null;
+      for (const obstacle of obstacles) {
+        if (obstacle.type === "hole") continue;
+        if (obstacle.y < 48 || obstacle.y > PLAYER_Y - 80) continue;
+        const distanceToPlayer = PLAYER_Y - obstacle.y;
+        if (distanceToPlayer > SAFE_GUIDE_RANGE) continue;
+        if (!best || obstacle.y > best.y) best = obstacle;
+      }
+      return best;
+    }
+
+    function safeLanesFor(obstacle) {
+      if (!obstacle) return [];
+      return [0, 1, 2].filter((lane) => !obstacle.lanes.includes(lane));
+    }
+
+    function drawSafeLaneGuide() {
+      const threat = upcomingCarThreat();
+      const safeLanes = safeLanesFor(threat);
+      if (!safeLanes.length) return;
+      const urgency = 1 - Math.max(0, Math.min(1, (PLAYER_Y - threat.y - 80) / SAFE_GUIDE_RANGE));
+      const alpha = 0.22 + urgency * 0.34;
+      const guideY = PLAYER_Y + 42;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      for (const lane of safeLanes) {
+        const x = LANES[lane];
+        const gradient = ctx.createLinearGradient(x - 34, 0, x + 34, 0);
+        gradient.addColorStop(0, "rgba(123,238,255,0)");
+        gradient.addColorStop(0.5, "rgba(123,238,255,0.9)");
+        gradient.addColorStop(1, "rgba(123,238,255,0)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x - 34, guideY - 3, 68, 6);
+        ctx.strokeStyle = "rgba(246,239,217,0.86)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 13, guideY + 11);
+        ctx.lineTo(x, guideY + 22);
+        ctx.lineTo(x + 13, guideY + 11);
+        ctx.stroke();
       }
       ctx.restore();
     }
