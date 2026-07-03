@@ -597,6 +597,9 @@
     const LAST_CHANCE_BONUS = 120;
     const WARMUP_DURATION = 14;
     const FULL_DIFFICULTY_TIME = 82;
+    const CHECKPOINT_DISTANCE = 150;
+    const CHECKPOINT_BASE_BONUS = 120;
+    const CHECKPOINT_COIN_TRAIL = 5;
 
     let running = false;
     let gameOver = false;
@@ -604,6 +607,7 @@
     let frameCarry = 0;
     let loopActive = false;
     let runTime = 0;
+    let checkpointIndex = 1;
     let distance = 0;
     let coins = 0;
     let skillBonus = 0;
@@ -665,6 +669,7 @@
       running = true;
       gameOver = false;
       runTime = 0;
+      checkpointIndex = 1;
       distance = 0;
       coins = 0;
       skillBonus = 0;
@@ -1115,6 +1120,32 @@ function spawnCoins() {
       return Math.max(0, Math.min(1, (runTime - WARMUP_DURATION) / (FULL_DIFFICULTY_TIME - WARMUP_DURATION)));
     }
 
+    function checkDistanceCheckpoint() {
+      while (distance >= checkpointIndex * CHECKPOINT_DISTANCE) {
+        awardCheckpoint(checkpointIndex);
+        checkpointIndex += 1;
+      }
+    }
+
+    function awardCheckpoint(index) {
+      const milestone = index * CHECKPOINT_DISTANCE;
+      const bonus = CHECKPOINT_BASE_BONUS + Math.min(280, (index - 1) * 40);
+      skillBonus += bonus;
+      spawnCheckpointCoinTrail(index);
+      coinTimer = Math.min(coinTimer, 0.35);
+      popups.push({ x: W / 2, y: PLAYER_Y - 132, text: `${milestone}m +${bonus}`, life: 1.05, color: "#7beeff" });
+      hintEl.textContent = `Checkpoint ${milestone}m +${bonus}`;
+    }
+
+    function spawnCheckpointCoinTrail(index) {
+      const direction = index % 2 === 0 ? -1 : 1;
+      const sideLane = Math.max(0, Math.min(2, player.lane + direction));
+      for (let i = 0; i < CHECKPOINT_COIN_TRAIL; i += 1) {
+        const lane = i % 2 === 0 ? player.lane : sideLane;
+        coinItems.push({ lane, y: PLAYER_Y - 220 - i * 40, r: COIN_RADIUS, collected: false, bonus: true });
+      }
+    }
+
     function update(dt) {
       if (!running) return;
       runTime += dt;
@@ -1139,6 +1170,7 @@ function spawnCoins() {
       jumpTimer = Math.max(0, jumpTimer - dt);
       if (jumpTimer <= 0 && bufferedJump) startJump();
       distance += (speed * dt) / 12;
+      checkDistanceCheckpoint();
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
       const targetX = LANES[player.lane];
