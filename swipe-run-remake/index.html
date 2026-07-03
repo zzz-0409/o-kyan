@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>3レーン・スワイプラン</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hud" aria-label="score board">
+      <h1>3レーン・スワイプラン</h1>
+      <div class="stat"><span>SCORE</span><strong id="score">0</strong></div>
+      <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
+      <div class="stat"><span>COINS</span><strong id="coins">0</strong></div>
+    </header>
+
+    <section class="stage" id="stage">
+      <canvas id="game" width="390" height="720"></canvas>
+      <div class="move-controls" aria-label="move buttons">
+        <button class="control-button" id="leftButton" type="button" aria-label="left">&larr;</button>
+        <button class="control-button" id="rightButton" type="button" aria-label="right">&rarr;</button>
+      </div>
+      <button class="jump-button" id="jumpButton" type="button" aria-label="jump">JUMP</button>
+      <div class="overlay show" id="overlay">
+        <div class="dialog" id="dialog">
+          <h2 id="overlayTitle">3レーン・スワイプラン</h2>
+          <p id="overlayText">左右にスワイプして障害物を避け、タップでジャンプ。コインを集めてハイスコアを狙おう。</p>
+          <div class="conversion" id="conversion" aria-hidden="true">
+            <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
+            <div class="convert-line"><i id="convertDot"></i></div>
+            <div class="convert-box"><span>SCORE</span><strong id="convertScore">0</strong></div>
+          </div>
+          <ol class="ranking" id="ranking"></ol>
+          <button class="primary-button" id="mainButton" type="button">START</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span id="hint">左右スワイプ / 左右ボタンで移動、タップ / JUMPでジャンプ</span>
+      <div class="effect-bar"><i id="effectFill"></i></div>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
