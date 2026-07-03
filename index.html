@@ -617,6 +617,7 @@
     let comboBonus = 0;
     let missionBonus = 0;
     let missionRefreshTimer = 0;
+    let missionLevel = 1;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
@@ -681,6 +682,7 @@
       comboBonus = 0;
       missionBonus = 0;
       missionRefreshTimer = 0;
+      missionLevel = 1;
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -1334,14 +1336,21 @@ function spawnCoins() {
       return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
     }
 
-    function createMission() {
+    function createMission(level = missionLevel) {
       const pool = [
-        { type: "coin", label: "Collect coins", target: 8, progress: 0, reward: 240, done: false },
-        { type: "dodge", label: "Dodge cars", target: 4, progress: 0, reward: 220, done: false },
-        { type: "jump", label: "Clear holes", target: 2, progress: 0, reward: 220, done: false },
-        { type: "combo", label: "Build combo", target: 6, progress: 0, reward: 260, done: false }
+        { type: "coin", label: "Collect coins", target: 8, targetStep: 2, progress: 0, reward: 240, done: false },
+        { type: "dodge", label: "Dodge cars", target: 4, targetStep: 1, progress: 0, reward: 220, done: false },
+        { type: "jump", label: "Clear holes", target: 2, targetStep: 1, progress: 0, reward: 220, done: false },
+        { type: "combo", label: "Build combo", target: 6, targetStep: 2, progress: 0, reward: 260, done: false }
       ];
-      return { ...pool[Math.floor(Math.random() * pool.length)] };
+      const base = pool[Math.floor(Math.random() * pool.length)];
+      const levelBoost = Math.max(0, level - 1);
+      return {
+        ...base,
+        level,
+        target: base.target + base.targetStep * levelBoost,
+        reward: base.reward + levelBoost * 60
+      };
     }
 
     function updateMission(type, value = 1) {
@@ -1365,6 +1374,7 @@ function spawnCoins() {
       if (!activeMission || !activeMission.done || missionRefreshTimer <= 0) return;
       missionRefreshTimer = Math.max(0, missionRefreshTimer - dt);
       if (missionRefreshTimer > 0) return;
+      missionLevel += 1;
       activeMission = createMission();
       popups.push({ x: W / 2, y: 104, text: "NEW MISSION", life: 0.9, color: "#f0c247" });
       hintEl.textContent = activeMission.label;
@@ -2200,7 +2210,10 @@ function drawObstacles() {
       ctx.fillStyle = activeMission.done ? "#7beeff" : "#f6efd9";
       ctx.font = "800 10px Segoe UI, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(activeMission.done ? "MISSION CLEAR" : activeMission.label.toUpperCase(), x + 9, y + 15);
+      const missionTitle = activeMission.done
+        ? "MISSION CLEAR"
+        : `${activeMission.label.toUpperCase()} LV${activeMission.level || 1}`;
+      ctx.fillText(missionTitle, x + 9, y + 15);
       ctx.font = "900 16px Segoe UI, sans-serif";
       const missionText = activeMission.done && missionRefreshTimer > 0
         ? `NEXT ${Math.ceil(missionRefreshTimer)}s`
