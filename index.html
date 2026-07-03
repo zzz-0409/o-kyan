@@ -590,6 +590,7 @@
     const MAGNET_RADIUS = 118;
     const FEVER_DURATION = 4.5;
     const FEVER_MAGNET_RADIUS = 170;
+    const FEVER_BONUS_COINS = 8;
     const SAFE_GUIDE_RANGE = 470;
     const LAST_CHANCE_DURATION = 0.42;
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
@@ -1317,7 +1318,18 @@ function spawnCoins() {
       comboTimer = Math.max(comboTimer, COMBO_WINDOW);
       comboCount = Math.max(comboCount, 5);
       coinTimer = Math.min(coinTimer, 0.25);
+      spawnFeverCoinTrail();
       popups.push({ x: W / 2, y: PLAYER_Y - 154, text: "FEVER!", life: 1.1, color: "#7beeff" });
+    }
+
+    function spawnFeverCoinTrail() {
+      const baseLane = player.lane;
+      const alternateLane = baseLane === 1 ? (Math.random() < 0.5 ? 0 : 2) : 1;
+      for (let i = 0; i < FEVER_BONUS_COINS; i += 1) {
+        const lane = i % 3 === 1 ? alternateLane : baseLane;
+        const y = PLAYER_Y - 190 - i * 38;
+        coinItems.push({ lane, y, r: COIN_RADIUS, collected: false, bonus: true });
+      }
     }
 
     function comboMagnetActive() {
@@ -1897,6 +1909,13 @@ function drawObstacles() {
         ctx.beginPath();
         ctx.ellipse(x + 2, y + 4, COIN_RADIUS, COIN_RADIUS * 0.55, 0, 0, Math.PI * 2);
         ctx.fill();
+        if (coin.bonus) {
+          ctx.strokeStyle = "rgba(123,238,255,0.68)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(x, y, COIN_RADIUS + 5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         ctx.fillStyle = "#f0c247";
         ctx.beginPath();
         ctx.arc(x, y, COIN_RADIUS, 0, Math.PI * 2);
