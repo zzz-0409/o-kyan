@@ -365,9 +365,13 @@
 
     .run-strip {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 6px;
       min-height: 34px;
+    }
+
+    #comboPill {
+      display: none;
     }
 
     .run-pill {
@@ -674,6 +678,7 @@
     const CHECKPOINT_DISTANCE = 150;
     const CHECKPOINT_BASE_BONUS = 120;
     const CHECKPOINT_COIN_TRAIL = 5;
+    const READY_GRACE_TIME = 1.2;
 
     let running = false;
     let gameOver = false;
@@ -701,6 +706,7 @@
     let slowTimer = 0;
     let boostTimer = 0;
     let invincibleTimer = 0;
+    let readyTimer = 0;
     let lastChanceTimer = 0;
     let lastChanceTarget = null;
     let rescueUsed = false;
@@ -759,6 +765,7 @@
       slowTimer = 0;
       boostTimer = 0;
       invincibleTimer = 0;
+      readyTimer = READY_GRACE_TIME;
       lastChanceTimer = 0;
       lastChanceTarget = null;
       rescueUsed = false;
@@ -776,7 +783,7 @@
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      hintEl.textContent = "左右で移動、JUMPでジャンプ";
+      hintEl.textContent = "準備OK、左右で移動";
       updateHud();
       lastTime = performance.now();
       frameCarry = 0;
@@ -787,7 +794,7 @@ function endGame() {
       gameOver = true;
       stageEl.classList.remove("playing");
       const score = computeScore();
-      const distanceScore = Math.floor(distance + skillBonus + comboBonus);
+      const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
       const isBest = score > best;
       const rank = saveDailyScore(score);
@@ -847,7 +854,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore}点 / 技術${skillBonus}点 / コンボ${comboBonus}点 / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore}点 / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -880,7 +887,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -926,7 +933,7 @@ function endGame() {
 
     function updateHud() {
       const runScore = computeScore();
-      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus));
+      distanceEl.textContent = String(Math.floor(distance));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       checkBestPace(runScore);
@@ -963,9 +970,11 @@ function endGame() {
       checkpointStatus.textContent = `${remaining}m`;
       checkpointPill.classList.toggle("active", remaining <= 30);
 
-      const effectLabel = invincibleTimer > 0
-        ? "救済"
-        : lastChanceTimer > 0
+      const effectLabel = readyTimer > 0
+        ? "準備"
+        : invincibleTimer > 0
+          ? "救済"
+          : lastChanceTimer > 0
           ? "猶予"
           : boostTimer > 0
             ? "加速"
@@ -977,7 +986,7 @@ function endGame() {
     }
 
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus);
+      return coins * COIN_VALUE + Math.floor(distance);
     }
 
     function checkBestPace(runScore) {
@@ -1258,6 +1267,7 @@ function spawnCoins() {
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
       invincibleTimer = Math.max(0, invincibleTimer - dt);
+      readyTimer = Math.max(0, readyTimer - dt);
       lastChanceTimer = Math.max(0, lastChanceTimer - dt);
       if (lastChanceTarget && !obstacles.includes(lastChanceTarget)) {
         lastChanceTarget = null;
@@ -1343,7 +1353,7 @@ function spawnCoins() {
 
     function awardPassedObstacles() {
       for (const obstacle of obstacles) {
-        if (obstacle.scored || invincibleTimer > 0 || !laneObjectPassed(obstacle)) continue;
+        if (obstacle.scored || invincibleTimer > 0 || readyTimer > 0 || !laneObjectPassed(obstacle)) continue;
         if (obstacle === lastChanceTarget && !lastChanceAvoided(obstacle)) {
           lastChanceTimer = 0;
           crash();
@@ -1440,7 +1450,7 @@ function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
       const feet = playerFootRect();
-      if (invincibleTimer <= 0) {
+      if (invincibleTimer <= 0 && readyTimer <= 0) {
         for (let obstacleIndex = obstacles.length - 1; obstacleIndex >= 0; obstacleIndex -= 1) {
           const obstacle = obstacles[obstacleIndex];
           if (laneObjectPassed(obstacle)) continue;
@@ -1478,7 +1488,7 @@ function checkCollisions() {
           comboBonus += bonus;
           const comboText = multiplier > 1 ? ` x${multiplier}` : "";
           popups.push({ x: coinX(coin), y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
-          hintEl.textContent = multiplier > 1 ? `コインコンボ x${multiplier} / +${bonus}` : `コイン +1 / ${coins}`;
+          hintEl.textContent = `コイン +1 / ${coins}`;
         }
       }
 
@@ -1631,7 +1641,6 @@ function draw() {
       drawSlowGates();
       drawObstacles();
       drawPlayer();
-      drawPopups();
       if (lastChanceTimer > 0) drawLastChancePulse();
       ctx.restore();
     }
