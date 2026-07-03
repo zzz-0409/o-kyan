@@ -598,6 +598,7 @@
     let comboCount = 0;
     let comboTimer = 0;
     let comboBonus = 0;
+    let missionBonus = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let speed = BASE_SPEED;
@@ -627,6 +628,7 @@
     let slowGates = [];
     let speedPanels = [];
     let popups = [];
+    let activeMission = null;
 
     const player = {
       lane: CENTER_LANE,
@@ -652,6 +654,7 @@
       comboCount = 0;
       comboTimer = 0;
       comboBonus = 0;
+      missionBonus = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
@@ -669,6 +672,7 @@
       slowGates = [];
       speedPanels = [];
       popups = [];
+      activeMission = createMission();
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -687,7 +691,7 @@ function endGame() {
       gameOver = true;
       stageEl.classList.remove("playing");
       const score = computeScore();
-      const distanceScore = Math.floor(distance + skillBonus + comboBonus);
+      const distanceScore = Math.floor(distance + skillBonus + comboBonus + missionBonus);
       const collectedCoins = coins;
       const isBest = score > best;
       const rank = saveDailyScore(score);
@@ -747,7 +751,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / mission ${missionBonus} / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -780,7 +784,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ミッション${missionBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -825,7 +829,7 @@ function endGame() {
     }
 
     function updateHud() {
-      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus));
+      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus + missionBonus));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       const boostActive = boostTimer > 0;
@@ -843,7 +847,7 @@ function endGame() {
       slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive);
     }
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus);
+      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus + missionBonus);
     }
 
     function todayKey() {
@@ -1165,6 +1169,8 @@ function spawnCoins() {
       const multiplier = advanceCombo();
       const awarded = Math.round(points * multiplier);
       skillBonus += awarded;
+      if (label === "DODGE") updateMission("dodge");
+      if (label === "JUMP CLEAR") updateMission("jump");
       const comboText = multiplier > 1 ? ` x${multiplier}` : "";
       popups.push({ x, y, text: `${label}${comboText} +${awarded}`, life: 0.86, color: "#f0c247" });
       hintEl.textContent = `${label}${comboText} +${awarded}`;
@@ -1173,11 +1179,37 @@ function spawnCoins() {
     function advanceCombo() {
       comboTimer = COMBO_WINDOW;
       comboCount += 1;
+      updateMission("combo", comboCount);
       return comboMultiplier();
     }
 
     function comboMultiplier() {
       return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
+    }
+
+    function createMission() {
+      const pool = [
+        { type: "coin", label: "Collect coins", target: 8, progress: 0, reward: 240, done: false },
+        { type: "dodge", label: "Dodge cars", target: 4, progress: 0, reward: 220, done: false },
+        { type: "jump", label: "Clear holes", target: 2, progress: 0, reward: 220, done: false },
+        { type: "combo", label: "Build combo", target: 6, progress: 0, reward: 260, done: false }
+      ];
+      return { ...pool[Math.floor(Math.random() * pool.length)] };
+    }
+
+    function updateMission(type, value = 1) {
+      if (!activeMission || activeMission.done || activeMission.type !== type) return;
+      if (type === "combo") {
+        activeMission.progress = Math.max(activeMission.progress, value);
+      } else {
+        activeMission.progress += value;
+      }
+      if (activeMission.progress < activeMission.target) return;
+      activeMission.progress = activeMission.target;
+      activeMission.done = true;
+      missionBonus += activeMission.reward;
+      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: `MISSION +${activeMission.reward}`, life: 1.05, color: "#7beeff" });
+      hintEl.textContent = `Mission clear +${activeMission.reward}`;
     }
 
     function comboMagnetActive() {
@@ -1229,6 +1261,7 @@ function checkCollisions() {
           coin.collected = true;
           coinItems.splice(i, 1);
           const multiplier = advanceCombo();
+          updateMission("coin");
           const bonus = COIN_VALUE * (multiplier - 1);
           comboBonus += bonus;
           const comboText = multiplier > 1 ? ` x${multiplier}` : "";
@@ -1387,6 +1420,7 @@ function draw() {
       drawPlayer();
       drawPopups();
       drawComboMeter();
+      drawMissionPanel();
       if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
@@ -1845,6 +1879,33 @@ function drawObstacles() {
       ctx.fillRect(x + 10, y + 28, w - 20, 5);
       ctx.fillStyle = "#f0c247";
       ctx.fillRect(x + 10, y + 28, (w - 20) * (comboTimer / COMBO_WINDOW), 5);
+      ctx.restore();
+    }
+
+    function drawMissionPanel() {
+      if (!activeMission) return;
+      const x = W - 154;
+      const y = 52;
+      const w = 140;
+      const h = 43;
+      const progress = activeMission.done ? 1 : Math.min(1, activeMission.progress / activeMission.target);
+      ctx.save();
+      ctx.fillStyle = activeMission.done ? "rgba(28, 86, 88, 0.68)" : "rgba(10, 12, 13, 0.52)";
+      ctx.strokeStyle = activeMission.done ? "rgba(123, 238, 255, 0.88)" : "rgba(246, 239, 217, 0.36)";
+      ctx.lineWidth = 1.5;
+      roundedRectPath(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = activeMission.done ? "#7beeff" : "#f6efd9";
+      ctx.font = "800 10px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(activeMission.done ? "MISSION CLEAR" : activeMission.label.toUpperCase(), x + 9, y + 15);
+      ctx.font = "900 16px Segoe UI, sans-serif";
+      ctx.fillText(`${activeMission.progress}/${activeMission.target}`, x + 9, y + 32);
+      ctx.fillStyle = "rgba(246,239,217,0.18)";
+      ctx.fillRect(x + 58, y + 27, w - 70, 5);
+      ctx.fillStyle = activeMission.done ? "#7beeff" : "#f0c247";
+      ctx.fillRect(x + 58, y + 27, (w - 70) * progress, 5);
       ctx.restore();
     }
 
