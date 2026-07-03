@@ -600,6 +600,7 @@
     const CHECKPOINT_DISTANCE = 150;
     const CHECKPOINT_BASE_BONUS = 120;
     const CHECKPOINT_COIN_TRAIL = 5;
+    const MISSION_REFRESH_TIME = 3.0;
 
     let running = false;
     let gameOver = false;
@@ -615,6 +616,7 @@
     let comboTimer = 0;
     let comboBonus = 0;
     let missionBonus = 0;
+    let missionRefreshTimer = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
@@ -678,6 +680,7 @@
       comboTimer = 0;
       comboBonus = 0;
       missionBonus = 0;
+      missionRefreshTimer = 0;
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -1182,6 +1185,7 @@ function spawnCoins() {
       if (jumpTimer <= 0 && bufferedJump) startJump();
       distance += (speed * dt) / 12;
       checkDistanceCheckpoint();
+      updateMissionRefresh(dt);
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
       const targetX = LANES[player.lane];
@@ -1351,9 +1355,19 @@ function spawnCoins() {
       activeMission.progress = activeMission.target;
       activeMission.done = true;
       missionBonus += activeMission.reward;
+      missionRefreshTimer = MISSION_REFRESH_TIME;
       startFever();
       popups.push({ x: W / 2, y: PLAYER_Y - 118, text: `MISSION +${activeMission.reward}`, life: 1.05, color: "#7beeff" });
       hintEl.textContent = `Mission clear +${activeMission.reward}`;
+    }
+
+    function updateMissionRefresh(dt) {
+      if (!activeMission || !activeMission.done || missionRefreshTimer <= 0) return;
+      missionRefreshTimer = Math.max(0, missionRefreshTimer - dt);
+      if (missionRefreshTimer > 0) return;
+      activeMission = createMission();
+      popups.push({ x: W / 2, y: 104, text: "NEW MISSION", life: 0.9, color: "#f0c247" });
+      hintEl.textContent = activeMission.label;
     }
 
     function startFever() {
@@ -2188,7 +2202,10 @@ function drawObstacles() {
       ctx.textAlign = "left";
       ctx.fillText(activeMission.done ? "MISSION CLEAR" : activeMission.label.toUpperCase(), x + 9, y + 15);
       ctx.font = "900 16px Segoe UI, sans-serif";
-      ctx.fillText(`${activeMission.progress}/${activeMission.target}`, x + 9, y + 32);
+      const missionText = activeMission.done && missionRefreshTimer > 0
+        ? `NEXT ${Math.ceil(missionRefreshTimer)}s`
+        : `${activeMission.progress}/${activeMission.target}`;
+      ctx.fillText(missionText, x + 9, y + 32);
       ctx.fillStyle = "rgba(246,239,217,0.18)";
       ctx.fillRect(x + 58, y + 27, w - 70, 5);
       ctx.fillStyle = activeMission.done ? "#7beeff" : "#f0c247";
