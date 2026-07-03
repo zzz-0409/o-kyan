@@ -46,7 +46,7 @@
       height: 100dvh;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
       gap: 8px;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
     }
@@ -363,6 +363,51 @@
       font-weight: 850;
     }
 
+    .run-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 34px;
+    }
+
+    .run-pill {
+      min-width: 0;
+      padding: 5px 6px;
+      border: 1px solid rgba(246, 239, 217, 0.12);
+      border-radius: 8px;
+      background: var(--panel);
+      text-align: center;
+    }
+
+    .run-pill span {
+      display: block;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .run-pill strong {
+      display: block;
+      margin-top: 4px;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 11px;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .run-pill.active {
+      border-color: rgba(123, 238, 255, 0.38);
+      box-shadow: 0 0 16px rgba(123, 238, 255, 0.1);
+    }
+
+    .run-pill.ready strong,
+    .run-pill.active strong {
+      color: #7beeff;
+    }
+
     .footer {
       min-height: 38px;
       display: grid;
@@ -457,6 +502,23 @@
         grid-template-columns: 1fr 76px;
         font-size: 10px;
       }
+
+      .run-strip {
+        gap: 4px;
+        min-height: 30px;
+      }
+
+      .run-pill {
+        padding: 4px 4px;
+      }
+
+      .run-pill span {
+        font-size: 7px;
+      }
+
+      .run-pill strong {
+        font-size: 10px;
+      }
     }
   </style>
 </head>
@@ -495,6 +557,13 @@
       </div>
     </section>
 
+    <div class="run-strip" aria-label="Run status">
+      <div class="run-pill" id="comboPill"><span>COMBO</span><strong id="comboStatus">-</strong></div>
+      <div class="run-pill" id="rescuePill"><span>RESCUE</span><strong id="rescueStatus">0/5</strong></div>
+      <div class="run-pill" id="checkpointPill"><span>NEXT</span><strong id="checkpointStatus">150m</strong></div>
+      <div class="run-pill" id="effectPill"><span>STATUS</span><strong id="effectStatus">-</strong></div>
+    </div>
+
     <footer class="footer">
       <span id="hint">Left/Right to move, JUMP to jump</span>
       <div class="slow-bar" aria-label="speed effect"><i id="slowFill"></i></div>
@@ -510,6 +579,14 @@
     const todayRankEl = document.getElementById("todayRank");
     const hintEl = document.getElementById("hint");
     const slowFill = document.getElementById("slowFill");
+    const comboPill = document.getElementById("comboPill");
+    const comboStatus = document.getElementById("comboStatus");
+    const rescuePill = document.getElementById("rescuePill");
+    const rescueStatus = document.getElementById("rescueStatus");
+    const checkpointPill = document.getElementById("checkpointPill");
+    const checkpointStatus = document.getElementById("checkpointStatus");
+    const effectPill = document.getElementById("effectPill");
+    const effectStatus = document.getElementById("effectStatus");
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
@@ -588,9 +665,6 @@
     const COMBO_WINDOW = 3.2;
     const MAGNET_COMBO_MIN = 2;
     const MAGNET_RADIUS = 118;
-    const FEVER_DURATION = 4.5;
-    const FEVER_MAGNET_RADIUS = 170;
-    const FEVER_BONUS_COINS = 8;
     const SAFE_GUIDE_RANGE = 470;
     const LAST_CHANCE_DURATION = 0.42;
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
@@ -600,7 +674,6 @@
     const CHECKPOINT_DISTANCE = 150;
     const CHECKPOINT_BASE_BONUS = 120;
     const CHECKPOINT_COIN_TRAIL = 5;
-    const MISSION_REFRESH_TIME = 3.0;
 
     let running = false;
     let gameOver = false;
@@ -615,9 +688,6 @@
     let comboCount = 0;
     let comboTimer = 0;
     let comboBonus = 0;
-    let missionBonus = 0;
-    let missionRefreshTimer = 0;
-    let missionLevel = 1;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
@@ -631,7 +701,6 @@
     let slowTimer = 0;
     let boostTimer = 0;
     let invincibleTimer = 0;
-    let feverTimer = 0;
     let lastChanceTimer = 0;
     let lastChanceTarget = null;
     let rescueUsed = false;
@@ -652,7 +721,6 @@
     let slowGates = [];
     let speedPanels = [];
     let popups = [];
-    let activeMission = null;
 
     const player = {
       lane: CENTER_LANE,
@@ -680,9 +748,6 @@
       comboCount = 0;
       comboTimer = 0;
       comboBonus = 0;
-      missionBonus = 0;
-      missionRefreshTimer = 0;
-      missionLevel = 1;
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -694,7 +759,6 @@
       slowTimer = 0;
       boostTimer = 0;
       invincibleTimer = 0;
-      feverTimer = 0;
       lastChanceTimer = 0;
       lastChanceTarget = null;
       rescueUsed = false;
@@ -705,7 +769,6 @@
       slowGates = [];
       speedPanels = [];
       popups = [];
-      activeMission = createMission();
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -724,7 +787,7 @@ function endGame() {
       gameOver = true;
       stageEl.classList.remove("playing");
       const score = computeScore();
-      const distanceScore = Math.floor(distance + skillBonus + comboBonus + missionBonus);
+      const distanceScore = Math.floor(distance + skillBonus + comboBonus);
       const collectedCoins = coins;
       const isBest = score > best;
       const rank = saveDailyScore(score);
@@ -784,7 +847,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / mission ${missionBonus} / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -817,7 +880,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ミッション${missionBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -863,18 +926,16 @@ function endGame() {
 
     function updateHud() {
       const runScore = computeScore();
-      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus + missionBonus));
+      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       checkBestPace(runScore);
+      updateRunStrip();
       const boostActive = boostTimer > 0;
       const slowActive = slowTimer > 0;
       const rescueActive = invincibleTimer > 0;
-      const feverActive = feverTimer > 0;
       const lastChanceActive = lastChanceTimer > 0;
-      const effectRatio = feverActive
-        ? feverTimer / FEVER_DURATION
-        : rescueActive
+      const effectRatio = rescueActive
           ? invincibleTimer / RESCUE_TIME
           : lastChanceActive
             ? lastChanceTimer / LAST_CHANCE_DURATION
@@ -884,11 +945,39 @@ function endGame() {
                 ? slowTimer / SLOW_DURATION
                 : 0;
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
-      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive || feverActive);
-      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive && !rescueActive && !feverActive);
+      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive);
+      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive && !rescueActive);
     }
+
+    function updateRunStrip() {
+      const comboActive = comboTimer > 0 && comboCount >= 2;
+      comboStatus.textContent = comboActive ? `x${comboMultiplier()} / ${comboCount}` : "-";
+      comboPill.classList.toggle("active", comboActive);
+
+      const rescueReady = !rescueUsed && coins >= RESCUE_COST;
+      rescueStatus.textContent = rescueUsed ? "USED" : rescueReady ? "READY" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
+      rescuePill.classList.toggle("ready", rescueReady);
+
+      const nextCheckpoint = checkpointIndex * CHECKPOINT_DISTANCE;
+      const remaining = Math.max(0, Math.ceil(nextCheckpoint - distance));
+      checkpointStatus.textContent = `${remaining}m`;
+      checkpointPill.classList.toggle("active", remaining <= 30);
+
+      const effectLabel = invincibleTimer > 0
+        ? "RESCUE"
+        : lastChanceTimer > 0
+          ? "LAST"
+          : boostTimer > 0
+            ? "BOOST"
+            : slowTimer > 0
+              ? "SLOW"
+              : "-";
+      effectStatus.textContent = effectLabel;
+      effectPill.classList.toggle("active", effectLabel !== "-");
+    }
+
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus + missionBonus);
+      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus);
     }
 
     function checkBestPace(runScore) {
@@ -1169,7 +1258,6 @@ function spawnCoins() {
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
       invincibleTimer = Math.max(0, invincibleTimer - dt);
-      feverTimer = Math.max(0, feverTimer - dt);
       lastChanceTimer = Math.max(0, lastChanceTimer - dt);
       if (lastChanceTarget && !obstacles.includes(lastChanceTarget)) {
         lastChanceTarget = null;
@@ -1187,7 +1275,6 @@ function spawnCoins() {
       if (jumpTimer <= 0 && bufferedJump) startJump();
       distance += (speed * dt) / 12;
       checkDistanceCheckpoint();
-      updateMissionRefresh(dt);
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
       const targetX = LANES[player.lane];
@@ -1206,7 +1293,7 @@ function spawnCoins() {
         coinTimer -= dt;
         if (coinTimer <= 0) {
           spawnCoins();
-          coinTimer = feverTimer > 0 ? 0.55 + Math.random() * 0.35 : 1.55 + Math.random() * 1.35;
+          coinTimer = 1.55 + Math.random() * 1.35;
         }
 
         slowGateTimer -= dt;
@@ -1318,8 +1405,6 @@ function spawnCoins() {
       const multiplier = advanceCombo();
       const awarded = Math.round(points * multiplier);
       skillBonus += awarded;
-      if (label === "DODGE") updateMission("dodge");
-      if (label === "JUMP CLEAR") updateMission("jump");
       const comboText = multiplier > 1 ? ` x${multiplier}` : "";
       popups.push({ x, y, text: `${label}${comboText} +${awarded}`, life: 0.86, color: "#f0c247" });
       hintEl.textContent = `${label}${comboText} +${awarded}`;
@@ -1328,7 +1413,6 @@ function spawnCoins() {
     function advanceCombo() {
       comboTimer = COMBO_WINDOW;
       comboCount += 1;
-      updateMission("combo", comboCount);
       return comboMultiplier();
     }
 
@@ -1336,71 +1420,8 @@ function spawnCoins() {
       return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
     }
 
-    function createMission(level = missionLevel) {
-      const pool = [
-        { type: "coin", label: "Collect coins", target: 8, targetStep: 2, progress: 0, reward: 240, done: false },
-        { type: "dodge", label: "Dodge cars", target: 4, targetStep: 1, progress: 0, reward: 220, done: false },
-        { type: "jump", label: "Clear holes", target: 2, targetStep: 1, progress: 0, reward: 220, done: false },
-        { type: "combo", label: "Build combo", target: 6, targetStep: 2, progress: 0, reward: 260, done: false }
-      ];
-      const base = pool[Math.floor(Math.random() * pool.length)];
-      const levelBoost = Math.max(0, level - 1);
-      return {
-        ...base,
-        level,
-        target: base.target + base.targetStep * levelBoost,
-        reward: base.reward + levelBoost * 60
-      };
-    }
-
-    function updateMission(type, value = 1) {
-      if (!activeMission || activeMission.done || activeMission.type !== type) return;
-      if (type === "combo") {
-        activeMission.progress = Math.max(activeMission.progress, value);
-      } else {
-        activeMission.progress += value;
-      }
-      if (activeMission.progress < activeMission.target) return;
-      activeMission.progress = activeMission.target;
-      activeMission.done = true;
-      missionBonus += activeMission.reward;
-      missionRefreshTimer = MISSION_REFRESH_TIME;
-      startFever();
-      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: `MISSION +${activeMission.reward}`, life: 1.05, color: "#7beeff" });
-      hintEl.textContent = `Mission clear +${activeMission.reward}`;
-    }
-
-    function updateMissionRefresh(dt) {
-      if (!activeMission || !activeMission.done || missionRefreshTimer <= 0) return;
-      missionRefreshTimer = Math.max(0, missionRefreshTimer - dt);
-      if (missionRefreshTimer > 0) return;
-      missionLevel += 1;
-      activeMission = createMission();
-      popups.push({ x: W / 2, y: 104, text: "NEW MISSION", life: 0.9, color: "#f0c247" });
-      hintEl.textContent = activeMission.label;
-    }
-
-    function startFever() {
-      feverTimer = FEVER_DURATION;
-      comboTimer = Math.max(comboTimer, COMBO_WINDOW);
-      comboCount = Math.max(comboCount, 5);
-      coinTimer = Math.min(coinTimer, 0.25);
-      spawnFeverCoinTrail();
-      popups.push({ x: W / 2, y: PLAYER_Y - 154, text: "FEVER!", life: 1.1, color: "#7beeff" });
-    }
-
-    function spawnFeverCoinTrail() {
-      const baseLane = player.lane;
-      const alternateLane = baseLane === 1 ? (Math.random() < 0.5 ? 0 : 2) : 1;
-      for (let i = 0; i < FEVER_BONUS_COINS; i += 1) {
-        const lane = i % 3 === 1 ? alternateLane : baseLane;
-        const y = PLAYER_Y - 190 - i * 38;
-        coinItems.push({ lane, y, r: COIN_RADIUS, collected: false, bonus: true });
-      }
-    }
-
     function comboMagnetActive() {
-      return feverTimer > 0 || (comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN);
+      return comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN;
     }
 
     function applyCoinMagnet(coin, dt) {
@@ -1409,9 +1430,9 @@ function spawnCoins() {
       const dx = targetX - LANES[coin.lane];
       const dy = PLAYER_Y - coin.y;
       const distanceToPlayer = Math.hypot(dx, dy);
-      const radius = feverTimer > 0 ? FEVER_MAGNET_RADIUS : MAGNET_RADIUS;
-      const verticalReach = feverTimer > 0 ? 104 : 72;
-      const pullSpeed = feverTimer > 0 ? 13 : 9;
+      const radius = MAGNET_RADIUS;
+      const verticalReach = 72;
+      const pullSpeed = 9;
       if (distanceToPlayer > radius || Math.abs(dy) > verticalReach) return;
       coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * pullSpeed);
     }
@@ -1453,7 +1474,6 @@ function checkCollisions() {
           coin.collected = true;
           coinItems.splice(i, 1);
           const multiplier = advanceCombo();
-          updateMission("coin");
           const bonus = COIN_VALUE * (multiplier - 1);
           comboBonus += bonus;
           const comboText = multiplier > 1 ? ` x${multiplier}` : "";
@@ -1612,12 +1632,7 @@ function draw() {
       drawObstacles();
       drawPlayer();
       drawPopups();
-      drawComboMeter();
-      drawRescueMeter();
-      drawCheckpointMeter();
-      drawMissionPanel();
       if (lastChanceTimer > 0) drawLastChancePulse();
-      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0 || lastChanceTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
 function drawRoad() {
@@ -2099,133 +2114,6 @@ function drawObstacles() {
       ctx.restore();
     }
 
-    function drawComboMeter() {
-      if (comboTimer <= 0 || comboCount < 2) return;
-      const multiplier = comboMultiplier();
-      const x = 12;
-      const y = 16;
-      const w = 124;
-      const h = 42;
-      ctx.save();
-      ctx.fillStyle = "rgba(10, 12, 13, 0.58)";
-      ctx.strokeStyle = "rgba(240, 194, 71, 0.7)";
-      ctx.lineWidth = 1.5;
-      roundedRectPath(x, y, w, h, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#f0c247";
-      ctx.font = "900 18px Segoe UI, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(`COMBO x${multiplier}`, x + 10, y + 19);
-      if (comboMagnetActive()) {
-        ctx.fillStyle = "rgba(246,239,217,0.86)";
-        ctx.font = "800 10px Segoe UI, sans-serif";
-        ctx.textAlign = "right";
-        ctx.fillText(feverTimer > 0 ? "FEVER" : "MAGNET", x + w - 10, y + 18);
-      }
-      ctx.fillStyle = "rgba(246,239,217,0.22)";
-      ctx.fillRect(x + 10, y + 28, w - 20, 5);
-      ctx.fillStyle = "#f0c247";
-      ctx.fillRect(x + 10, y + 28, (w - 20) * (comboTimer / COMBO_WINDOW), 5);
-      ctx.restore();
-    }
-
-    function drawRescueMeter() {
-      if (!running) return;
-      if (rescueUsed) return;
-      const progress = Math.max(0, Math.min(1, coins / RESCUE_COST));
-      const ready = coins >= RESCUE_COST;
-      const x = 12;
-      const y = comboTimer > 0 && comboCount >= 2 ? 66 : 16;
-      const w = ready ? 128 : 116;
-      const h = 36;
-      const pulse = ready ? 0.72 + Math.sin(loopScroll * 0.12) * 0.18 : 0.42;
-      ctx.save();
-      ctx.fillStyle = ready ? "rgba(37, 85, 73, 0.72)" : "rgba(10, 12, 13, 0.48)";
-      ctx.strokeStyle = ready ? `rgba(123, 238, 255, ${pulse})` : "rgba(246, 239, 217, 0.28)";
-      ctx.lineWidth = ready ? 2.2 : 1.4;
-      roundedRectPath(x, y, w, h, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = ready ? "#7beeff" : "#f6efd9";
-      ctx.font = "900 11px Segoe UI, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(ready ? "RESCUE READY" : `RESCUE ${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`, x + 10, y + 14);
-      ctx.fillStyle = "rgba(246,239,217,0.18)";
-      ctx.fillRect(x + 10, y + 23, w - 20, 5);
-      ctx.fillStyle = ready ? "#7beeff" : "#f0c247";
-      ctx.fillRect(x + 10, y + 23, (w - 20) * progress, 5);
-      if (ready) {
-        ctx.globalAlpha = 0.22;
-        ctx.fillStyle = "#7beeff";
-        roundedRectPath(x - 4, y - 4, w + 8, h + 8, 10);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawCheckpointMeter() {
-      if (!running) return;
-      const previous = (checkpointIndex - 1) * CHECKPOINT_DISTANCE;
-      const next = checkpointIndex * CHECKPOINT_DISTANCE;
-      const progress = Math.max(0, Math.min(1, (distance - previous) / CHECKPOINT_DISTANCE));
-      const x = 137;
-      const y = 16;
-      const w = 116;
-      const h = 34;
-      ctx.save();
-      ctx.fillStyle = "rgba(10, 12, 13, 0.48)";
-      ctx.strokeStyle = "rgba(246, 239, 217, 0.26)";
-      ctx.lineWidth = 1.3;
-      roundedRectPath(x, y, w, h, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#f6efd9";
-      ctx.font = "900 10px Segoe UI, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(`NEXT ${next}m`, x + 9, y + 13);
-      ctx.fillStyle = "rgba(246,239,217,0.18)";
-      ctx.fillRect(x + 9, y + 22, w - 18, 5);
-      ctx.fillStyle = "#7beeff";
-      ctx.fillRect(x + 9, y + 22, (w - 18) * progress, 5);
-      ctx.fillStyle = "rgba(123,238,255,0.52)";
-      ctx.fillRect(x + 9 + (w - 18) * progress - 2, y + 20, 4, 9);
-      ctx.restore();
-    }
-
-    function drawMissionPanel() {
-      if (!activeMission) return;
-      const x = W - 154;
-      const y = 52;
-      const w = 140;
-      const h = 43;
-      const progress = activeMission.done ? 1 : Math.min(1, activeMission.progress / activeMission.target);
-      ctx.save();
-      ctx.fillStyle = activeMission.done ? "rgba(28, 86, 88, 0.68)" : "rgba(10, 12, 13, 0.52)";
-      ctx.strokeStyle = activeMission.done ? "rgba(123, 238, 255, 0.88)" : "rgba(246, 239, 217, 0.36)";
-      ctx.lineWidth = 1.5;
-      roundedRectPath(x, y, w, h, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = activeMission.done ? "#7beeff" : "#f6efd9";
-      ctx.font = "800 10px Segoe UI, sans-serif";
-      ctx.textAlign = "left";
-      const missionTitle = activeMission.done
-        ? "MISSION CLEAR"
-        : `${activeMission.label.toUpperCase()} LV${activeMission.level || 1}`;
-      ctx.fillText(missionTitle, x + 9, y + 15);
-      ctx.font = "900 16px Segoe UI, sans-serif";
-      const missionText = activeMission.done && missionRefreshTimer > 0
-        ? `NEXT ${Math.ceil(missionRefreshTimer)}s`
-        : `${activeMission.progress}/${activeMission.target}`;
-      ctx.fillText(missionText, x + 9, y + 32);
-      ctx.fillStyle = "rgba(246,239,217,0.18)";
-      ctx.fillRect(x + 58, y + 27, w - 70, 5);
-      ctx.fillStyle = activeMission.done ? "#7beeff" : "#f0c247";
-      ctx.fillRect(x + 58, y + 27, (w - 70) * progress, 5);
-      ctx.restore();
-    }
-
     function roundedRectPath(x, y, w, h, r) {
       const rr = Math.min(r, w / 2, h / 2);
       ctx.beginPath();
@@ -2239,14 +2127,6 @@ function drawObstacles() {
       ctx.lineTo(x, y + rr);
       ctx.quadraticCurveTo(x, y, x + rr, y);
       ctx.closePath();
-    }
-
-    function drawSpeedLabel() {
-      ctx.fillStyle = "rgba(246,239,217,0.86)";
-      ctx.font = "800 18px Segoe UI, sans-serif";
-      ctx.textAlign = "right";
-      const label = feverTimer > 0 ? "FEVER" : invincibleTimer > 0 ? "RESCUE" : lastChanceTimer > 0 ? "LAST CHANCE" : boostTimer > 0 ? "BOOST" : "SLOW";
-      ctx.fillText(label, W - 18, 30);
     }
 
     function drawLastChancePulse() {
