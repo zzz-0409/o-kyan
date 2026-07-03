@@ -481,7 +481,7 @@
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3-Lane Run</h2>
-          <p id="overlayText">Move left and right to dodge cars, jump over holes, collect coins, and use speed panels.</p>
+          <p id="overlayText">Move left and right to dodge cars, jump over holes, collect coins, and use speed panels. 5 coins can rescue one crash.</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -579,6 +579,8 @@
     const SWIPE_MIN = 36;
     const OBSTACLE_CLEARANCE = 250;
     const PANEL_CLEARANCE = 170;
+    const RESCUE_COST = 5;
+    const RESCUE_TIME = 1.45;
 
     let running = false;
     let gameOver = false;
@@ -598,6 +600,8 @@
     let panelTimer = 0;
     let slowTimer = 0;
     let boostTimer = 0;
+    let invincibleTimer = 0;
+    let rescueUsed = false;
     let jumpTimer = 0;
     let touchStart = null;
     let resultState = {
@@ -643,6 +647,8 @@
       panelTimer = 2.2;
       slowTimer = 0;
       boostTimer = 0;
+      invincibleTimer = 0;
+      rescueUsed = false;
       jumpTimer = 0;
       obstacles = [];
       coinItems = [];
@@ -809,14 +815,17 @@ function endGame() {
       todayRankEl.textContent = String(coins);
       const boostActive = boostTimer > 0;
       const slowActive = slowTimer > 0;
-      const effectRatio = boostActive
-        ? boostTimer / BOOST_DURATION
-        : slowActive
-          ? slowTimer / SLOW_DURATION
-          : 0;
+      const rescueActive = invincibleTimer > 0;
+      const effectRatio = rescueActive
+        ? invincibleTimer / RESCUE_TIME
+        : boostActive
+          ? boostTimer / BOOST_DURATION
+          : slowActive
+            ? slowTimer / SLOW_DURATION
+            : 0;
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
-      slowFill.parentElement.classList.toggle("boost", boostActive);
-      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive);
+      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive);
+      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive);
     }
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance);
@@ -1048,6 +1057,7 @@ function spawnCoins() {
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
+      invincibleTimer = Math.max(0, invincibleTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -1112,25 +1122,27 @@ function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
       const feet = playerFootRect();
-      for (let obstacleIndex = obstacles.length - 1; obstacleIndex >= 0; obstacleIndex -= 1) {
-        const obstacle = obstacles[obstacleIndex];
-        if (laneObjectPassed(obstacle)) continue;
-        if (obstacle.type === "hole") {
-          if (isJumping()) continue;
+      if (invincibleTimer <= 0) {
+        for (let obstacleIndex = obstacles.length - 1; obstacleIndex >= 0; obstacleIndex -= 1) {
+          const obstacle = obstacles[obstacleIndex];
+          if (laneObjectPassed(obstacle)) continue;
+          if (obstacle.type === "hole") {
+            if (isJumping()) continue;
+            for (const lane of obstacle.lanes) {
+              const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
+              if (rectsOverlap(feet, o)) {
+                crash();
+                return;
+              }
+            }
+            continue;
+          }
           for (const lane of obstacle.lanes) {
-            const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
-            if (rectsOverlap(feet, o)) {
-              endGame();
+            const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 8, 7);
+            if (rectsOverlap(hitP, o)) {
+              crash();
               return;
             }
-          }
-          continue;
-        }
-        for (const lane of obstacle.lanes) {
-          const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 8, 7);
-          if (rectsOverlap(hitP, o)) {
-            endGame();
-            return;
           }
         }
       }
@@ -1178,6 +1190,21 @@ function checkCollisions() {
           break;
         }
       }
+    }
+
+    function crash() {
+      if (!rescueUsed && coins >= RESCUE_COST) {
+        rescueUsed = true;
+        coins -= RESCUE_COST;
+        invincibleTimer = RESCUE_TIME;
+        obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 210 || obstacle.y > PLAYER_Y + 110);
+        slowGates = slowGates.filter((gate) => gate.y < PLAYER_Y - 160 || gate.y > PLAYER_Y + 80);
+        speedPanels = speedPanels.filter((panel) => panel.y < PLAYER_Y - 150 || panel.y > PLAYER_Y + 80);
+        hintEl.textContent = `RESCUE! Coins -${RESCUE_COST}`;
+        updateHud();
+        return;
+      }
+      endGame();
     }
 function playerRect() {
       const collisionX = LANES[player.lane];
@@ -1272,7 +1299,7 @@ function draw() {
       drawSlowGates();
       drawObstacles();
       drawPlayer();
-      if (slowTimer > 0 || boostTimer > 0) drawSpeedLabel();
+      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
 function drawRoad() {
@@ -1629,6 +1656,22 @@ function drawObstacles() {
       ctx.scale(pose.scale, pose.scale);
       ctx.fillRect(-PLAYER_W / 2 + 5, -5, PLAYER_W - 10, isJumping() ? 5 : 8);
       ctx.restore();
+      if (invincibleTimer > 0) {
+        const pulse = 0.55 + Math.sin(loopScroll * 0.12) * 0.2;
+        ctx.save();
+        ctx.translate(pose.x, pose.y - lift + bob - PLAYER_H * 0.55);
+        ctx.strokeStyle = `rgba(240, 194, 71, ${pulse})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 36, 48, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "#f0c247";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 42, 54, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
       const runFrame = playerRunSprites[Math.floor(roadScroll / 20) % playerRunSprites.length];
       const activePlayerSprite = isJumping() ? playerSprite : runFrame;
@@ -1666,7 +1709,8 @@ function drawObstacles() {
       ctx.fillStyle = "rgba(246,239,217,0.86)";
       ctx.font = "800 18px Segoe UI, sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(boostTimer > 0 ? "BOOST" : "SLOW", W - 18, 30);
+      const label = invincibleTimer > 0 ? "RESCUE" : boostTimer > 0 ? "BOOST" : "SLOW";
+      ctx.fillText(label, W - 18, 30);
     }
 function onPointerDown(event) {
       touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
