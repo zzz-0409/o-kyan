@@ -525,7 +525,7 @@
 <body>
   <main class="app">
     <header class="hud">
-      <h1>3-Lane Run</h1>
+      <h1>3レーンラン</h1>
       <div class="stat"><span>SCORE</span><strong id="distance">0</strong></div>
       <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
       <div class="stat"><span>COINS</span><strong id="todayRank">0</strong></div>
@@ -542,8 +542,8 @@
       </div>
       <div class="overlay show" id="overlay">
         <div class="dialog">
-          <h2 id="overlayTitle">3-Lane Run</h2>
-          <p id="overlayText">Move left and right to dodge cars, jump over holes, collect coins, and use speed panels. 5 coins can rescue one crash.</p>
+          <h2 id="overlayTitle">3レーンラン</h2>
+          <p id="overlayText">左右でレーン移動、JUMPで穴を回避。コインを5枚集めると一度だけミスを救済できます。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -552,20 +552,20 @@
             </div>
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
-          <button id="startButton" type="button">START</button>
+          <button id="startButton" type="button">スタート</button>
         </div>
       </div>
     </section>
 
     <div class="run-strip" aria-label="Run status">
-      <div class="run-pill" id="comboPill"><span>COMBO</span><strong id="comboStatus">-</strong></div>
-      <div class="run-pill" id="rescuePill"><span>RESCUE</span><strong id="rescueStatus">0/5</strong></div>
-      <div class="run-pill" id="checkpointPill"><span>NEXT</span><strong id="checkpointStatus">150m</strong></div>
-      <div class="run-pill" id="effectPill"><span>STATUS</span><strong id="effectStatus">-</strong></div>
+      <div class="run-pill" id="comboPill"><span>コンボ</span><strong id="comboStatus">-</strong></div>
+      <div class="run-pill" id="rescuePill"><span>救済</span><strong id="rescueStatus">0/5</strong></div>
+      <div class="run-pill" id="checkpointPill"><span>次</span><strong id="checkpointStatus">150m</strong></div>
+      <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
     </div>
 
     <footer class="footer">
-      <span id="hint">Left/Right to move, JUMP to jump</span>
+      <span id="hint">左右で移動、JUMPでジャンプ</span>
       <div class="slow-bar" aria-label="speed effect"><i id="slowFill"></i></div>
     </footer>
   </main>
@@ -776,7 +776,7 @@
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      hintEl.textContent = "Left/Right to move, JUMP to jump";
+      hintEl.textContent = "左右で移動、JUMPでジャンプ";
       updateHud();
       lastTime = performance.now();
       frameCarry = 0;
@@ -793,9 +793,9 @@ function endGame() {
       const rank = saveDailyScore(score);
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
-      overlayTitle.textContent = isBest ? "NEW BEST!" : "GAME OVER";
-      overlayText.textContent = `${distanceScore} pts including skill + ${collectedCoins} coins converting`;
-      startButton.textContent = collectedCoins > 0 ? "SKIP COINS" : "SKIP RESULT";
+      overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
+      overlayText.textContent = `${distanceScore}点 + ${collectedCoins}コインを換算`;
+      startButton.textContent = collectedCoins > 0 ? "コイン換算スキップ" : "結果スキップ";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       overlay.classList.add("show");
       renderDailyRanking(rank);
@@ -847,7 +847,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore}点 / 技術${skillBonus}点 / コンボ${comboBonus}点 / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -890,9 +890,9 @@ function endGame() {
       clearScoreConversion();
       scoreConvert.classList.remove("show");
       scoreConvert.setAttribute("aria-hidden", "true");
-      overlayTitle.textContent = resultState.isBest ? "NEW BEST" : "READY";
+      overlayTitle.textContent = resultState.isBest ? "新記録" : "もう一回";
       overlayText.textContent = resultState.isBest
-        ? `最高スコア ${resultState.finalScore}点！ 次のランでさらに伸ばそう。`
+        ? `最高スコア ${resultState.finalScore}点！`
         : `${resultState.finalScore}点。もう一回いく？`;
       dailyRankingEl.innerHTML = "";
       startButton.textContent = "リスタート";
@@ -955,7 +955,7 @@ function endGame() {
       comboPill.classList.toggle("active", comboActive);
 
       const rescueReady = !rescueUsed && coins >= RESCUE_COST;
-      rescueStatus.textContent = rescueUsed ? "USED" : rescueReady ? "READY" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
+      rescueStatus.textContent = rescueUsed ? "使用済" : rescueReady ? "準備OK" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
       rescuePill.classList.toggle("ready", rescueReady);
 
       const nextCheckpoint = checkpointIndex * CHECKPOINT_DISTANCE;
@@ -964,13 +964,13 @@ function endGame() {
       checkpointPill.classList.toggle("active", remaining <= 30);
 
       const effectLabel = invincibleTimer > 0
-        ? "RESCUE"
+        ? "救済"
         : lastChanceTimer > 0
-          ? "LAST"
+          ? "猶予"
           : boostTimer > 0
-            ? "BOOST"
+            ? "加速"
             : slowTimer > 0
-              ? "SLOW"
+              ? "減速"
               : "-";
       effectStatus.textContent = effectLabel;
       effectPill.classList.toggle("active", effectLabel !== "-");
@@ -984,7 +984,7 @@ function endGame() {
       if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
       bestPaceAnnounced = true;
       popups.push({ x: W / 2, y: PLAYER_Y - 170, text: "NEW BEST PACE!", life: 1.2, color: "#7beeff" });
-      hintEl.textContent = `New best pace ${runScore}`;
+      hintEl.textContent = `新記録ペース ${runScore}点`;
     }
 
     function todayKey() {
@@ -1037,7 +1037,7 @@ function endGame() {
       if (nextLane === player.lane) return;
       player.lane = nextLane;
       player.holdTimer = 0;
-      hintEl.textContent = direction < 0 ? "Move left" : "Move right";
+      hintEl.textContent = direction < 0 ? "左へ移動" : "右へ移動";
     }
 
     function jump() {
@@ -1045,7 +1045,7 @@ function endGame() {
       if (jumpTimer > 0) {
         if (jumpTimer <= JUMP_BUFFER_ARM_TIME) {
           jumpBufferTimer = JUMP_BUFFER_TIME;
-          hintEl.textContent = "Jump queued";
+          hintEl.textContent = "ジャンプ予約";
         }
         return;
       }
@@ -1055,7 +1055,7 @@ function endGame() {
     function startJump() {
       jumpTimer = JUMP_DURATION;
       jumpBufferTimer = 0;
-      hintEl.textContent = "Jump";
+      hintEl.textContent = "ジャンプ";
     }
 function spawnObstacle() {
       if (!hasObstacleClearance()) {
@@ -1239,7 +1239,7 @@ function spawnCoins() {
       spawnCheckpointCoinTrail(index);
       coinTimer = Math.min(coinTimer, 0.35);
       popups.push({ x: W / 2, y: PLAYER_Y - 132, text: `${milestone}m +${bonus}`, life: 1.05, color: "#7beeff" });
-      hintEl.textContent = `Checkpoint ${milestone}m +${bonus}`;
+      hintEl.textContent = `${milestone}m到達 +${bonus}`;
     }
 
     function spawnCheckpointCoinTrail(index) {
@@ -1382,8 +1382,8 @@ function spawnCoins() {
       lastChanceTarget = obstacle;
       lastChanceTimer = LAST_CHANCE_DURATION;
       comboTimer = Math.max(comboTimer, 1.2);
-      hintEl.textContent = "LAST CHANCE!";
-      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: "LAST CHANCE!", life: 0.7, color: "#7beeff" });
+      hintEl.textContent = "ラストチャンス！";
+      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: "ラストチャンス！", life: 0.7, color: "#7beeff" });
       return true;
     }
 
@@ -1397,7 +1397,7 @@ function spawnCoins() {
       lastChanceTarget = null;
       lastChanceTimer = 0;
       popups.push({ x: player.x, y: PLAYER_Y - 104, text: `CLUTCH +${LAST_CHANCE_BONUS}`, life: 0.92, color: "#7beeff" });
-      hintEl.textContent = `Clutch dodge +${LAST_CHANCE_BONUS}`;
+      hintEl.textContent = `ギリギリ回避 +${LAST_CHANCE_BONUS}`;
       obstacle.lastChanceAwarded = true;
     }
 
@@ -1478,7 +1478,7 @@ function checkCollisions() {
           comboBonus += bonus;
           const comboText = multiplier > 1 ? ` x${multiplier}` : "";
           popups.push({ x: coinX(coin), y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
-          hintEl.textContent = multiplier > 1 ? `Coin combo x${multiplier} / +${bonus}` : `Coin +1 / ${coins}`;
+          hintEl.textContent = multiplier > 1 ? `コインコンボ x${multiplier} / +${bonus}` : `コイン +1 / ${coins}`;
         }
       }
 
@@ -1527,7 +1527,7 @@ function checkCollisions() {
         obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 210 || obstacle.y > PLAYER_Y + 110);
         slowGates = slowGates.filter((gate) => gate.y < PLAYER_Y - 160 || gate.y > PLAYER_Y + 80);
         speedPanels = speedPanels.filter((panel) => panel.y < PLAYER_Y - 150 || panel.y > PLAYER_Y + 80);
-        hintEl.textContent = `RESCUE! Coins -${RESCUE_COST}`;
+        hintEl.textContent = `救済！ コイン -${RESCUE_COST}`;
         updateHud();
         return;
       }
@@ -2145,8 +2145,8 @@ function drawObstacles() {
       ctx.textAlign = "center";
       ctx.lineWidth = 5;
       ctx.strokeStyle = "rgba(10, 12, 13, 0.72)";
-      ctx.strokeText("LAST CHANCE", W / 2, 118);
-      ctx.fillText("LAST CHANCE", W / 2, 118);
+      ctx.strokeText("ラストチャンス", W / 2, 118);
+      ctx.fillText("ラストチャンス", W / 2, 118);
       ctx.restore();
     }
 function onPointerDown(event) {
