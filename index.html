@@ -586,6 +586,8 @@
     const COMBO_WINDOW = 3.2;
     const MAGNET_COMBO_MIN = 2;
     const MAGNET_RADIUS = 118;
+    const FEVER_DURATION = 4.5;
+    const FEVER_MAGNET_RADIUS = 170;
 
     let running = false;
     let gameOver = false;
@@ -611,6 +613,7 @@
     let slowTimer = 0;
     let boostTimer = 0;
     let invincibleTimer = 0;
+    let feverTimer = 0;
     let rescueUsed = false;
     let jumpTimer = 0;
     let touchStart = null;
@@ -665,6 +668,7 @@
       slowTimer = 0;
       boostTimer = 0;
       invincibleTimer = 0;
+      feverTimer = 0;
       rescueUsed = false;
       jumpTimer = 0;
       obstacles = [];
@@ -835,16 +839,19 @@ function endGame() {
       const boostActive = boostTimer > 0;
       const slowActive = slowTimer > 0;
       const rescueActive = invincibleTimer > 0;
-      const effectRatio = rescueActive
-        ? invincibleTimer / RESCUE_TIME
-        : boostActive
-          ? boostTimer / BOOST_DURATION
-          : slowActive
-            ? slowTimer / SLOW_DURATION
-            : 0;
+      const feverActive = feverTimer > 0;
+      const effectRatio = feverActive
+        ? feverTimer / FEVER_DURATION
+        : rescueActive
+          ? invincibleTimer / RESCUE_TIME
+          : boostActive
+            ? boostTimer / BOOST_DURATION
+            : slowActive
+              ? slowTimer / SLOW_DURATION
+              : 0;
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
-      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive);
-      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive);
+      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive || feverActive);
+      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive && !feverActive);
     }
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus + missionBonus);
@@ -1077,6 +1084,7 @@ function spawnCoins() {
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
       invincibleTimer = Math.max(0, invincibleTimer - dt);
+      feverTimer = Math.max(0, feverTimer - dt);
       comboTimer = Math.max(0, comboTimer - dt);
       if (comboTimer <= 0) comboCount = 0;
       speed = rawSpeed;
@@ -1100,7 +1108,7 @@ function spawnCoins() {
         coinTimer -= dt;
         if (coinTimer <= 0) {
           spawnCoins();
-          coinTimer = 1.55 + Math.random() * 1.35;
+          coinTimer = feverTimer > 0 ? 0.55 + Math.random() * 0.35 : 1.55 + Math.random() * 1.35;
         }
 
         slowGateTimer -= dt;
@@ -1208,12 +1216,21 @@ function spawnCoins() {
       activeMission.progress = activeMission.target;
       activeMission.done = true;
       missionBonus += activeMission.reward;
+      startFever();
       popups.push({ x: W / 2, y: PLAYER_Y - 118, text: `MISSION +${activeMission.reward}`, life: 1.05, color: "#7beeff" });
       hintEl.textContent = `Mission clear +${activeMission.reward}`;
     }
 
+    function startFever() {
+      feverTimer = FEVER_DURATION;
+      comboTimer = Math.max(comboTimer, COMBO_WINDOW);
+      comboCount = Math.max(comboCount, 5);
+      coinTimer = Math.min(coinTimer, 0.25);
+      popups.push({ x: W / 2, y: PLAYER_Y - 154, text: "FEVER!", life: 1.1, color: "#7beeff" });
+    }
+
     function comboMagnetActive() {
-      return comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN;
+      return feverTimer > 0 || (comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN);
     }
 
     function applyCoinMagnet(coin, dt) {
@@ -1222,8 +1239,11 @@ function spawnCoins() {
       const dx = targetX - LANES[coin.lane];
       const dy = PLAYER_Y - coin.y;
       const distanceToPlayer = Math.hypot(dx, dy);
-      if (distanceToPlayer > MAGNET_RADIUS || Math.abs(dy) > 72) return;
-      coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * 9);
+      const radius = feverTimer > 0 ? FEVER_MAGNET_RADIUS : MAGNET_RADIUS;
+      const verticalReach = feverTimer > 0 ? 104 : 72;
+      const pullSpeed = feverTimer > 0 ? 13 : 9;
+      if (distanceToPlayer > radius || Math.abs(dy) > verticalReach) return;
+      coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * pullSpeed);
     }
 function checkCollisions() {
       const p = playerRect();
@@ -1421,7 +1441,7 @@ function draw() {
       drawPopups();
       drawComboMeter();
       drawMissionPanel();
-      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0) drawSpeedLabel();
+      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
 function drawRoad() {
@@ -1873,7 +1893,7 @@ function drawObstacles() {
         ctx.fillStyle = "rgba(246,239,217,0.86)";
         ctx.font = "800 10px Segoe UI, sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("MAGNET", x + w - 10, y + 18);
+        ctx.fillText(feverTimer > 0 ? "FEVER" : "MAGNET", x + w - 10, y + 18);
       }
       ctx.fillStyle = "rgba(246,239,217,0.22)";
       ctx.fillRect(x + 10, y + 28, w - 20, 5);
@@ -1928,7 +1948,7 @@ function drawObstacles() {
       ctx.fillStyle = "rgba(246,239,217,0.86)";
       ctx.font = "800 18px Segoe UI, sans-serif";
       ctx.textAlign = "right";
-      const label = invincibleTimer > 0 ? "RESCUE" : boostTimer > 0 ? "BOOST" : "SLOW";
+      const label = feverTimer > 0 ? "FEVER" : invincibleTimer > 0 ? "RESCUE" : boostTimer > 0 ? "BOOST" : "SLOW";
       ctx.fillText(label, W - 18, 30);
     }
 function onPointerDown(event) {
