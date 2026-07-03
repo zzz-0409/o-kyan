@@ -583,6 +583,7 @@
     const RESCUE_TIME = 1.45;
     const CAR_DODGE_BONUS = 35;
     const JUMP_CLEAR_BONUS = 80;
+    const COMBO_WINDOW = 3.2;
 
     let running = false;
     let gameOver = false;
@@ -592,6 +593,9 @@
     let distance = 0;
     let coins = 0;
     let skillBonus = 0;
+    let comboCount = 0;
+    let comboTimer = 0;
+    let comboBonus = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let speed = BASE_SPEED;
@@ -643,6 +647,9 @@
       distance = 0;
       coins = 0;
       skillBonus = 0;
+      comboCount = 0;
+      comboTimer = 0;
+      comboBonus = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
@@ -678,7 +685,7 @@ function endGame() {
       gameOver = true;
       stageEl.classList.remove("playing");
       const score = computeScore();
-      const distanceScore = Math.floor(distance + skillBonus);
+      const distanceScore = Math.floor(distance + skillBonus + comboBonus);
       const collectedCoins = coins;
       const isBest = score > best;
       const rank = saveDailyScore(score);
@@ -738,7 +745,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore} pts / skill ${skillBonus} / combo ${comboBonus} / 0 coins / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -771,7 +778,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / スキル${skillBonus}点 / コンボ${comboBonus}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -816,7 +823,7 @@ function endGame() {
     }
 
     function updateHud() {
-      distanceEl.textContent = String(Math.floor(distance + skillBonus));
+      distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       const boostActive = boostTimer > 0;
@@ -834,7 +841,7 @@ function endGame() {
       slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive);
     }
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance + skillBonus);
+      return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus);
     }
 
     function todayKey() {
@@ -1064,6 +1071,8 @@ function spawnCoins() {
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
       invincibleTimer = Math.max(0, invincibleTimer - dt);
+      comboTimer = Math.max(0, comboTimer - dt);
+      if (comboTimer <= 0) comboCount = 0;
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -1150,9 +1159,22 @@ function spawnCoins() {
     }
 
     function addSkillBonus(points, label, x, y) {
-      skillBonus += points;
-      popups.push({ x, y, text: `${label} +${points}`, life: 0.86, color: "#f0c247" });
-      hintEl.textContent = `${label} +${points}`;
+      const multiplier = advanceCombo();
+      const awarded = Math.round(points * multiplier);
+      skillBonus += awarded;
+      const comboText = multiplier > 1 ? ` x${multiplier}` : "";
+      popups.push({ x, y, text: `${label}${comboText} +${awarded}`, life: 0.86, color: "#f0c247" });
+      hintEl.textContent = `${label}${comboText} +${awarded}`;
+    }
+
+    function advanceCombo() {
+      comboTimer = COMBO_WINDOW;
+      comboCount += 1;
+      return comboMultiplier();
+    }
+
+    function comboMultiplier() {
+      return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
     }
 function checkCollisions() {
       const p = playerRect();
@@ -1189,7 +1211,12 @@ function checkCollisions() {
           coins += 1;
           coin.collected = true;
           coinItems.splice(i, 1);
-          hintEl.textContent = `Coin +1 / ${coins}`;
+          const multiplier = advanceCombo();
+          const bonus = COIN_VALUE * (multiplier - 1);
+          comboBonus += bonus;
+          const comboText = multiplier > 1 ? ` x${multiplier}` : "";
+          popups.push({ x: LANES[coin.lane], y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
+          hintEl.textContent = multiplier > 1 ? `Coin combo x${multiplier} / +${bonus}` : `Coin +1 / ${coins}`;
         }
       }
 
@@ -1232,6 +1259,8 @@ function checkCollisions() {
       if (!rescueUsed && coins >= RESCUE_COST) {
         rescueUsed = true;
         coins -= RESCUE_COST;
+        comboCount = 0;
+        comboTimer = 0;
         invincibleTimer = RESCUE_TIME;
         obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 210 || obstacle.y > PLAYER_Y + 110);
         slowGates = slowGates.filter((gate) => gate.y < PLAYER_Y - 160 || gate.y > PLAYER_Y + 80);
@@ -1336,6 +1365,7 @@ function draw() {
       drawObstacles();
       drawPlayer();
       drawPopups();
+      drawComboMeter();
       if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
@@ -1756,6 +1786,46 @@ function drawObstacles() {
         ctx.fillText(popup.text, popup.x, popup.y);
       }
       ctx.restore();
+    }
+
+    function drawComboMeter() {
+      if (comboTimer <= 0 || comboCount < 2) return;
+      const multiplier = comboMultiplier();
+      const x = 12;
+      const y = 16;
+      const w = 124;
+      const h = 42;
+      ctx.save();
+      ctx.fillStyle = "rgba(10, 12, 13, 0.58)";
+      ctx.strokeStyle = "rgba(240, 194, 71, 0.7)";
+      ctx.lineWidth = 1.5;
+      roundedRectPath(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#f0c247";
+      ctx.font = "900 18px Segoe UI, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`COMBO x${multiplier}`, x + 10, y + 19);
+      ctx.fillStyle = "rgba(246,239,217,0.22)";
+      ctx.fillRect(x + 10, y + 28, w - 20, 5);
+      ctx.fillStyle = "#f0c247";
+      ctx.fillRect(x + 10, y + 28, (w - 20) * (comboTimer / COMBO_WINDOW), 5);
+      ctx.restore();
+    }
+
+    function roundedRectPath(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+      ctx.lineTo(x + w, y + h - rr);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+      ctx.lineTo(x + rr, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+      ctx.lineTo(x, y + rr);
+      ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
     }
 
     function drawSpeedLabel() {
