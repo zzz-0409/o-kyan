@@ -591,6 +591,9 @@
     const FEVER_DURATION = 4.5;
     const FEVER_MAGNET_RADIUS = 170;
     const SAFE_GUIDE_RANGE = 470;
+    const LAST_CHANCE_DURATION = 0.42;
+    const LAST_CHANCE_SPEED_FACTOR = 0.36;
+    const LAST_CHANCE_BONUS = 120;
 
     let running = false;
     let gameOver = false;
@@ -617,6 +620,8 @@
     let boostTimer = 0;
     let invincibleTimer = 0;
     let feverTimer = 0;
+    let lastChanceTimer = 0;
+    let lastChanceTarget = null;
     let rescueUsed = false;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
@@ -673,6 +678,8 @@
       boostTimer = 0;
       invincibleTimer = 0;
       feverTimer = 0;
+      lastChanceTimer = 0;
+      lastChanceTarget = null;
       rescueUsed = false;
       jumpTimer = 0;
       jumpBufferTimer = 0;
@@ -845,18 +852,21 @@ function endGame() {
       const slowActive = slowTimer > 0;
       const rescueActive = invincibleTimer > 0;
       const feverActive = feverTimer > 0;
+      const lastChanceActive = lastChanceTimer > 0;
       const effectRatio = feverActive
         ? feverTimer / FEVER_DURATION
         : rescueActive
           ? invincibleTimer / RESCUE_TIME
-          : boostActive
-            ? boostTimer / BOOST_DURATION
-            : slowActive
-              ? slowTimer / SLOW_DURATION
-              : 0;
+          : lastChanceActive
+            ? lastChanceTimer / LAST_CHANCE_DURATION
+            : boostActive
+              ? boostTimer / BOOST_DURATION
+              : slowActive
+                ? slowTimer / SLOW_DURATION
+                : 0;
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
       slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive || feverActive);
-      slowFill.parentElement.classList.toggle("slow", slowActive && !boostActive && !rescueActive && !feverActive);
+      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive && !rescueActive && !feverActive);
     }
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus + missionBonus);
@@ -1102,11 +1112,17 @@ function spawnCoins() {
       boostTimer = Math.max(0, boostTimer - dt);
       invincibleTimer = Math.max(0, invincibleTimer - dt);
       feverTimer = Math.max(0, feverTimer - dt);
+      lastChanceTimer = Math.max(0, lastChanceTimer - dt);
+      if (lastChanceTarget && !obstacles.includes(lastChanceTarget)) {
+        lastChanceTarget = null;
+        lastChanceTimer = 0;
+      }
       comboTimer = Math.max(0, comboTimer - dt);
       if (comboTimer <= 0) comboCount = 0;
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
+      if (lastChanceTimer > 0) speed *= LAST_CHANCE_SPEED_FACTOR;
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
       jumpTimer = Math.max(0, jumpTimer - dt);
@@ -1179,18 +1195,61 @@ function spawnCoins() {
     function awardPassedObstacles() {
       for (const obstacle of obstacles) {
         if (obstacle.scored || invincibleTimer > 0 || !laneObjectPassed(obstacle)) continue;
+        if (obstacle === lastChanceTarget && !lastChanceAvoided(obstacle)) {
+          lastChanceTimer = 0;
+          crash();
+          return;
+        }
         obstacle.scored = true;
         if (obstacle.type === "hole") {
           if (isJumping() && obstacle.lanes.includes(player.lane)) {
             addSkillBonus(JUMP_CLEAR_BONUS, "JUMP CLEAR", LANES[player.lane], PLAYER_Y - 74);
+          }
+          if (obstacle === lastChanceTarget) {
+            awardLastChanceBonus(obstacle);
           }
           continue;
         }
         if (!obstacle.lanes.includes(player.lane)) {
           const bonus = obstacle.lanes.length > 1 ? CAR_DODGE_BONUS + 20 : CAR_DODGE_BONUS;
           addSkillBonus(bonus, "DODGE", player.x, PLAYER_Y - 68);
+          if (obstacle === lastChanceTarget) {
+            awardLastChanceBonus(obstacle);
+          }
         }
       }
+    }
+
+    function lastChanceAvoided(obstacle) {
+      if (obstacle.type === "hole") {
+        return !obstacle.lanes.includes(player.lane) || isJumping();
+      }
+      return !obstacle.lanes.includes(player.lane);
+    }
+
+    function triggerLastChance(obstacle) {
+      if (obstacle.lastChanceUsed) return false;
+      obstacle.lastChanceUsed = true;
+      lastChanceTarget = obstacle;
+      lastChanceTimer = LAST_CHANCE_DURATION;
+      comboTimer = Math.max(comboTimer, 1.2);
+      hintEl.textContent = "LAST CHANCE!";
+      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: "LAST CHANCE!", life: 0.7, color: "#7beeff" });
+      return true;
+    }
+
+    function shouldHoldCrashForLastChance(obstacle) {
+      if (lastChanceTarget === obstacle && lastChanceTimer > 0) return true;
+      return triggerLastChance(obstacle);
+    }
+
+    function awardLastChanceBonus(obstacle) {
+      skillBonus += LAST_CHANCE_BONUS;
+      lastChanceTarget = null;
+      lastChanceTimer = 0;
+      popups.push({ x: player.x, y: PLAYER_Y - 104, text: `CLUTCH +${LAST_CHANCE_BONUS}`, life: 0.92, color: "#7beeff" });
+      hintEl.textContent = `Clutch dodge +${LAST_CHANCE_BONUS}`;
+      obstacle.lastChanceAwarded = true;
     }
 
     function addSkillBonus(points, label, x, y) {
@@ -1278,6 +1337,7 @@ function checkCollisions() {
             for (const lane of obstacle.lanes) {
               const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
               if (rectsOverlap(feet, o)) {
+                if (shouldHoldCrashForLastChance(obstacle)) return;
                 crash();
                 return;
               }
@@ -1287,6 +1347,7 @@ function checkCollisions() {
           for (const lane of obstacle.lanes) {
             const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 8, 7);
             if (rectsOverlap(hitP, o)) {
+              if (shouldHoldCrashForLastChance(obstacle)) return;
               crash();
               return;
             }
@@ -1462,7 +1523,8 @@ function draw() {
       drawPopups();
       drawComboMeter();
       drawMissionPanel();
-      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0) drawSpeedLabel();
+      if (lastChanceTimer > 0) drawLastChancePulse();
+      if (slowTimer > 0 || boostTimer > 0 || invincibleTimer > 0 || feverTimer > 0 || lastChanceTimer > 0) drawSpeedLabel();
       ctx.restore();
     }
 function drawRoad() {
@@ -2014,8 +2076,29 @@ function drawObstacles() {
       ctx.fillStyle = "rgba(246,239,217,0.86)";
       ctx.font = "800 18px Segoe UI, sans-serif";
       ctx.textAlign = "right";
-      const label = feverTimer > 0 ? "FEVER" : invincibleTimer > 0 ? "RESCUE" : boostTimer > 0 ? "BOOST" : "SLOW";
+      const label = feverTimer > 0 ? "FEVER" : invincibleTimer > 0 ? "RESCUE" : lastChanceTimer > 0 ? "LAST CHANCE" : boostTimer > 0 ? "BOOST" : "SLOW";
       ctx.fillText(label, W - 18, 30);
+    }
+
+    function drawLastChancePulse() {
+      const ratio = Math.max(0, Math.min(1, lastChanceTimer / LAST_CHANCE_DURATION));
+      const pulse = 0.35 + Math.sin(loopScroll * 0.22) * 0.12;
+      const strokeAlpha = Math.min(0.95, 0.55 + pulse);
+      ctx.save();
+      ctx.globalAlpha = 0.45 + ratio * 0.35;
+      ctx.strokeStyle = `rgba(123, 238, 255, ${strokeAlpha})`;
+      ctx.lineWidth = 5;
+      ctx.strokeRect(8, 8, W - 16, H - 16);
+      ctx.fillStyle = "rgba(123, 238, 255, 0.12)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#7beeff";
+      ctx.font = "900 22px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(10, 12, 13, 0.72)";
+      ctx.strokeText("LAST CHANCE", W / 2, 118);
+      ctx.fillText("LAST CHANCE", W / 2, 118);
+      ctx.restore();
     }
 function onPointerDown(event) {
       touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
