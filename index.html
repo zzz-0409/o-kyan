@@ -594,12 +594,15 @@
     const LAST_CHANCE_DURATION = 0.42;
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
     const LAST_CHANCE_BONUS = 120;
+    const WARMUP_DURATION = 14;
+    const FULL_DIFFICULTY_TIME = 82;
 
     let running = false;
     let gameOver = false;
     let lastTime = 0;
     let frameCarry = 0;
     let loopActive = false;
+    let runTime = 0;
     let distance = 0;
     let coins = 0;
     let skillBonus = 0;
@@ -660,6 +663,7 @@
       clearScoreConversion();
       running = true;
       gameOver = false;
+      runTime = 0;
       distance = 0;
       coins = 0;
       skillBonus = 0;
@@ -947,19 +951,20 @@ function spawnObstacle() {
         spawnTimer = 0.35;
         return;
       }
-      if (Math.random() < 0.24) {
+      const difficulty = difficultyRatio();
+      if (runTime > WARMUP_DURATION && Math.random() < 0.08 + difficulty * 0.18) {
         spawnComboObstacle();
         return;
       }
 
-      const type = Math.random() < 0.32 ? "hole" : "car";
+      const type = Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
       if (type === "hole") {
         obstacles.push({ type, lanes: [0, 1, 2], y: -62, h: 52, group: "solo" });
         return;
       }
 
       const lane = Math.floor(Math.random() * 3);
-      const wide = Math.random() < 0.22;
+      const wide = runTime > WARMUP_DURATION && Math.random() < 0.1 + difficulty * 0.16;
       if (wide) {
         const left = chooseWideBlockLeft();
         obstacles.push({ type, lanes: [left, left + 1], y: -92, h: 82, group: "solo" });
@@ -1105,8 +1110,13 @@ function spawnCoins() {
       return aTop < bBottom + clearance && aBottom + clearance > bTop;
     }
 
+    function difficultyRatio() {
+      return Math.max(0, Math.min(1, (runTime - WARMUP_DURATION) / (FULL_DIFFICULTY_TIME - WARMUP_DURATION)));
+    }
+
     function update(dt) {
       if (!running) return;
+      runTime += dt;
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
@@ -1138,7 +1148,9 @@ function spawnCoins() {
         if (spawnTimer <= 0) {
           spawnObstacle();
           const rate = speed / BASE_SPEED;
-          spawnTimer = Math.max(0.72, 1.2 - rate * 0.07 + Math.random() * 0.42);
+          const difficulty = difficultyRatio();
+          const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
+          spawnTimer = Math.max(0.68, 1.28 + warmupSpace - difficulty * 0.28 - rate * 0.06 + Math.random() * 0.44);
         }
 
         coinTimer -= dt;
