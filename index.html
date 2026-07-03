@@ -617,6 +617,7 @@
     let missionBonus = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
+    let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
     let roadScroll = 0;
     let loopScroll = 0;
@@ -677,6 +678,7 @@
       comboTimer = 0;
       comboBonus = 0;
       missionBonus = 0;
+      bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
@@ -855,9 +857,11 @@ function endGame() {
     }
 
     function updateHud() {
+      const runScore = computeScore();
       distanceEl.textContent = String(Math.floor(distance + skillBonus + comboBonus + missionBonus));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
+      checkBestPace(runScore);
       const boostActive = boostTimer > 0;
       const slowActive = slowTimer > 0;
       const rescueActive = invincibleTimer > 0;
@@ -880,6 +884,13 @@ function endGame() {
     }
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance + skillBonus + comboBonus + missionBonus);
+    }
+
+    function checkBestPace(runScore) {
+      if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
+      bestPaceAnnounced = true;
+      popups.push({ x: W / 2, y: PLAYER_Y - 170, text: "NEW BEST PACE!", life: 1.2, color: "#7beeff" });
+      hintEl.textContent = `New best pace ${runScore}`;
     }
 
     function todayKey() {
