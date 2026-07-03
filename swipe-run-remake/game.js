@@ -52,6 +52,7 @@ let loopActive = false;
 let score = 0;
 let distance = 0;
 let coins = 0;
+let runTime = 0;
 let best = Number(localStorage.getItem("swipeRunRemakeBest") || 0);
 let roadScroll = 0;
 let speed = BASE_SPEED;
@@ -93,9 +94,10 @@ function resetGame() {
   score = 0;
   distance = 0;
   coins = 0;
+  runTime = 0;
   roadScroll = 0;
   speed = BASE_SPEED;
-  spawnTimer = 0.8;
+  spawnTimer = 3.2;
   coinTimer = 0.7;
   itemTimer = 2.6;
   boostTimer = 0;
@@ -139,7 +141,7 @@ function endGame() {
     tick: 0
   };
   overlayTitle.textContent = isBest ? "NEW BEST!" : "GAME OVER";
-  overlayText.textContent = `${distanceScore}点 + ${coins}枚のバッジを換算中`;
+  overlayText.textContent = `${distanceScore}点 + ${coins}枚のコインを換算中`;
   mainButton.textContent = coins > 0 ? "SKIP COINS" : "RESTART";
   dialog.classList.toggle("new-best", isBest);
   conversion.classList.toggle("show", coins > 0);
@@ -164,7 +166,7 @@ function updateResult(dt) {
   if (result.coinsLeft <= 0) {
     result.phase = "done";
     conversion.classList.remove("show");
-    overlayText.textContent = `${result.finalScore}点 / 距離${result.distanceScore}点 / バッジ${coins}枚 / Today #${result.rank}`;
+    overlayText.textContent = `${result.finalScore}点 / 距離${result.distanceScore}点 / コイン${coins}枚 / Today #${result.rank}`;
     mainButton.textContent = "RESTART";
     bestEl.textContent = String(best);
   }
@@ -198,6 +200,7 @@ function update(dt) {
   boostTimer = Math.max(0, boostTimer - dt);
   slowTimer = Math.max(0, slowTimer - dt);
   speed = base * (boostTimer > 0 ? 1.48 : 1) * (slowTimer > 0 ? 0.58 : 1);
+  runTime += dt;
   distance += speed * dt / 12;
   score = Math.floor(distance) + coins * COIN_VALUE;
   roadScroll += speed * dt;
@@ -233,6 +236,10 @@ function update(dt) {
 }
 
 function spawnObstacle() {
+  if (runTime < 3.2) {
+    spawnTimer = 0.4;
+    return;
+  }
   if (!hasClearance(-100, -20, 185)) {
     spawnTimer = 0.35;
     return;
@@ -241,7 +248,7 @@ function spawnObstacle() {
   if (roll < 0.26 && distance > 240) {
     const lane = Math.floor(Math.random() * 3);
     obstacles.push({ type: "gate", lanes: [lane], y: -108, h: 94 });
-  } else if (roll < 0.52) {
+  } else if (roll < 0.52 && runTime > 8) {
     obstacles.push({ type: "hole", lanes: [0, 1, 2], y: -64, h: 54 });
   } else {
     const lane = Math.floor(Math.random() * 3);
@@ -315,7 +322,7 @@ function checkCollisions() {
       if (rectsOverlap(p, coinRect(item))) {
         item.used = true;
         coins += 1;
-        hintEl.textContent = `バッジ +1 / ${coins}`;
+        hintEl.textContent = `コイン +1 / ${coins}`;
       }
       continue;
     }
