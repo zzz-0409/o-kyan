@@ -1051,7 +1051,8 @@ function endGame() {
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
       player.lane = nextLane;
-      player.holdTimer = 0;
+      player.holdTimer = 0.18;
+      vibrate(10);
       hintEl.textContent = direction < 0 ? "左へ移動" : "右へ移動";
     }
 
@@ -1070,7 +1071,18 @@ function endGame() {
     function startJump() {
       jumpTimer = JUMP_DURATION;
       jumpBufferTimer = 0;
+      player.holdTimer = 0.22;
+      vibrate(14);
       hintEl.textContent = "ジャンプ";
+    }
+
+    function vibrate(pattern) {
+      if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // Vibration is optional feedback; ignore unsupported browser cases.
+      }
     }
 function spawnObstacle() {
       if (!hasObstacleClearance()) {
@@ -1301,6 +1313,7 @@ function spawnCoins() {
       loopScroll += speed * dt;
       const targetX = LANES[player.lane];
       player.x += (targetX - player.x) * Math.min(1, dt * 14);
+      player.holdTimer = Math.max(0, player.holdTimer - dt);
 
       {
         spawnTimer -= dt;
@@ -2070,6 +2083,24 @@ function drawObstacles() {
         ctx.restore();
       }
 
+      if (player.holdTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, player.holdTimer / 0.22));
+        ctx.save();
+        ctx.translate(pose.x, pose.y - lift + bob - 8);
+        ctx.globalAlpha = 0.22 + ratio * 0.42;
+        ctx.strokeStyle = "rgba(123,238,255,0.92)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 48 - ratio * 10, 16 - ratio * 3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.12 + ratio * 0.14;
+        ctx.fillStyle = "#7beeff";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 54 - ratio * 10, 18 - ratio * 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
       const runFrame = playerRunSprites[Math.floor(roadScroll / 20) % playerRunSprites.length];
       const activePlayerSprite = isJumping() ? playerSprite : runFrame;
       if (activePlayerSprite && activePlayerSprite.complete && activePlayerSprite.naturalWidth > 0) {
@@ -2128,13 +2159,6 @@ function drawObstacles() {
       ctx.strokeRect(8, 8, W - 16, H - 16);
       ctx.fillStyle = "rgba(123, 238, 255, 0.12)";
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#7beeff";
-      ctx.font = "900 22px Segoe UI, sans-serif";
-      ctx.textAlign = "center";
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "rgba(10, 12, 13, 0.72)";
-      ctx.strokeText("ラストチャンス", W / 2, 118);
-      ctx.fillText("ラストチャンス", W / 2, 118);
       ctx.restore();
     }
 function onPointerDown(event) {
