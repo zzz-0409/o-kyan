@@ -2321,12 +2321,14 @@ function onPointerDown(event) {
       const dt = Math.min(0.05, elapsed / 1000 || 0);
       frameCarry = elapsed % FRAME_MS;
       lastTime = now;
-      update(dt);
-      draw();
-      if (!running && gameOver) {
-        loopActive = false;
-        return;
+      if (running) {
+        update(dt);
+      } else {
+        roadScroll = (roadScroll + BASE_SPEED * 0.42 * dt) % 80;
+        loopScroll += BASE_SPEED * 0.42 * dt;
+        updateParticles(dt);
       }
+      draw();
       requestAnimationFrame(loop);
     }
 
@@ -2348,6 +2350,8 @@ function onPointerDown(event) {
     updateHud();
     resizeCanvas();
     draw();
+    lastTime = performance.now();
+    startLoop();
   </script>
 </body>
 </html>
