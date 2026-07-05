@@ -442,6 +442,10 @@
       background: var(--slow);
     }
 
+    .slow-bar.pace i {
+      background: linear-gradient(90deg, rgba(123, 238, 255, 0.55), rgba(240, 194, 71, 0.8));
+    }
+
     @media (max-width: 430px), (max-height: 700px) {
       .app {
         gap: 5px;
@@ -543,7 +547,7 @@
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3レーンラン</h2>
-          <p id="overlayText">左右でレーン移動、JUMPで穴を回避。コインを5枚集めると一度だけミスを救済できます。</p>
+          <p id="overlayText">左右でレーン移動、JUMPで穴を回避。2分くらいで遊べて、コイン5枚で一度だけミスを救済できます。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -559,12 +563,12 @@
 
     <div class="run-strip" aria-label="Run status">
       <div class="run-pill" id="rescuePill"><span>救済</span><strong id="rescueStatus">0/5</strong></div>
-      <div class="run-pill" id="checkpointPill"><span>次</span><strong id="checkpointStatus">150m</strong></div>
+      <div class="run-pill" id="timePill"><span>時間</span><strong id="timeStatus">0:00</strong></div>
       <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
     </div>
 
     <footer class="footer">
-      <span id="hint">左右で移動、JUMPでジャンプ</span>
+      <span id="hint">2分目安。左右で移動、JUMPでジャンプ</span>
       <div class="slow-bar" aria-label="speed effect"><i id="slowFill"></i></div>
     </footer>
   </main>
@@ -580,8 +584,8 @@
     const slowFill = document.getElementById("slowFill");
     const rescuePill = document.getElementById("rescuePill");
     const rescueStatus = document.getElementById("rescueStatus");
-    const checkpointPill = document.getElementById("checkpointPill");
-    const checkpointStatus = document.getElementById("checkpointStatus");
+    const timePill = document.getElementById("timePill");
+    const timeStatus = document.getElementById("timeStatus");
     const effectPill = document.getElementById("effectPill");
     const effectStatus = document.getElementById("effectStatus");
     const overlay = document.getElementById("overlay");
@@ -662,9 +666,11 @@
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
+    const FIRST_HOLE_TIME = 6;
     const CHECKPOINT_DISTANCE = 150;
     const CHECKPOINT_COIN_TRAIL = 5;
     const READY_GRACE_TIME = 1.8;
+    const TWO_MINUTE_TARGET = 120;
 
     let running = false;
     let gameOver = false;
@@ -672,6 +678,7 @@
     let frameCarry = 0;
     let loopActive = false;
     let runTime = 0;
+    let targetTimeAnnounced = false;
     let checkpointIndex = 1;
     let distance = 0;
     let coins = 0;
@@ -728,6 +735,7 @@
       running = true;
       gameOver = false;
       runTime = 0;
+      targetTimeAnnounced = false;
       checkpointIndex = 1;
       distance = 0;
       coins = 0;
@@ -735,10 +743,10 @@
       speed = BASE_SPEED;
       roadScroll = 0;
       loopScroll = 0;
-      spawnTimer = 0.85;
-      coinTimer = 1.25;
-      slowGateTimer = 4.4;
-      panelTimer = 2.2;
+      spawnTimer = 1.55;
+      coinTimer = 0.55;
+      slowGateTimer = 5.8;
+      panelTimer = 3.0;
       slowTimer = 0;
       boostTimer = 0;
       invincibleTimer = 0;
@@ -759,7 +767,7 @@
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      hintEl.textContent = "準備OK、左右で移動";
+      hintEl.textContent = "準備OK、2分目安で遊べます";
       updateHud();
       lastTime = performance.now();
       frameCarry = 0;
@@ -830,7 +838,7 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore}点 / ${Math.floor(distance)}m / Today #${rank}`;
+        overlayText.textContent = `${finalScore}点 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${rank}`;
         startButton.textContent = "リザルトスキップ";
         return;
       }
@@ -863,7 +871,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${Math.floor(distance)}m / Today #${resultState.rank}`;
+      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${resultState.rank}`;
       startButton.textContent = "リザルトスキップ";
       resultState.phase = "result";
     }
@@ -876,7 +884,7 @@ function endGame() {
       overlayTitle.textContent = resultState.isBest ? "新記録" : "もう一回";
       overlayText.textContent = resultState.isBest
         ? `最高スコア ${resultState.finalScore}点！`
-        : `${resultState.finalScore}点。もう一回いく？`;
+        : `${resultState.finalScore}点 / ${formatRunTime(runTime)}。もう一回いく？`;
       dailyRankingEl.innerHTML = "";
       startButton.textContent = "リスタート";
       resultState.phase = "ready";
@@ -918,7 +926,11 @@ function endGame() {
       const slowActive = slowTimer > 0;
       const rescueActive = invincibleTimer > 0;
       const lastChanceActive = lastChanceTimer > 0;
-      const effectRatio = rescueActive
+      const readyActive = readyTimer > 0;
+      const timedEffectActive = readyActive || rescueActive || lastChanceActive || boostActive || slowActive;
+      const effectRatio = readyActive
+          ? readyTimer / READY_GRACE_TIME
+          : rescueActive
           ? invincibleTimer / RESCUE_TIME
           : lastChanceActive
             ? lastChanceTimer / LAST_CHANCE_DURATION
@@ -926,10 +938,11 @@ function endGame() {
               ? boostTimer / BOOST_DURATION
               : slowActive
                 ? slowTimer / SLOW_DURATION
-                : 0;
+                : Math.min(1, runTime / TWO_MINUTE_TARGET);
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
       slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive);
       slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive && !rescueActive);
+      slowFill.parentElement.classList.toggle("pace", !timedEffectActive);
     }
 
     function updateRunStrip() {
@@ -937,10 +950,8 @@ function endGame() {
       rescueStatus.textContent = rescueUsed ? "使用済" : rescueReady ? "準備OK" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
       rescuePill.classList.toggle("ready", rescueReady);
 
-      const nextCheckpoint = checkpointIndex * CHECKPOINT_DISTANCE;
-      const remaining = Math.max(0, Math.ceil(nextCheckpoint - distance));
-      checkpointStatus.textContent = `${remaining}m`;
-      checkpointPill.classList.toggle("active", remaining <= 30);
+      timeStatus.textContent = formatRunTime(runTime);
+      timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
       const effectLabel = readyTimer > 0
         ? "準備"
@@ -959,6 +970,23 @@ function endGame() {
 
     function computeScore() {
       return coins * COIN_VALUE + Math.floor(distance);
+    }
+
+    function formatRunTime(seconds) {
+      const total = Math.max(0, Math.floor(seconds));
+      const minutes = Math.floor(total / 60);
+      const rest = String(total % 60).padStart(2, "0");
+      return `${minutes}:${rest}`;
+    }
+
+    function checkPlayTimeTarget() {
+      if (targetTimeAnnounced || runTime < TWO_MINUTE_TARGET) return;
+      targetTimeAnnounced = true;
+      hintEl.textContent = "2分突破！ そのまま記録更新へ";
+      for (let i = 0; i < CHECKPOINT_COIN_TRAIL; i += 1) {
+        const lane = i % 3;
+        coinItems.push({ lane, y: PLAYER_Y - 230 - i * 38, r: COIN_RADIUS, collected: false, bonus: true });
+      }
     }
 
     function checkBestPace(runScore) {
@@ -1048,7 +1076,8 @@ function spawnObstacle() {
         return;
       }
 
-      const type = Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
+      const canSpawnHole = runTime >= FIRST_HOLE_TIME;
+      const type = canSpawnHole && Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
       if (type === "hole") {
         obstacles.push({ type, lanes: [0, 1, 2], y: -62, h: 52, group: "solo" });
         return;
@@ -1251,6 +1280,7 @@ function spawnCoins() {
       if (jumpTimer <= 0 && bufferedJump) startJump();
       distance += (speed * dt) / 12;
       checkDistanceCheckpoint();
+      checkPlayTimeTarget();
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
       const targetX = LANES[player.lane];
@@ -1263,7 +1293,7 @@ function spawnCoins() {
           const rate = speed / BASE_SPEED;
           const difficulty = difficultyRatio();
           const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
-          spawnTimer = Math.max(0.68, 1.28 + warmupSpace - difficulty * 0.28 - rate * 0.06 + Math.random() * 0.44);
+          spawnTimer = Math.max(0.78, 1.36 + warmupSpace - difficulty * 0.24 - rate * 0.05 + Math.random() * 0.48);
         }
 
         coinTimer -= dt;
