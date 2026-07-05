@@ -663,6 +663,7 @@
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
     const SWIPE_MIN = 36;
+    const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
     const PANEL_CLEARANCE = 170;
     const RESCUE_COST = 5;
@@ -2221,20 +2222,38 @@ function drawObstacles() {
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
     }
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const left = rect.left || 0;
+      const top = rect.top || 0;
+      return {
+        x: event.clientX - left,
+        y: event.clientY - top,
+        w: rect.width || canvas.clientWidth || W,
+        h: rect.height || canvas.clientHeight || H
+      };
+    }
+
+    function canTapJumpFrom(event) {
+      const point = canvasPoint(event);
+      return point.y < point.h - TAP_JUMP_BOTTOM_DEAD_ZONE;
+    }
+
 function onPointerDown(event) {
-      touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
+      touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId, canTapJump: canTapJumpFrom(event) };
     }
 
     function onPointerUp(event) {
       if (!touchStart) return;
-      const dx = event.clientX - touchStart.x;
-      const dy = event.clientY - touchStart.y;
+      const start = touchStart;
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
       touchStart = null;
       if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) {
         handleScreenDirection(dx, dy);
         return;
       }
-      if (Math.abs(dx) < 24 && Math.abs(dy) < 24) {
+      if (start.canTapJump && canTapJumpFrom(event) && Math.abs(dx) < 24 && Math.abs(dy) < 24) {
         jump();
       }
     }
