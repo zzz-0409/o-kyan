@@ -677,6 +677,7 @@
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
     const CHECKPOINT_DISTANCE = 150;
+    const STARTER_COIN_TRAIL = 4;
     const CHECKPOINT_COIN_TRAIL = 5;
     const RESCUE_COIN_TRAIL = 4;
     const READY_GRACE_TIME = 1.8;
@@ -775,6 +776,7 @@
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
+      spawnStarterCoins();
       resetResultState();
       stageEl.classList.add("playing");
       overlay.classList.remove("show");
@@ -1171,6 +1173,13 @@ function spawnObstacle() {
       }
       slowGates.push({ y: -58, h: 34, forced: false });
     }
+
+    function spawnStarterCoins() {
+      for (let i = 0; i < STARTER_COIN_TRAIL; i += 1) {
+        coinItems.push({ lane: CENTER_LANE, y: PLAYER_Y - 180 - i * 40, r: COIN_RADIUS, collected: false, bonus: true });
+      }
+    }
+
 function spawnCoins() {
       if (!hasCoinClearance()) {
         coinTimer = 0.5;
