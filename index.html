@@ -1675,6 +1675,7 @@ function draw() {
       drawSlowGates();
       drawObstacles();
       drawParticles();
+      if (readyTimer > 0) drawReadyGuide();
       drawPlayer();
       if (lastChanceTimer > 0) drawLastChancePulse();
       ctx.restore();
@@ -1932,6 +1933,36 @@ function drawFallbackRoad() {
       ctx.lineTo(-17, -3);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
+    }
+
+    function drawReadyGuide() {
+      const ratio = Math.max(0, Math.min(1, readyTimer / READY_GRACE_TIME));
+      const pulse = 0.68 + Math.sin(loopScroll * 0.1) * 0.18;
+      const guideY = PLAYER_Y - 30;
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.8, 0.34 + ratio * 0.36);
+      ctx.strokeStyle = `rgba(123, 238, 255, ${pulse})`;
+      ctx.fillStyle = "rgba(123, 238, 255, 0.2)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(LANES[player.lane], PLAYER_Y - 28, 48 + (1 - ratio) * 10, 28 + (1 - ratio) * 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (const lane of [0, 2]) {
+        const x = LANES[lane];
+        const direction = lane === 0 ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x - 16 * direction, guideY - 10);
+        ctx.lineTo(x + 15 * direction, guideY);
+        ctx.lineTo(x - 16 * direction, guideY + 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(LANES[CENTER_LANE] + 18 * direction, guideY);
+        ctx.lineTo(x - 10 * direction, guideY);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
