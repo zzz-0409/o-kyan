@@ -798,7 +798,7 @@ function endGame() {
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = `${distanceScore}点 + ${collectedCoins}コインを換算`;
-      startButton.textContent = collectedCoins > 0 ? "コイン換算スキップ" : "結果スキップ";
+      startButton.textContent = collectedCoins > 0 ? "結果をすぐ見る" : "結果を見る";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       overlay.classList.add("show");
       renderDailyRanking(rank);
@@ -851,7 +851,7 @@ function endGame() {
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
         overlayText.textContent = `${finalScore}点 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${rank}`;
-        startButton.textContent = "リザルトスキップ";
+        startButton.textContent = "次の人へ";
         return;
       }
 
@@ -884,7 +884,7 @@ function endGame() {
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${resultState.rank}`;
-      startButton.textContent = "リザルトスキップ";
+      startButton.textContent = "次の人へ";
       resultState.phase = "result";
     }
 
@@ -893,12 +893,12 @@ function endGame() {
       clearScoreConversion();
       scoreConvert.classList.remove("show");
       scoreConvert.setAttribute("aria-hidden", "true");
-      overlayTitle.textContent = resultState.isBest ? "新記録" : "もう一回";
+      overlayTitle.textContent = resultState.isBest ? "新記録" : "次のチャレンジ";
       overlayText.textContent = resultState.isBest
-        ? `最高スコア ${resultState.finalScore}点！`
-        : `${resultState.finalScore}点 / ${formatRunTime(runTime)}。もう一回いく？`;
+        ? `最高スコア ${resultState.finalScore}点！ 次の人も挑戦できます`
+        : `${resultState.finalScore}点 / ${formatRunTime(runTime)}。次の人もどうぞ`;
       dailyRankingEl.innerHTML = "";
-      startButton.textContent = "リスタート";
+      startButton.textContent = "スタート";
       resultState.phase = "ready";
     }
 
