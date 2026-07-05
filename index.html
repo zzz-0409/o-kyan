@@ -1383,12 +1383,18 @@ function spawnCoins() {
         }
         obstacle.scored = true;
         if (obstacle.type === "hole") {
+          if (obstacle.lanes.includes(player.lane) && isJumping()) {
+            burstParticles(LANES[player.lane], PLAYER_Y - 42, "#7beeff", 10, 0.75);
+          }
           if (obstacle === lastChanceTarget) {
             awardLastChanceBonus(obstacle);
           }
           continue;
         }
         if (!obstacle.lanes.includes(player.lane)) {
+          const clearX = LANES[player.lane];
+          const clearY = PLAYER_Y - 34;
+          burstParticles(clearX, clearY, obstacle.lanes.length > 1 ? "#f0c247" : "#7beeff", 8, 0.65);
           if (obstacle === lastChanceTarget) {
             awardLastChanceBonus(obstacle);
           }
