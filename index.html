@@ -674,6 +674,7 @@
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
+    const FIRST_CENTER_BLOCK_TIME = 8;
     const CHECKPOINT_DISTANCE = 150;
     const CHECKPOINT_COIN_TRAIL = 5;
     const RESCUE_COIN_TRAIL = 4;
@@ -1105,7 +1106,9 @@ function spawnObstacle() {
         return;
       }
 
-      const lane = Math.floor(Math.random() * 3);
+      const lane = runTime < FIRST_CENTER_BLOCK_TIME
+        ? (Math.random() < 0.5 ? 0 : 2)
+        : Math.floor(Math.random() * 3);
       const wide = runTime > WARMUP_DURATION && Math.random() < 0.1 + difficulty * 0.16;
       if (wide) {
         const left = chooseWideBlockLeft();
