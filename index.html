@@ -536,29 +536,29 @@
   <main class="app">
     <header class="hud">
       <h1>3レーンラン</h1>
-      <div class="stat"><span>SCORE</span><strong id="distance">0</strong></div>
-      <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
-      <div class="stat"><span>COINS</span><strong id="todayRank">0</strong></div>
+      <div class="stat"><span>スコア</span><strong id="distance">0</strong></div>
+      <div class="stat"><span>ベスト</span><strong id="best">0</strong></div>
+      <div class="stat"><span>コイン</span><strong id="todayRank">0</strong></div>
     </header>
 
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720"></canvas>
-      <div class="move-controls" id="moveControls" aria-label="Move buttons">
-        <button class="control-button dir-left" id="leftButton" type="button" aria-label="Left">&larr;</button>
-        <button class="control-button dir-right" id="rightButton" type="button" aria-label="Right">&rarr;</button>
+      <div class="move-controls" id="moveControls" aria-label="左右移動ボタン">
+        <button class="control-button dir-left" id="leftButton" type="button" aria-label="左へ移動">&larr;</button>
+        <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">&rarr;</button>
       </div>
-      <div class="jump-control" id="jumpControl" aria-label="Jump button">
-        <button class="control-button" id="jumpButton" type="button">JUMP</button>
+      <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
+        <button class="control-button" id="jumpButton" type="button">ジャンプ</button>
       </div>
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3レーンラン</h2>
-          <p id="overlayText">左右でレーン移動、JUMPで穴を回避。2分くらいで遊べて、コイン5枚で一度だけミスを救済できます。</p>
+          <p id="overlayText">左右でレーン移動、ジャンプで穴を回避。2分くらいで遊べて、コイン5枚で一度だけミスを救済できます。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
-              <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
+              <div class="convert-box"><span>コイン</span><strong id="convertCoins">0</strong></div>
               <div class="convert-lane" id="convertLane"></div>
-              <div class="convert-box" id="convertScoreBox"><span>SCORE</span><strong id="convertScore">0</strong></div>
+              <div class="convert-box" id="convertScoreBox"><span>スコア</span><strong id="convertScore">0</strong></div>
             </div>
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
@@ -567,15 +567,15 @@
       </div>
     </section>
 
-    <div class="run-strip" aria-label="Run status">
+    <div class="run-strip" aria-label="ラン状態">
       <div class="run-pill" id="rescuePill"><span>救済</span><strong id="rescueStatus">0/5</strong></div>
       <div class="run-pill" id="timePill"><span>時間</span><strong id="timeStatus">0:00</strong></div>
       <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
     </div>
 
     <footer class="footer">
-      <span id="hint">2分目安。左右で移動、JUMPでジャンプ</span>
-      <div class="slow-bar" aria-label="speed effect"><i id="slowFill"></i></div>
+      <span id="hint">2分目安。左右で移動、ジャンプで回避</span>
+      <div class="slow-bar" aria-label="状態バー"><i id="slowFill"></i></div>
     </footer>
   </main>
 
