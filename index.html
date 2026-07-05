@@ -370,10 +370,6 @@
       min-height: 34px;
     }
 
-    #comboPill {
-      display: none;
-    }
-
     .run-pill {
       min-width: 0;
       padding: 5px 6px;
@@ -562,7 +558,6 @@
     </section>
 
     <div class="run-strip" aria-label="Run status">
-      <div class="run-pill" id="comboPill"><span>コンボ</span><strong id="comboStatus">-</strong></div>
       <div class="run-pill" id="rescuePill"><span>救済</span><strong id="rescueStatus">0/5</strong></div>
       <div class="run-pill" id="checkpointPill"><span>次</span><strong id="checkpointStatus">150m</strong></div>
       <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
@@ -583,8 +578,6 @@
     const todayRankEl = document.getElementById("todayRank");
     const hintEl = document.getElementById("hint");
     const slowFill = document.getElementById("slowFill");
-    const comboPill = document.getElementById("comboPill");
-    const comboStatus = document.getElementById("comboStatus");
     const rescuePill = document.getElementById("rescuePill");
     const rescueStatus = document.getElementById("rescueStatus");
     const checkpointPill = document.getElementById("checkpointPill");
@@ -647,9 +640,9 @@
     const PLAYER_Y = 590;
     const PLAYER_W = 46;
     const PLAYER_H = 58;
-    const BASE_SPEED = 230;
-    const MAX_SPEED = 620;
-    const SPEED_GAIN = 0.0026;
+    const BASE_SPEED = 220;
+    const MAX_SPEED = 540;
+    const SPEED_GAIN = 0.0017;
     const JUMP_DURATION = 0.66;
     const JUMP_BUFFER_TIME = 0.18;
     const JUMP_BUFFER_ARM_TIME = 0.24;
@@ -658,27 +651,20 @@
     const BOOST_DURATION = 3.0;
     const BOOST_FACTOR = 1.55;
     const COIN_VALUE = 100;
-    const COIN_RADIUS = 9;
+    const COIN_RADIUS = 10;
     const SWIPE_MIN = 36;
-    const OBSTACLE_CLEARANCE = 250;
+    const OBSTACLE_CLEARANCE = 285;
     const PANEL_CLEARANCE = 170;
     const RESCUE_COST = 5;
     const RESCUE_TIME = 1.45;
-    const CAR_DODGE_BONUS = 35;
-    const JUMP_CLEAR_BONUS = 80;
-    const COMBO_WINDOW = 3.2;
-    const MAGNET_COMBO_MIN = 2;
-    const MAGNET_RADIUS = 118;
     const SAFE_GUIDE_RANGE = 470;
     const LAST_CHANCE_DURATION = 0.42;
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
-    const LAST_CHANCE_BONUS = 120;
-    const WARMUP_DURATION = 14;
-    const FULL_DIFFICULTY_TIME = 82;
+    const WARMUP_DURATION = 22;
+    const FULL_DIFFICULTY_TIME = 115;
     const CHECKPOINT_DISTANCE = 150;
-    const CHECKPOINT_BASE_BONUS = 120;
     const CHECKPOINT_COIN_TRAIL = 5;
-    const READY_GRACE_TIME = 1.2;
+    const READY_GRACE_TIME = 1.8;
 
     let running = false;
     let gameOver = false;
@@ -689,10 +675,6 @@
     let checkpointIndex = 1;
     let distance = 0;
     let coins = 0;
-    let skillBonus = 0;
-    let comboCount = 0;
-    let comboTimer = 0;
-    let comboBonus = 0;
     let scoreConvertInterval = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
@@ -726,7 +708,6 @@
     let coinItems = [];
     let slowGates = [];
     let speedPanels = [];
-    let popups = [];
 
     const player = {
       lane: CENTER_LANE,
@@ -750,10 +731,6 @@
       checkpointIndex = 1;
       distance = 0;
       coins = 0;
-      skillBonus = 0;
-      comboCount = 0;
-      comboTimer = 0;
-      comboBonus = 0;
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -775,7 +752,6 @@
       coinItems = [];
       slowGates = [];
       speedPanels = [];
-      popups = [];
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -957,10 +933,6 @@ function endGame() {
     }
 
     function updateRunStrip() {
-      const comboActive = comboTimer > 0 && comboCount >= 2;
-      comboStatus.textContent = comboActive ? `x${comboMultiplier()} / ${comboCount}` : "-";
-      comboPill.classList.toggle("active", comboActive);
-
       const rescueReady = !rescueUsed && coins >= RESCUE_COST;
       rescueStatus.textContent = rescueUsed ? "使用済" : rescueReady ? "準備OK" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
       rescuePill.classList.toggle("ready", rescueReady);
@@ -992,7 +964,6 @@ function endGame() {
     function checkBestPace(runScore) {
       if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
       bestPaceAnnounced = true;
-      popups.push({ x: W / 2, y: PLAYER_Y - 170, text: "NEW BEST PACE!", life: 1.2, color: "#7beeff" });
       hintEl.textContent = `新記録ペース ${runScore}点`;
     }
 
@@ -1109,8 +1080,8 @@ function spawnObstacle() {
       const carLane = Math.floor(Math.random() * 3);
       const holeLanes = [0, 1, 2].filter((lane) => lane !== carLane);
       const y = -74;
-      obstacles.push({ type: "car", lanes: [carLane], y: y - 10, h: 82, group: "combo" });
-      obstacles.push({ type: "hole", lanes: holeLanes, y: y + 10, h: 52, group: "combo" });
+      obstacles.push({ type: "car", lanes: [carLane], y: y - 10, h: 82, group: "mixed" });
+      obstacles.push({ type: "hole", lanes: holeLanes, y: y + 10, h: 52, group: "mixed" });
     }
 
     function hasObstacleClearance() {
@@ -1243,12 +1214,9 @@ function spawnCoins() {
 
     function awardCheckpoint(index) {
       const milestone = index * CHECKPOINT_DISTANCE;
-      const bonus = CHECKPOINT_BASE_BONUS + Math.min(280, (index - 1) * 40);
-      skillBonus += bonus;
       spawnCheckpointCoinTrail(index);
       coinTimer = Math.min(coinTimer, 0.35);
-      popups.push({ x: W / 2, y: PLAYER_Y - 132, text: `${milestone}m +${bonus}`, life: 1.05, color: "#7beeff" });
-      hintEl.textContent = `${milestone}m到達 +${bonus}`;
+      hintEl.textContent = `${milestone}m到達！ コイン出現`;
     }
 
     function spawnCheckpointCoinTrail(index) {
@@ -1273,8 +1241,6 @@ function spawnCoins() {
         lastChanceTarget = null;
         lastChanceTimer = 0;
       }
-      comboTimer = Math.max(0, comboTimer - dt);
-      if (comboTimer <= 0) comboCount = 0;
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -1341,12 +1307,6 @@ function spawnCoins() {
       }
       speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
 
-      for (const popup of popups) {
-        popup.y -= 34 * dt;
-        popup.life -= dt;
-      }
-      popups = popups.filter((popup) => popup.life > 0);
-
       checkCollisions();
       updateHud();
     }
@@ -1361,17 +1321,12 @@ function spawnCoins() {
         }
         obstacle.scored = true;
         if (obstacle.type === "hole") {
-          if (isJumping() && obstacle.lanes.includes(player.lane)) {
-            addSkillBonus(JUMP_CLEAR_BONUS, "JUMP CLEAR", LANES[player.lane], PLAYER_Y - 74);
-          }
           if (obstacle === lastChanceTarget) {
             awardLastChanceBonus(obstacle);
           }
           continue;
         }
         if (!obstacle.lanes.includes(player.lane)) {
-          const bonus = obstacle.lanes.length > 1 ? CAR_DODGE_BONUS + 20 : CAR_DODGE_BONUS;
-          addSkillBonus(bonus, "DODGE", player.x, PLAYER_Y - 68);
           if (obstacle === lastChanceTarget) {
             awardLastChanceBonus(obstacle);
           }
@@ -1391,9 +1346,7 @@ function spawnCoins() {
       obstacle.lastChanceUsed = true;
       lastChanceTarget = obstacle;
       lastChanceTimer = LAST_CHANCE_DURATION;
-      comboTimer = Math.max(comboTimer, 1.2);
       hintEl.textContent = "ラストチャンス！";
-      popups.push({ x: W / 2, y: PLAYER_Y - 118, text: "ラストチャンス！", life: 0.7, color: "#7beeff" });
       return true;
     }
 
@@ -1403,46 +1356,20 @@ function spawnCoins() {
     }
 
     function awardLastChanceBonus(obstacle) {
-      skillBonus += LAST_CHANCE_BONUS;
       lastChanceTarget = null;
       lastChanceTimer = 0;
-      popups.push({ x: player.x, y: PLAYER_Y - 104, text: `CLUTCH +${LAST_CHANCE_BONUS}`, life: 0.92, color: "#7beeff" });
-      hintEl.textContent = `ギリギリ回避 +${LAST_CHANCE_BONUS}`;
+      hintEl.textContent = "ギリギリ回避！";
       obstacle.lastChanceAwarded = true;
     }
 
-    function addSkillBonus(points, label, x, y) {
-      const multiplier = advanceCombo();
-      const awarded = Math.round(points * multiplier);
-      skillBonus += awarded;
-      const comboText = multiplier > 1 ? ` x${multiplier}` : "";
-      popups.push({ x, y, text: `${label}${comboText} +${awarded}`, life: 0.86, color: "#f0c247" });
-      hintEl.textContent = `${label}${comboText} +${awarded}`;
-    }
-
-    function advanceCombo() {
-      comboTimer = COMBO_WINDOW;
-      comboCount += 1;
-      return comboMultiplier();
-    }
-
-    function comboMultiplier() {
-      return Math.min(4, 1 + Math.floor(Math.max(0, comboCount - 1) / 4));
-    }
-
-    function comboMagnetActive() {
-      return comboTimer > 0 && comboMultiplier() >= MAGNET_COMBO_MIN;
-    }
-
     function applyCoinMagnet(coin, dt) {
-      if (!comboMagnetActive()) return;
       const targetX = LANES[player.lane];
       const dx = targetX - LANES[coin.lane];
       const dy = PLAYER_Y - coin.y;
       const distanceToPlayer = Math.hypot(dx, dy);
-      const radius = MAGNET_RADIUS;
-      const verticalReach = 72;
-      const pullSpeed = 9;
+      const radius = 108;
+      const verticalReach = 92;
+      const pullSpeed = 7;
       if (distanceToPlayer > radius || Math.abs(dy) > verticalReach) return;
       coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * pullSpeed);
     }
@@ -1483,11 +1410,6 @@ function checkCollisions() {
           coins += 1;
           coin.collected = true;
           coinItems.splice(i, 1);
-          const multiplier = advanceCombo();
-          const bonus = COIN_VALUE * (multiplier - 1);
-          comboBonus += bonus;
-          const comboText = multiplier > 1 ? ` x${multiplier}` : "";
-          popups.push({ x: coinX(coin), y: coin.y - 14, text: `COIN${comboText}`, life: 0.72, color: "#f6efd9" });
           hintEl.textContent = `コイン +1 / ${coins}`;
         }
       }
@@ -1531,8 +1453,6 @@ function checkCollisions() {
       if (!rescueUsed && coins >= RESCUE_COST) {
         rescueUsed = true;
         coins -= RESCUE_COST;
-        comboCount = 0;
-        comboTimer = 0;
         invincibleTimer = RESCUE_TIME;
         obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 210 || obstacle.y > PLAYER_Y + 110);
         slowGates = slowGates.filter((gate) => gate.y < PLAYER_Y - 160 || gate.y > PLAYER_Y + 80);
@@ -1928,13 +1848,13 @@ function drawObstacles() {
           const r = laneRect(lane, obstacle.y, obstacle.h);
           if (obstacle.type === "hole") {
             drawObstacleSprite("hole", r);
-            if (obstacle.group === "combo") {
+            if (obstacle.group === "mixed") {
               ctx.fillStyle = "rgba(246,239,217,0.85)";
               ctx.fillRect(r.x + 25, r.y + 2, 18, 5);
             }
           } else {
             drawObstacleSprite("car", r);
-            if (obstacle.group === "combo") {
+            if (obstacle.group === "mixed") {
               ctx.fillStyle = "rgba(246,239,217,0.72)";
               ctx.fillRect(r.x + 10, r.y + r.h - 12, r.w - 20, 5);
             }
@@ -1989,7 +1909,7 @@ function drawObstacles() {
       for (const coin of coinItems) {
         const x = coinX(coin);
         const y = coin.y;
-        if (comboMagnetActive() && coin.pullX) {
+        if (coin.pullX) {
           ctx.strokeStyle = "rgba(240,194,71,0.42)";
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -2105,22 +2025,6 @@ function drawObstacles() {
         ctx.lineWidth = 3;
         ctx.strokeRect(LANES[player.lane] - 39, PLAYER_Y - 36, 78, 72);
       }
-    }
-
-    function drawPopups() {
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.font = "900 18px Segoe UI, sans-serif";
-      for (const popup of popups) {
-        const alpha = Math.max(0, Math.min(1, popup.life / 0.86));
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = "rgba(10, 12, 13, 0.72)";
-        ctx.fillStyle = popup.color;
-        ctx.strokeText(popup.text, popup.x, popup.y);
-        ctx.fillText(popup.text, popup.x, popup.y);
-      }
-      ctx.restore();
     }
 
     function roundedRectPath(x, y, w, h, r) {
