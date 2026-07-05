@@ -536,7 +536,7 @@
   <main class="app">
     <header class="hud">
       <h1>3レーンラン</h1>
-      <div class="stat"><span>スコア</span><strong id="distance">0</strong></div>
+      <div class="stat"><span id="scoreLabel">距離</span><strong id="distance">0</strong></div>
       <div class="stat"><span>ベスト</span><strong id="best">0</strong></div>
       <div class="stat"><span>コイン</span><strong id="todayRank">0</strong></div>
     </header>
@@ -583,6 +583,7 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const stageEl = document.getElementById("stage");
+    const scoreLabel = document.getElementById("scoreLabel");
     const distanceEl = document.getElementById("distance");
     const bestEl = document.getElementById("best");
     const todayRankEl = document.getElementById("todayRank");
@@ -744,6 +745,7 @@
 
     function resetGame() {
       clearScoreConversion();
+      scoreLabel.textContent = "\u8ddd\u96e2";
       running = true;
       gameOver = false;
       runTime = 0;
@@ -790,6 +792,7 @@
 function endGame() {
       running = false;
       gameOver = true;
+      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
       stageEl.classList.remove("playing");
       const score = computeScore();
       const distanceScore = Math.floor(distance);
@@ -845,6 +848,7 @@ function endGame() {
 
     function startScoreConversion(baseScore, coinCount, finalScore, rank) {
       clearScoreConversion();
+      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
       let remainingCoins = coinCount;
       let shownScore = baseScore;
       distanceEl.textContent = String(shownScore);
@@ -881,6 +885,7 @@ function endGame() {
     function finishScoreConversion() {
       if (!resultState.active) return;
       clearScoreConversion();
+      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
       scoreConvert.classList.add("show");
       scoreConvert.setAttribute("aria-hidden", "false");
       convertCoinsEl.textContent = "0";
@@ -896,6 +901,7 @@ function endGame() {
     function skipResultDetails() {
       if (!resultState.active) return;
       clearScoreConversion();
+      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
       scoreConvert.classList.remove("show");
       scoreConvert.setAttribute("aria-hidden", "true");
       overlayTitle.textContent = resultState.isBest ? "新記録" : "次のチャレンジ";
@@ -934,6 +940,7 @@ function endGame() {
 
     function updateHud() {
       const runScore = computeScore();
+      scoreLabel.textContent = "\u8ddd\u96e2";
       distanceEl.textContent = String(Math.floor(distance));
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
