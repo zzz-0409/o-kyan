@@ -363,7 +363,7 @@
       background: #f0c247;
       border: 2px solid #f6efd9;
       box-shadow: 0 0 10px rgba(240, 194, 71, 0.45);
-      animation: coinToScore 0.34s ease-in forwards;
+      animation: coinToScore 0.18s ease-in forwards;
     }
 
     @keyframes coinToScore {
@@ -1043,7 +1043,7 @@ function endGame() {
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
-      }, 180);
+      }, 70);
     }
 
     function finishScoreConversion() {
@@ -2221,14 +2221,19 @@ function onPointerDown(event) {
       return overlayMode === "result" && !running && overlay.classList.contains("show");
     }
 
+    function isResultControlTarget(target) {
+      return target && target.closest && target.closest("button, input, textarea, select, label, .score-entry");
+    }
+
     function onOverlayPointerUp(event) {
       if (!resultAdvanceRequested()) return;
-      if (event.target.closest("button")) return;
+      if (isResultControlTarget(event.target)) return;
       event.preventDefault();
       handleMainButton();
     }
 
     function onKeyDown(event) {
+      if (isResultControlTarget(event.target)) return;
       if (event.repeat) return;
       if ((event.code === "Space" || event.code === "Enter" || event.code === "KeyR") && resultAdvanceRequested()) {
         event.preventDefault();
