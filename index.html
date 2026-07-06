@@ -2115,16 +2115,18 @@ function drawObstacles() {
         ctx.restore();
       }
 
+      const jumping = isJumping();
       const runFrame = playerRunSprites[Math.floor(roadScroll / 20) % playerRunSprites.length];
-      const activePlayerSprite = isJumping()
+      const activePlayerSprite = jumping
         ? (playerJumpSprite.complete && playerJumpSprite.naturalWidth > 0 ? playerJumpSprite : playerSprite)
         : runFrame;
       if (activePlayerSprite && activePlayerSprite.complete && activePlayerSprite.naturalWidth > 0) {
         ctx.save();
         ctx.translate(pose.x, pose.y - lift + bob);
         ctx.rotate(lean);
-        const jumpScale = isJumping() ? 1.05 : 1;
-        ctx.scale(jumpScale * pose.scale, jumpScale * pose.scale);
+        const spriteScaleX = jumping ? 1.05 : 1.22;
+        const spriteScaleY = jumping ? 1.05 : 1;
+        ctx.scale(spriteScaleX * pose.scale, spriteScaleY * pose.scale);
         ctx.drawImage(activePlayerSprite, -spriteW / 2, -spriteH, spriteW, spriteH);
         ctx.restore();
       } else {
