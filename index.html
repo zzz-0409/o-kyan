@@ -923,6 +923,9 @@
     function resetGame() {
       clearScoreConversion();
       stopCamera();
+      if (document.activeElement && typeof document.activeElement.blur === "function") {
+        document.activeElement.blur();
+      }
       overlayMode = "playing";
       scoreLabel.textContent = "\u8ddd\u96e2";
       running = true;
@@ -2207,6 +2210,10 @@ function onPointerDown(event) {
       return target && target.closest && target.closest("button, input, textarea, select, label, .score-entry");
     }
 
+    function isTextEntryTarget(target) {
+      return target && target.closest && target.closest("input, textarea, select, [contenteditable='true']");
+    }
+
     function onOverlayPointerUp(event) {
       if (!resultAdvanceRequested()) return;
       if (isResultControlTarget(event.target)) return;
@@ -2215,7 +2222,7 @@ function onPointerDown(event) {
     }
 
     function onKeyDown(event) {
-      if (isResultControlTarget(event.target)) return;
+      if (isTextEntryTarget(event.target)) return;
       if (event.repeat) return;
       if ((event.code === "Space" || event.code === "Enter" || event.code === "KeyR") && resultAdvanceRequested()) {
         event.preventDefault();
