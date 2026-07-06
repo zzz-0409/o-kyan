@@ -576,7 +576,7 @@
 
     .run-strip {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 6px;
       min-height: 34px;
     }
@@ -758,7 +758,7 @@
       <div class="overlay show" id="overlay">
         <div class="dialog">
           <h2 id="overlayTitle">3レーンラン</h2>
-          <p id="overlayText">左右でレーン移動、ジャンプで穴を回避。2分くらいで遊べて、コイン5枚で一度だけミスを救済できます。</p>
+          <p id="overlayText">左右でレーン移動、ジャンプで穴を回避。コインを集めながらどこまで走れるか挑戦できます。</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>コイン</span><strong id="convertCoins">0</strong></div>
@@ -789,7 +789,6 @@
     </section>
 
     <div class="run-strip" aria-label="ラン状態">
-      <div class="run-pill" id="rescuePill"><span>救済</span><strong id="rescueStatus">0/5</strong></div>
       <div class="run-pill" id="timePill"><span>時間</span><strong id="timeStatus">0:00</strong></div>
       <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
     </div>
@@ -810,8 +809,6 @@
     const todayRankEl = document.getElementById("todayRank");
     const hintEl = document.getElementById("hint");
     const slowFill = document.getElementById("slowFill");
-    const rescuePill = document.getElementById("rescuePill");
-    const rescueStatus = document.getElementById("rescueStatus");
     const timePill = document.getElementById("timePill");
     const timeStatus = document.getElementById("timeStatus");
     const effectPill = document.getElementById("effectPill");
@@ -838,7 +835,7 @@
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-5";
+    const ASSET_VERSION = "imagegen-6";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -897,9 +894,6 @@
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
     const PANEL_CLEARANCE = 170;
-    const RESCUE_COST = 5;
-    const RESCUE_TIME = 1.8;
-    const RESCUE_SPEED_FACTOR = 0.82;
     const SAFE_GUIDE_RANGE = 470;
     const LAST_CHANCE_DURATION = 0.42;
     const LAST_CHANCE_SPEED_FACTOR = 0.36;
@@ -910,7 +904,6 @@
     const CHECKPOINT_DISTANCE = 150;
     const STARTER_COIN_TRAIL = 4;
     const CHECKPOINT_COIN_TRAIL = 5;
-    const RESCUE_COIN_TRAIL = 4;
     const READY_GRACE_TIME = 1.8;
     const TWO_MINUTE_TARGET = 120;
 
@@ -936,11 +929,9 @@
     let panelTimer = 0;
     let slowTimer = 0;
     let boostTimer = 0;
-    let invincibleTimer = 0;
     let readyTimer = 0;
     let lastChanceTimer = 0;
     let lastChanceTarget = null;
-    let rescueUsed = false;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
     let touchStart = null;
@@ -999,11 +990,9 @@
       panelTimer = 3.0;
       slowTimer = 0;
       boostTimer = 0;
-      invincibleTimer = 0;
       readyTimer = READY_GRACE_TIME;
       lastChanceTimer = 0;
       lastChanceTarget = null;
-      rescueUsed = false;
       jumpTimer = 0;
       jumpBufferTimer = 0;
       obstacles = [];
@@ -1190,14 +1179,11 @@ function endGame() {
       updateRunStrip();
       const boostActive = boostTimer > 0;
       const slowActive = slowTimer > 0;
-      const rescueActive = invincibleTimer > 0;
       const lastChanceActive = lastChanceTimer > 0;
       const readyActive = readyTimer > 0;
-      const timedEffectActive = readyActive || rescueActive || lastChanceActive || boostActive || slowActive;
+      const timedEffectActive = readyActive || lastChanceActive || boostActive || slowActive;
       const effectRatio = readyActive
           ? readyTimer / READY_GRACE_TIME
-          : rescueActive
-          ? invincibleTimer / RESCUE_TIME
           : lastChanceActive
             ? lastChanceTimer / LAST_CHANCE_DURATION
             : boostActive
@@ -1206,24 +1192,18 @@ function endGame() {
                 ? slowTimer / SLOW_DURATION
                 : Math.min(1, runTime / TWO_MINUTE_TARGET);
       slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
-      slowFill.parentElement.classList.toggle("boost", boostActive || rescueActive);
-      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive && !rescueActive);
+      slowFill.parentElement.classList.toggle("boost", boostActive);
+      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive);
       slowFill.parentElement.classList.toggle("pace", !timedEffectActive);
     }
 
     function updateRunStrip() {
-      const rescueReady = !rescueUsed && coins >= RESCUE_COST;
-      rescueStatus.textContent = rescueUsed ? "使用済" : rescueReady ? "準備OK" : `${Math.min(coins, RESCUE_COST)}/${RESCUE_COST}`;
-      rescuePill.classList.toggle("ready", rescueReady);
-
       timeStatus.textContent = formatRunTime(runTime);
       timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
       const effectLabel = readyTimer > 0
         ? "準備"
-        : invincibleTimer > 0
-          ? "救済"
-          : lastChanceTimer > 0
+        : lastChanceTimer > 0
           ? "猶予"
           : boostTimer > 0
             ? "加速"
@@ -1667,22 +1647,12 @@ function spawnCoins() {
       }
     }
 
-    function spawnRescueCoinTrail() {
-      const leftLane = Math.max(0, player.lane - 1);
-      const rightLane = Math.min(2, player.lane + 1);
-      for (let i = 0; i < RESCUE_COIN_TRAIL; i += 1) {
-        const lane = i % 2 === 0 ? player.lane : (player.lane === 0 ? rightLane : leftLane);
-        coinItems.push({ lane, y: PLAYER_Y - 180 - i * 42, r: COIN_RADIUS, collected: false, bonus: true });
-      }
-    }
-
     function update(dt) {
       if (!running) return;
       runTime += dt;
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
-      invincibleTimer = Math.max(0, invincibleTimer - dt);
       readyTimer = Math.max(0, readyTimer - dt);
       lastChanceTimer = Math.max(0, lastChanceTimer - dt);
       if (lastChanceTarget && !obstacles.includes(lastChanceTarget)) {
@@ -1692,7 +1662,6 @@ function spawnCoins() {
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
-      if (invincibleTimer > 0) speed *= RESCUE_SPEED_FACTOR;
       if (lastChanceTimer > 0) speed *= LAST_CHANCE_SPEED_FACTOR;
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
@@ -1744,7 +1713,6 @@ function spawnCoins() {
 
       for (const coin of coinItems) {
         coin.y += speed * dt;
-        applyCoinMagnet(coin, dt);
       }
       coinItems = coinItems.filter((coin) => coin.y < H + 40 && !coin.collected);
 
@@ -1765,7 +1733,7 @@ function spawnCoins() {
 
     function awardPassedObstacles() {
       for (const obstacle of obstacles) {
-        if (obstacle.scored || invincibleTimer > 0 || readyTimer > 0 || !laneObjectPassed(obstacle)) continue;
+        if (obstacle.scored || readyTimer > 0 || !laneObjectPassed(obstacle)) continue;
         if (obstacle === lastChanceTarget && !lastChanceAvoided(obstacle)) {
           lastChanceTimer = 0;
           crash();
@@ -1820,18 +1788,6 @@ function spawnCoins() {
       obstacle.lastChanceAwarded = true;
     }
 
-    function applyCoinMagnet(coin, dt) {
-      const targetX = LANES[player.lane];
-      const dx = targetX - LANES[coin.lane];
-      const dy = PLAYER_Y - coin.y;
-      const distanceToPlayer = Math.hypot(dx, dy);
-      const radius = 108;
-      const verticalReach = 92;
-      const pullSpeed = 7;
-      if (distanceToPlayer > radius || Math.abs(dy) > verticalReach) return;
-      coin.pullX = (coin.pullX || LANES[coin.lane]) + (targetX - (coin.pullX || LANES[coin.lane])) * Math.min(1, dt * pullSpeed);
-    }
-
     function burstParticles(x, y, color, count = 8, spread = 1) {
       for (let i = 0; i < count; i += 1) {
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * spread;
@@ -1865,7 +1821,7 @@ function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
       const feet = playerFootRect();
-      if (invincibleTimer <= 0 && readyTimer <= 0) {
+      if (readyTimer <= 0) {
         for (let obstacleIndex = obstacles.length - 1; obstacleIndex >= 0; obstacleIndex -= 1) {
           const obstacle = obstacles[obstacleIndex];
           if (laneObjectPassed(obstacle)) continue;
@@ -1898,7 +1854,7 @@ function checkCollisions() {
           coins += 1;
           coin.collected = true;
           coinItems.splice(i, 1);
-          burstParticles(coinX(coin), coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
+          burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
           hintEl.textContent = `コイン +1 / ${coins}`;
         }
       }
@@ -1942,25 +1898,6 @@ function checkCollisions() {
     }
 
     function crash() {
-      if (!rescueUsed && coins >= RESCUE_COST) {
-        rescueUsed = true;
-        coins -= RESCUE_COST;
-        invincibleTimer = RESCUE_TIME;
-        lastChanceTimer = 0;
-        lastChanceTarget = null;
-        obstacles = obstacles.filter((obstacle) => obstacle.y < PLAYER_Y - 210 || obstacle.y > PLAYER_Y + 110);
-        slowGates = slowGates.filter((gate) => gate.y < PLAYER_Y - 160 || gate.y > PLAYER_Y + 80);
-        speedPanels = speedPanels.filter((panel) => panel.y < PLAYER_Y - 150 || panel.y > PLAYER_Y + 80);
-        spawnTimer = Math.max(spawnTimer, 1.1);
-        coinTimer = Math.min(coinTimer, 0.25);
-        slowGateTimer = Math.max(slowGateTimer, 3.2);
-        panelTimer = Math.max(panelTimer, 1.5);
-        spawnRescueCoinTrail();
-        burstParticles(player.x, PLAYER_Y - PLAYER_H / 2, "#f0c247", 18, 1.25);
-        hintEl.textContent = `救済！ コイン -${RESCUE_COST} / 立て直し`;
-        updateHud();
-        return;
-      }
       endGame();
     }
 function playerRect() {
@@ -2001,17 +1938,13 @@ function playerRect() {
       };
     }
 
-function coinRect(coin) {
+    function coinRect(coin) {
       return {
-        x: coinX(coin) - coin.r,
+        x: LANES[coin.lane] - coin.r,
         y: coin.y - coin.r,
         w: coin.r * 2,
         h: coin.r * 2
       };
-    }
-
-    function coinX(coin) {
-      return coin.pullX || LANES[coin.lane];
     }
 function isJumping() {
       return jumpTimer > 0;
@@ -2461,16 +2394,8 @@ function drawObstacles() {
 
     function drawCoins() {
       for (const coin of coinItems) {
-        const x = coinX(coin);
+        const x = LANES[coin.lane];
         const y = coin.y;
-        if (coin.pullX) {
-          ctx.strokeStyle = "rgba(240,194,71,0.42)";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(LANES[coin.lane], y);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        }
         ctx.fillStyle = "rgba(0,0,0,0.22)";
         ctx.beginPath();
         ctx.ellipse(x + 2, y + 4, COIN_RADIUS, COIN_RADIUS * 0.55, 0, 0, Math.PI * 2);
@@ -2547,23 +2472,6 @@ function drawObstacles() {
       ctx.scale(pose.scale, pose.scale);
       ctx.fillRect(-PLAYER_W / 2 + 5, -5, PLAYER_W - 10, isJumping() ? 5 : 8);
       ctx.restore();
-      if (invincibleTimer > 0) {
-        const pulse = 0.55 + Math.sin(loopScroll * 0.12) * 0.2;
-        ctx.save();
-        ctx.translate(pose.x, pose.y - lift + bob - PLAYER_H * 0.55);
-        ctx.strokeStyle = `rgba(240, 194, 71, ${pulse})`;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 36, 48, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 0.22;
-        ctx.fillStyle = "#f0c247";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 42, 54, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
       if (player.holdTimer > 0) {
         const ratio = Math.max(0, Math.min(1, player.holdTimer / 0.22));
         ctx.save();
