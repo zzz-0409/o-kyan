@@ -800,7 +800,7 @@
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-7";
+    const ASSET_VERSION = "imagegen-8";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -809,6 +809,9 @@
       return image;
     });
     const playerSprite = playerRunSprites[0];
+    const playerJumpSprite = new Image();
+    playerJumpSprite.src = assetUrl("assets/character/imagegen-runner-jump.png");
+    playerJumpSprite.addEventListener("load", draw);
     const obstacleSprites = {
       car: new Image(),
       hole: new Image()
@@ -2113,7 +2116,9 @@ function drawObstacles() {
       }
 
       const runFrame = playerRunSprites[Math.floor(roadScroll / 20) % playerRunSprites.length];
-      const activePlayerSprite = isJumping() ? playerSprite : runFrame;
+      const activePlayerSprite = isJumping()
+        ? (playerJumpSprite.complete && playerJumpSprite.naturalWidth > 0 ? playerJumpSprite : playerSprite)
+        : runFrame;
       if (activePlayerSprite && activePlayerSprite.complete && activePlayerSprite.naturalWidth > 0) {
         ctx.save();
         ctx.translate(pose.x, pose.y - lift + bob);
