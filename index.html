@@ -194,6 +194,16 @@
       pointer-events: auto;
     }
 
+    .overlay[data-mode="title"],
+    .overlay[data-mode="ranking"] {
+      align-items: stretch;
+      padding: 22px 18px;
+      background:
+        linear-gradient(180deg, rgba(7, 19, 45, 0.18), rgba(7, 11, 22, 0.95) 72%),
+        radial-gradient(circle at 50% 12%, rgba(123, 238, 255, 0.14), transparent 34%),
+        rgba(7, 11, 22, 0.7);
+    }
+
     .dialog {
       width: min(100%, 340px);
       padding: 18px;
@@ -225,6 +235,54 @@
       font-size: 30px;
       line-height: 1;
       letter-spacing: 0;
+    }
+
+    .overlay[data-mode="title"] .dialog {
+      align-self: stretch;
+      display: grid;
+      grid-template-rows: 1fr auto auto auto;
+      width: min(100%, 360px);
+      border-color: rgba(246, 239, 217, 0.08);
+      background:
+        linear-gradient(180deg, rgba(8, 18, 43, 0.08), rgba(8, 13, 25, 0.72) 48%, rgba(8, 12, 18, 0.94)),
+        transparent;
+      box-shadow: none;
+    }
+
+    .overlay[data-mode="title"] .dialog h2 {
+      align-self: end;
+      margin-bottom: 8px;
+      color: #f8c92d;
+      font-size: 56px;
+      font-weight: 950;
+      line-height: 0.92;
+      text-shadow: 0 5px 0 #12223b, 0 12px 22px rgba(0,0,0,0.58);
+    }
+
+    .overlay[data-mode="title"] .dialog p {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 850;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.5);
+    }
+
+    .overlay[data-mode="ranking"] .dialog {
+      align-self: stretch;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      width: min(100%, 370px);
+      background: rgba(9, 17, 32, 0.94);
+    }
+
+    .overlay[data-mode="ranking"] .dialog h2 {
+      font-size: 34px;
+    }
+
+    .overlay[data-mode="title"] .ranking,
+    .overlay[data-mode="title"] .conversion,
+    .overlay[data-mode="ranking"] .conversion,
+    .overlay[data-mode="ranking"] .score-entry {
+      display: none;
     }
 
     .dialog p {
@@ -350,10 +408,62 @@
 
     .ranking li {
       display: flex;
+      align-items: center;
       justify-content: space-between;
       gap: 10px;
       border-top: 1px solid rgba(246, 239, 217, 0.12);
-      padding: 4px 0;
+      padding: 6px 0;
+    }
+
+    .ranking .rank-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ranking .rank-avatar {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(246, 239, 217, 0.32);
+      border-radius: 50%;
+      background: rgba(246, 239, 217, 0.1) center / cover no-repeat;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .ranking .rank-name {
+      overflow: hidden;
+      color: var(--ink);
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ranking .rank-number {
+      min-width: 22px;
+      color: var(--muted);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .ranking .rank-score {
+      flex: 0 0 auto;
+      color: var(--ink);
+      font-weight: 950;
+    }
+
+    .ranking li.current {
+      margin: 4px -8px;
+      padding: 8px;
+      border: 1px solid rgba(123, 238, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(123, 238, 255, 0.12);
+      box-shadow: 0 0 18px rgba(123, 238, 255, 0.08);
     }
 
     button {
@@ -367,6 +477,101 @@
       cursor: pointer;
       font: inherit;
       font-weight: 850;
+    }
+
+    .menu-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-actions button {
+      width: 100%;
+      min-height: 54px;
+      border: 2px solid rgba(246, 239, 217, 0.72);
+      border-radius: 12px;
+      box-shadow: 0 7px 0 rgba(70, 45, 0, 0.95), 0 15px 24px rgba(0,0,0,0.38);
+      font-size: 22px;
+      text-transform: uppercase;
+    }
+
+    .menu-actions button + button {
+      background: #182231;
+      color: var(--ink);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.92), 0 12px 20px rgba(0,0,0,0.32);
+      font-size: 18px;
+    }
+
+    .score-entry {
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 10px;
+      border: 1px solid rgba(246, 239, 217, 0.14);
+      border-radius: 8px;
+      background: rgba(246, 239, 217, 0.06);
+      text-align: left;
+    }
+
+    .score-entry[hidden] {
+      display: none;
+    }
+
+    .entry-photo {
+      width: 60px;
+      height: 60px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(246, 239, 217, 0.35);
+      border-radius: 50%;
+      background: rgba(13, 15, 16, 0.74) center / cover no-repeat;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .entry-fields {
+      min-width: 0;
+      display: grid;
+      gap: 7px;
+    }
+
+    .entry-fields input {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid rgba(246, 239, 217, 0.18);
+      border-radius: 8px;
+      background: rgba(8, 10, 12, 0.74);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 850;
+    }
+
+    .entry-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .entry-actions button {
+      min-height: 36px;
+      padding: 7px 8px;
+      font-size: 13px;
+    }
+
+    .entry-fields small {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    #photoVideo {
+      grid-column: 1 / -1;
+      width: 100%;
+      max-height: 160px;
+      border-radius: 8px;
+      background: #000;
+      object-fit: cover;
     }
 
     .run-strip {
@@ -562,7 +767,23 @@
             </div>
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
-          <button id="startButton" type="button">スタート</button>
+          <div class="score-entry" id="scoreEntry" hidden>
+            <div class="entry-photo" id="photoPreview"><span>顔</span></div>
+            <div class="entry-fields">
+              <input id="playerName" type="text" maxlength="12" placeholder="名前">
+              <div class="entry-actions">
+                <button id="photoButton" type="button">写真</button>
+                <button id="saveEntryButton" type="button">登録</button>
+              </div>
+              <small id="photoStatus">名前と写真はこの端末のランキングに保存されます</small>
+            </div>
+            <video id="photoVideo" playsinline muted hidden></video>
+            <canvas id="photoCanvas" width="96" height="96" hidden></canvas>
+          </div>
+          <div class="menu-actions">
+            <button id="startButton" type="button">スタート</button>
+            <button id="rankingButton" type="button">ランキング</button>
+          </div>
         </div>
       </div>
     </section>
@@ -605,6 +826,15 @@
     const convertScoreBox = document.getElementById("convertScoreBox");
     const dailyRankingEl = document.getElementById("dailyRanking");
     const startButton = document.getElementById("startButton");
+    const rankingButton = document.getElementById("rankingButton");
+    const scoreEntry = document.getElementById("scoreEntry");
+    const playerNameInput = document.getElementById("playerName");
+    const photoButton = document.getElementById("photoButton");
+    const saveEntryButton = document.getElementById("saveEntryButton");
+    const photoPreview = document.getElementById("photoPreview");
+    const photoStatus = document.getElementById("photoStatus");
+    const photoVideo = document.getElementById("photoVideo");
+    const photoCanvas = document.getElementById("photoCanvas");
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
@@ -714,6 +944,9 @@
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
     let touchStart = null;
+    let overlayMode = "title";
+    let cameraStream = null;
+    let capturedPhoto = "";
     let resultState = {
       active: false,
       phase: "none",
@@ -721,7 +954,8 @@
       coinCount: 0,
       finalScore: 0,
       rank: 0,
-      isBest: false
+      isBest: false,
+      entryId: ""
     };
     let obstacles = [];
     let coinItems = [];
@@ -745,6 +979,8 @@
 
     function resetGame() {
       clearScoreConversion();
+      stopCamera();
+      overlayMode = "playing";
       scoreLabel.textContent = "\u8ddd\u96e2";
       running = true;
       gameOver = false;
@@ -780,8 +1016,12 @@
       player.holdTimer = 0;
       spawnStarterCoins();
       resetResultState();
+      stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
+      scoreEntry.hidden = true;
+      rankingButton.hidden = true;
       overlay.classList.remove("show");
+      overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
       hintEl.textContent = "準備OK、2分目安で遊べます";
       updateHud();
@@ -792,13 +1032,18 @@
 function endGame() {
       running = false;
       gameOver = true;
+      overlayMode = "result";
       scoreLabel.textContent = "\u30b9\u30b3\u30a2";
       stageEl.classList.remove("playing");
+      stageEl.classList.remove("title-screen");
+      overlay.dataset.mode = "result";
+      rankingButton.hidden = true;
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
       const isBest = score > best;
-      const rank = saveDailyScore(score);
+      const savedScore = saveDailyScore(score);
+      const rank = savedScore.rank;
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
@@ -818,8 +1063,10 @@ function endGame() {
         coinCount: collectedCoins,
         finalScore: score,
         rank,
-        isBest
+        isBest,
+        entryId: savedScore.id
       };
+      prepareScoreEntry();
       startScoreConversion(distanceScore, collectedCoins, score, rank);
     }
 
@@ -831,7 +1078,8 @@ function endGame() {
         coinCount: 0,
         finalScore: 0,
         rank: 0,
-        isBest: false
+        isBest: false,
+        entryId: ""
       };
     }
 
@@ -860,7 +1108,7 @@ function endGame() {
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
         overlayText.textContent = `${finalScore}点 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${rank}`;
-        startButton.textContent = "次の人へ";
+        startButton.textContent = "タイトルへ";
         return;
       }
 
@@ -894,26 +1142,20 @@ function endGame() {
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${resultState.rank}`;
-      startButton.textContent = "次の人へ";
+      startButton.textContent = "タイトルへ";
       resultState.phase = "result";
     }
 
     function skipResultDetails() {
       if (!resultState.active) return;
-      clearScoreConversion();
-      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
-      scoreConvert.classList.remove("show");
-      scoreConvert.setAttribute("aria-hidden", "true");
-      overlayTitle.textContent = resultState.isBest ? "新記録" : "次のチャレンジ";
-      overlayText.textContent = resultState.isBest
-        ? `最高スコア ${resultState.finalScore}点！ 次の人も挑戦できます`
-        : `${resultState.finalScore}点 / ${formatRunTime(runTime)}。次の人もどうぞ`;
-      dailyRankingEl.innerHTML = "";
-      startButton.textContent = "スタート";
-      resultState.phase = "ready";
+      showTitleScreen();
     }
 
     function handleMainButton() {
+      if (overlayMode === "ranking") {
+        showTitleScreen();
+        return;
+      }
       if (!resultState.active) {
         resetGame();
         return;
@@ -1041,27 +1283,166 @@ function endGame() {
       const entry = {
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
         score,
-        time: Date.now()
+        time: Date.now(),
+        name: "プレイヤー",
+        photo: ""
       };
       const scores = readDailyScores();
       scores.push(entry);
       scores.sort((a, b) => b.score - a.score || a.time - b.time);
       const trimmed = scores.slice(0, 10);
       localStorage.setItem(todayKey(), JSON.stringify(trimmed));
-      return trimmed.findIndex((item) => item.id === entry.id) + 1 || trimmed.length;
+      return {
+        id: entry.id,
+        rank: trimmed.findIndex((item) => item.id === entry.id) + 1 || trimmed.length
+      };
     }
 
-    function renderDailyRanking(currentRank = 0) {
-      const scores = readDailyScores().slice(0, 5);
+    function updateDailyScoreProfile(entryId, name, photo) {
+      const scores = readDailyScores();
+      const entry = scores.find((item) => item.id === entryId);
+      if (!entry) return false;
+      entry.name = name || "プレイヤー";
+      entry.photo = photo || "";
+      localStorage.setItem(todayKey(), JSON.stringify(scores));
+      return true;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function renderDailyRanking(currentRank = 0, limit = 5) {
+      const scores = readDailyScores().slice(0, limit);
       if (!scores.length) {
         dailyRankingEl.innerHTML = "<li><span>今日のランキング</span><strong>まだ記録なし</strong></li>";
         return;
       }
       dailyRankingEl.innerHTML = scores.map((item, index) => {
         const rank = index + 1;
-        const mark = rank === currentRank ? " ★" : "";
-        return `<li><span>${rank}位${mark}</span><strong>${item.score}点</strong></li>`;
+        const mark = rank === currentRank ? " current" : "";
+        const name = escapeHtml(item.name || "プレイヤー");
+        const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
+        const avatar = item.photo ? "" : name.slice(0, 1);
+        return `<li class="${mark.trim()}"><span class="rank-main"><span class="rank-number">${rank}</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
       }).join("");
+    }
+
+    function showTitleScreen() {
+      stopCamera();
+      clearScoreConversion();
+      resetResultState();
+      overlayMode = "title";
+      overlay.dataset.mode = "title";
+      stageEl.classList.remove("playing");
+      stageEl.classList.add("title-screen");
+      overlay.querySelector(".dialog").classList.remove("new-best");
+      overlay.classList.add("show");
+      scoreEntry.hidden = true;
+      dailyRankingEl.innerHTML = "";
+      overlayTitle.textContent = "RUN DASH!";
+      overlayText.textContent = "3レーンを駆け抜けろ！";
+      startButton.textContent = "START";
+      rankingButton.hidden = false;
+      rankingButton.textContent = "RANKING";
+      hintEl.textContent = "STARTでラン、RANKINGで記録確認";
+      updateHud();
+    }
+
+    function showRankingScreen() {
+      stopCamera();
+      clearScoreConversion();
+      overlayMode = "ranking";
+      overlay.dataset.mode = "ranking";
+      overlay.querySelector(".dialog").classList.remove("new-best");
+      overlay.classList.add("show");
+      scoreEntry.hidden = true;
+      overlayTitle.textContent = "ランキング";
+      overlayText.textContent = "今日の上位記録";
+      renderDailyRanking(0, 10);
+      startButton.textContent = "もどる";
+      rankingButton.hidden = true;
+    }
+
+    function prepareScoreEntry() {
+      capturedPhoto = localStorage.getItem("laneRunnerLastPhoto") || "";
+      playerNameInput.value = localStorage.getItem("laneRunnerPlayerName") || "プレイヤー";
+      updatePhotoPreview(capturedPhoto);
+      photoStatus.textContent = "名前と写真を登録できます";
+      photoButton.textContent = capturedPhoto ? "撮り直し" : "写真";
+      saveEntryButton.textContent = "登録";
+      scoreEntry.hidden = false;
+    }
+
+    function updatePhotoPreview(photo) {
+      photoPreview.style.backgroundImage = photo ? `url("${photo}")` : "";
+      photoPreview.innerHTML = photo ? "" : "<span>顔</span>";
+    }
+
+    function saveEntryProfile() {
+      if (!resultState.entryId) return;
+      const name = playerNameInput.value.trim() || "プレイヤー";
+      const saved = updateDailyScoreProfile(resultState.entryId, name, capturedPhoto);
+      if (!saved) return;
+      localStorage.setItem("laneRunnerPlayerName", name);
+      if (capturedPhoto) {
+        localStorage.setItem("laneRunnerLastPhoto", capturedPhoto);
+      }
+      saveEntryButton.textContent = "保存済み";
+      photoStatus.textContent = "ランキングに登録しました";
+      renderDailyRanking(resultState.rank);
+    }
+
+    async function handlePhotoButton() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        photoStatus.textContent = "この表示方法ではカメラが使えません";
+        return;
+      }
+      if (!cameraStream) {
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+          photoVideo.srcObject = cameraStream;
+          photoVideo.hidden = false;
+          await photoVideo.play();
+          photoButton.textContent = "撮影";
+          photoStatus.textContent = "もう一度押すと撮影します";
+        } catch {
+          photoStatus.textContent = "カメラ許可が必要です";
+        }
+        return;
+      }
+
+      const context = photoCanvas.getContext("2d");
+      const size = 96;
+      const videoW = photoVideo.videoWidth || size;
+      const videoH = photoVideo.videoHeight || size;
+      const sourceSize = Math.min(videoW, videoH);
+      const sx = (videoW - sourceSize) / 2;
+      const sy = (videoH - sourceSize) / 2;
+      context.drawImage(photoVideo, sx, sy, sourceSize, sourceSize, 0, 0, size, size);
+      capturedPhoto = photoCanvas.toDataURL("image/jpeg", 0.82);
+      updatePhotoPreview(capturedPhoto);
+      stopCamera();
+      photoButton.textContent = "撮り直し";
+      photoStatus.textContent = "写真を設定しました";
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+      }
+      if (photoVideo) {
+        photoVideo.pause();
+        photoVideo.srcObject = null;
+        photoVideo.hidden = true;
+      }
     }
 
     function moveSide(direction) {
@@ -1108,11 +1489,6 @@ function spawnObstacle() {
         return;
       }
       const difficulty = difficultyRatio();
-      if (runTime > WARMUP_DURATION && Math.random() < 0.08 + difficulty * 0.18) {
-        spawnComboObstacle();
-        return;
-      }
-
       const canSpawnHole = runTime >= FIRST_HOLE_TIME;
       const type = canSpawnHole && Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
       if (type === "hole") {
@@ -1138,18 +1514,6 @@ function spawnObstacle() {
         return Math.abs(openLane - player.lane) <= 1;
       });
       return options.length ? options[Math.floor(Math.random() * options.length)] : Math.floor(Math.random() * 2);
-    }
-
-    function spawnComboObstacle() {
-      spawnCarHoleCombo();
-    }
-
-    function spawnCarHoleCombo() {
-      const carLane = Math.floor(Math.random() * 3);
-      const holeLanes = [0, 1, 2].filter((lane) => lane !== carLane);
-      const y = -74;
-      obstacles.push({ type: "car", lanes: [carLane], y: y - 10, h: 82, group: "mixed" });
-      obstacles.push({ type: "hole", lanes: holeLanes, y: y + 10, h: 52, group: "mixed" });
     }
 
     function hasObstacleClearance() {
@@ -2327,7 +2691,7 @@ function onPointerDown(event) {
     }
 
     function resultAdvanceRequested() {
-      return !running && overlay.classList.contains("show");
+      return overlayMode === "result" && !running && overlay.classList.contains("show");
     }
 
     function onOverlayPointerUp(event) {
@@ -2386,6 +2750,9 @@ function onPointerDown(event) {
     }
 
     startButton.addEventListener("click", handleMainButton);
+    rankingButton.addEventListener("click", showRankingScreen);
+    photoButton.addEventListener("click", handlePhotoButton);
+    saveEntryButton.addEventListener("click", saveEntryProfile);
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
@@ -2399,9 +2766,9 @@ function onPointerDown(event) {
     window.addEventListener("resize", resizeCanvas);
 
     bestEl.textContent = String(Math.floor(best));
-    renderDailyRanking();
     updateHud();
     resizeCanvas();
+    showTitleScreen();
     draw();
     lastTime = performance.now();
     startLoop();
