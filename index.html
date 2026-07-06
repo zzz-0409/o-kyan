@@ -816,6 +816,13 @@
     obstacleSprites.car.src = assetUrl("assets/obstacles/imagegen-car.png");
     obstacleSprites.hole.src = assetUrl("assets/obstacles/imagegen-hole.png");
     Object.values(obstacleSprites).forEach((image) => image.addEventListener("load", draw));
+    const gimmickSprites = {
+      boost: new Image(),
+      slow: new Image()
+    };
+    gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
+    gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
+    Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
     const backgroundSprites = {
       laneBg: new Image(),
       laneRoad: new Image(),
@@ -840,12 +847,16 @@
     const JUMP_DURATION = 0.66;
     const JUMP_BUFFER_TIME = 0.18;
     const JUMP_BUFFER_ARM_TIME = 0.24;
+    const SLOW_DURATION = 3.7;
+    const SLOW_FACTOR = 0.55;
+    const BOOST_DURATION = 3.0;
+    const BOOST_FACTOR = 1.55;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
     const SWIPE_MIN = 36;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
-    const SAFE_GUIDE_RANGE = 470;
+    const PANEL_CLEARANCE = 170;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
@@ -870,6 +881,9 @@
     let loopScroll = 0;
     let spawnTimer = 0;
     let coinTimer = 0;
+    let panelTimer = 0;
+    let slowTimer = 0;
+    let boostTimer = 0;
     let readyTimer = 0;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
@@ -889,6 +903,7 @@
     };
     let obstacles = [];
     let coinItems = [];
+    let speedPanels = [];
     let particles = [];
 
     const player = {
@@ -922,11 +937,15 @@
       loopScroll = 0;
       spawnTimer = 1.55;
       coinTimer = 0.55;
+      panelTimer = 3.0;
+      slowTimer = 0;
+      boostTimer = 0;
       readyTimer = READY_GRACE_TIME;
       jumpTimer = 0;
       jumpBufferTimer = 0;
       obstacles = [];
       coinItems = [];
+      speedPanels = [];
       particles = [];
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
@@ -1400,6 +1419,13 @@ function spawnObstacle() {
           return false;
         }
       }
+      for (const panel of speedPanels) {
+        const panelTop = panel.y;
+        const panelBottom = panel.y + panel.h;
+        if (rangesTooClose(obstacleTop, obstacleBottom, panelTop, panelBottom, PANEL_CLEARANCE)) {
+          return false;
+        }
+      }
       return true;
     }
 
@@ -1431,6 +1457,37 @@ function spawnCoins() {
       return true;
     }
 
+    function spawnSpeedPanel() {
+      if (!hasPanelClearance()) {
+        panelTimer = 0.45;
+        return;
+      }
+      if (Math.random() < 0.28) {
+        const y = -72;
+        const groupId = `boost-${Date.now()}-${Math.random()}`;
+        for (let lane = 0; lane < 3; lane += 1) {
+          speedPanels.push({ lane, kind: "up", y, h: 58, used: false, group: "tripleBoost", groupId });
+        }
+        return;
+      }
+      const lane = Math.floor(Math.random() * 3);
+      const kind = Math.random() < 0.46 ? "up" : "down";
+      speedPanels.push({ lane, kind, y: -72, h: 58, used: false, group: "solo", groupId: "" });
+    }
+
+    function hasPanelClearance() {
+      const panelTop = -72;
+      const panelBottom = panelTop + 58;
+      for (const obstacle of obstacles) {
+        const obstacleTop = obstacle.y;
+        const obstacleBottom = obstacle.y + obstacle.h;
+        if (rangesTooClose(panelTop, panelBottom, obstacleTop, obstacleBottom, PANEL_CLEARANCE)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     function rangesTooClose(aTop, aBottom, bTop, bBottom, clearance) {
       return aTop < bBottom + clearance && aBottom + clearance > bTop;
     }
@@ -1443,8 +1500,12 @@ function spawnCoins() {
       if (!running) return;
       runTime += dt;
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
+      slowTimer = Math.max(0, slowTimer - dt);
+      boostTimer = Math.max(0, boostTimer - dt);
       readyTimer = Math.max(0, readyTimer - dt);
       speed = rawSpeed;
+      if (boostTimer > 0) speed *= BOOST_FACTOR;
+      if (slowTimer > 0) speed *= SLOW_FACTOR;
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
       jumpTimer = Math.max(0, jumpTimer - dt);
@@ -1473,6 +1534,11 @@ function spawnCoins() {
           coinTimer = 1.55 + Math.random() * 1.35;
         }
 
+        panelTimer -= dt;
+        if (panelTimer <= 0) {
+          spawnSpeedPanel();
+          panelTimer = 3.2 + Math.random() * 2.4;
+        }
       }
 
       for (const obstacle of obstacles) {
@@ -1485,6 +1551,11 @@ function spawnCoins() {
         coin.y += speed * dt;
       }
       coinItems = coinItems.filter((coin) => coin.y < H + 40 && !coin.collected);
+
+      for (const panel of speedPanels) {
+        panel.y += speed * dt;
+      }
+      speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
 
       updateParticles(dt);
       checkCollisions();
@@ -1578,6 +1649,31 @@ function checkCollisions() {
         }
       }
 
+      for (let i = speedPanels.length - 1; i >= 0; i -= 1) {
+        const panel = speedPanels[i];
+        const r = panelRect(panel);
+        if (rectsOverlap(feet, r)) {
+          panel.used = true;
+          if (panel.kind === "up") {
+            boostTimer = BOOST_DURATION;
+            slowTimer = 0;
+            burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
+            hintEl.textContent = "スピードアップ";
+          } else {
+            slowTimer = SLOW_DURATION;
+            boostTimer = 0;
+            burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
+            hintEl.textContent = "スピードダウン";
+          }
+          if (panel.group === "tripleBoost") {
+            speedPanels = speedPanels.filter((item) => item.groupId !== panel.groupId);
+          } else {
+            speedPanels.splice(i, 1);
+          }
+          break;
+        }
+      }
+
     }
 
     function crash() {
@@ -1609,6 +1705,15 @@ function playerRect() {
         y,
         w: 68,
         h
+      };
+    }
+
+    function panelRect(panel) {
+      return {
+        x: LANES[panel.lane] - 36,
+        y: panel.y,
+        w: 72,
+        h: panel.h
       };
     }
 
@@ -1661,12 +1766,10 @@ function draw() {
       ctx.fillRect(0, 0, W, H);
       ctx.save();
       drawRoad();
-      drawDangerHints();
-      drawSafeLaneGuide();
+      drawSpeedPanels();
       drawCoins();
       drawObstacles();
       drawParticles();
-      if (readyTimer > 0) drawReadyGuide();
       drawPlayer();
       ctx.restore();
     }
@@ -1867,139 +1970,6 @@ function drawFallbackRoad() {
       ctx.fillRect(x - 28, y - 28, 56, 56);
     }
 
-    function drawDangerHints() {
-      ctx.save();
-      for (const obstacle of obstacles) {
-        if (obstacle.type === "hole") {
-          if (obstacle.y < 72 || obstacle.y > PLAYER_Y - 88) continue;
-          const pulse = 0.72 + Math.sin(loopScroll * 0.08) * 0.18;
-          ctx.globalAlpha = pulse;
-          drawJumpCue(W / 2, obstacle.y - 24, 1 + (1 - pulse) * 0.08);
-          continue;
-        }
-        if (obstacle.y < 40 || obstacle.y > PLAYER_Y - 96) continue;
-        const urgency = 1 - Math.max(0, Math.min(1, (PLAYER_Y - 96 - obstacle.y) / 440));
-        ctx.globalAlpha = 0.28 + urgency * 0.26;
-        for (const lane of obstacle.lanes) {
-          const x = LANES[lane];
-          const top = Math.max(0, obstacle.y - 18);
-          const bottom = Math.min(H, obstacle.y + obstacle.h + 18);
-          const gradient = ctx.createLinearGradient(0, top, 0, bottom);
-          gradient.addColorStop(0, "rgba(221, 102, 85, 0)");
-          gradient.addColorStop(0.5, "rgba(221, 102, 85, 0.82)");
-          gradient.addColorStop(1, "rgba(221, 102, 85, 0)");
-          ctx.fillStyle = gradient;
-          ctx.fillRect(x - 36, top, 72, bottom - top);
-          ctx.strokeStyle = "rgba(246, 239, 217, 0.7)";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x - 36, top, 72, bottom - top);
-        }
-      }
-      ctx.restore();
-    }
-
-    function drawJumpCue(x, y, scale = 1) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 42);
-      glow.addColorStop(0, "rgba(240,194,71,0.32)");
-      glow.addColorStop(1, "rgba(240,194,71,0)");
-      ctx.fillStyle = glow;
-      ctx.fillRect(-46, -46, 92, 92);
-      ctx.strokeStyle = "rgba(246,239,217,0.86)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(0, 0, 24, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "rgba(240,194,71,0.96)";
-      ctx.beginPath();
-      ctx.moveTo(0, -23);
-      ctx.lineTo(17, -3);
-      ctx.lineTo(7, -3);
-      ctx.lineTo(7, 17);
-      ctx.lineTo(-7, 17);
-      ctx.lineTo(-7, -3);
-      ctx.lineTo(-17, -3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawReadyGuide() {
-      const ratio = Math.max(0, Math.min(1, readyTimer / READY_GRACE_TIME));
-      const pulse = 0.68 + Math.sin(loopScroll * 0.1) * 0.18;
-      const guideY = PLAYER_Y - 30;
-      ctx.save();
-      ctx.globalAlpha = Math.min(0.8, 0.34 + ratio * 0.36);
-      ctx.strokeStyle = `rgba(123, 238, 255, ${pulse})`;
-      ctx.fillStyle = "rgba(123, 238, 255, 0.2)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.ellipse(LANES[player.lane], PLAYER_Y - 28, 48 + (1 - ratio) * 10, 28 + (1 - ratio) * 4, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      for (const lane of [0, 2]) {
-        const x = LANES[lane];
-        const direction = lane === 0 ? -1 : 1;
-        ctx.beginPath();
-        ctx.moveTo(x - 16 * direction, guideY - 10);
-        ctx.lineTo(x + 15 * direction, guideY);
-        ctx.lineTo(x - 16 * direction, guideY + 10);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(LANES[CENTER_LANE] + 18 * direction, guideY);
-        ctx.lineTo(x - 10 * direction, guideY);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function upcomingCarThreat() {
-      let best = null;
-      for (const obstacle of obstacles) {
-        if (obstacle.type === "hole") continue;
-        if (obstacle.y < 48 || obstacle.y > PLAYER_Y - 80) continue;
-        const distanceToPlayer = PLAYER_Y - obstacle.y;
-        if (distanceToPlayer > SAFE_GUIDE_RANGE) continue;
-        if (!best || obstacle.y > best.y) best = obstacle;
-      }
-      return best;
-    }
-
-    function safeLanesFor(obstacle) {
-      if (!obstacle) return [];
-      return [0, 1, 2].filter((lane) => !obstacle.lanes.includes(lane));
-    }
-
-    function drawSafeLaneGuide() {
-      const threat = upcomingCarThreat();
-      const safeLanes = safeLanesFor(threat);
-      if (!safeLanes.length) return;
-      const urgency = 1 - Math.max(0, Math.min(1, (PLAYER_Y - threat.y - 80) / SAFE_GUIDE_RANGE));
-      const alpha = 0.22 + urgency * 0.34;
-      const guideY = PLAYER_Y + 42;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      for (const lane of safeLanes) {
-        const x = LANES[lane];
-        const gradient = ctx.createLinearGradient(x - 34, 0, x + 34, 0);
-        gradient.addColorStop(0, "rgba(123,238,255,0)");
-        gradient.addColorStop(0.5, "rgba(123,238,255,0.9)");
-        gradient.addColorStop(1, "rgba(123,238,255,0)");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x - 34, guideY - 3, 68, 6);
-        ctx.strokeStyle = "rgba(246,239,217,0.86)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x - 13, guideY + 11);
-        ctx.lineTo(x, guideY + 22);
-        ctx.lineTo(x + 13, guideY + 11);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
 function drawObstacles() {
       for (const obstacle of obstacles) {
         for (const lane of obstacle.lanes) {
@@ -2043,6 +2013,23 @@ function drawObstacles() {
         ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         ctx.fillStyle = "rgba(20,22,22,0.32)";
         ctx.fillRect(rect.x + 8, rect.y + 8, rect.w - 16, 8);
+      }
+    }
+
+    function drawSpeedPanels() {
+      for (const panel of speedPanels) {
+        const r = panelRect(panel);
+        const image = panel.kind === "up" ? gimmickSprites.boost : gimmickSprites.slow;
+        if (imageReady(image)) {
+          ctx.drawImage(image, r.x, r.y, r.w, r.h);
+          continue;
+        }
+        ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = panel.kind === "up" ? "#f6efd9" : "#e8f8ff";
+        ctx.font = "800 18px Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(panel.kind === "up" ? ">>" : "<<", r.x + r.w / 2, r.y + 35);
       }
     }
 
@@ -2147,11 +2134,6 @@ function drawObstacles() {
         ctx.restore();
       }
 
-      if (player.lane !== CENTER_LANE) {
-        ctx.strokeStyle = "rgba(240,194,71,0.9)";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(LANES[player.lane] - 39, PLAYER_Y - 36, 78, 72);
-      }
     }
 
     function roundedRectPath(x, y, w, h, r) {
