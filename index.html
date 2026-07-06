@@ -14,8 +14,6 @@
       --muted: #b8c1b2;
       --accent: #f0c247;
       --danger: #dd6655;
-      --slow: #65b7d8;
-      --boost: #f0c247;
       --panel: rgba(13, 15, 16, 0.78);
     }
 
@@ -576,7 +574,7 @@
 
     .run-strip {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 6px;
       min-height: 34px;
     }
@@ -622,39 +620,11 @@
     .footer {
       min-height: 38px;
       display: grid;
-      grid-template-columns: 1fr 96px;
+      grid-template-columns: 1fr;
       align-items: center;
       gap: 8px;
       color: var(--muted);
       font-size: 12px;
-    }
-
-    .slow-bar {
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(246, 239, 217, 0.1);
-      overflow: hidden;
-    }
-
-    .slow-bar i {
-      display: block;
-      width: 0%;
-      height: 100%;
-      background: var(--slow);
-      border-radius: inherit;
-      transition: width 0.08s linear, background-color 0.15s ease;
-    }
-
-    .slow-bar.boost i {
-      background: var(--boost);
-    }
-
-    .slow-bar.slow i {
-      background: var(--slow);
-    }
-
-    .slow-bar.pace i {
-      background: linear-gradient(90deg, rgba(123, 238, 255, 0.55), rgba(240, 194, 71, 0.8));
     }
 
     @media (max-width: 430px), (max-height: 700px) {
@@ -714,7 +684,7 @@
 
       .footer {
         min-height: 28px;
-        grid-template-columns: 1fr 76px;
+        grid-template-columns: 1fr;
         font-size: 10px;
       }
 
@@ -790,12 +760,10 @@
 
     <div class="run-strip" aria-label="ラン状態">
       <div class="run-pill" id="timePill"><span>時間</span><strong id="timeStatus">0:00</strong></div>
-      <div class="run-pill" id="effectPill"><span>状態</span><strong id="effectStatus">-</strong></div>
     </div>
 
     <footer class="footer">
       <span id="hint">2分目安。左右で移動、ジャンプで回避</span>
-      <div class="slow-bar" aria-label="状態バー"><i id="slowFill"></i></div>
     </footer>
   </main>
 
@@ -808,11 +776,8 @@
     const bestEl = document.getElementById("best");
     const todayRankEl = document.getElementById("todayRank");
     const hintEl = document.getElementById("hint");
-    const slowFill = document.getElementById("slowFill");
     const timePill = document.getElementById("timePill");
     const timeStatus = document.getElementById("timeStatus");
-    const effectPill = document.getElementById("effectPill");
-    const effectStatus = document.getElementById("effectStatus");
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
@@ -835,7 +800,7 @@
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-6";
+    const ASSET_VERSION = "imagegen-7";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -851,15 +816,6 @@
     obstacleSprites.car.src = assetUrl("assets/obstacles/imagegen-car.png");
     obstacleSprites.hole.src = assetUrl("assets/obstacles/imagegen-hole.png");
     Object.values(obstacleSprites).forEach((image) => image.addEventListener("load", draw));
-    const gimmickSprites = {
-      boost: new Image(),
-      slow: new Image(),
-      slowGate: new Image()
-    };
-    gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
-    gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
-    gimmickSprites.slowGate.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
-    Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
     const backgroundSprites = {
       laneBg: new Image(),
       laneRoad: new Image(),
@@ -884,26 +840,16 @@
     const JUMP_DURATION = 0.66;
     const JUMP_BUFFER_TIME = 0.18;
     const JUMP_BUFFER_ARM_TIME = 0.24;
-    const SLOW_DURATION = 3.7;
-    const SLOW_FACTOR = 0.55;
-    const BOOST_DURATION = 3.0;
-    const BOOST_FACTOR = 1.55;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
     const SWIPE_MIN = 36;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
-    const PANEL_CLEARANCE = 170;
     const SAFE_GUIDE_RANGE = 470;
-    const LAST_CHANCE_DURATION = 0.42;
-    const LAST_CHANCE_SPEED_FACTOR = 0.36;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
-    const CHECKPOINT_DISTANCE = 150;
-    const STARTER_COIN_TRAIL = 4;
-    const CHECKPOINT_COIN_TRAIL = 5;
     const READY_GRACE_TIME = 1.8;
     const TWO_MINUTE_TARGET = 120;
 
@@ -914,7 +860,6 @@
     let loopActive = false;
     let runTime = 0;
     let targetTimeAnnounced = false;
-    let checkpointIndex = 1;
     let distance = 0;
     let coins = 0;
     let scoreConvertInterval = 0;
@@ -925,13 +870,7 @@
     let loopScroll = 0;
     let spawnTimer = 0;
     let coinTimer = 0;
-    let slowGateTimer = 0;
-    let panelTimer = 0;
-    let slowTimer = 0;
-    let boostTimer = 0;
     let readyTimer = 0;
-    let lastChanceTimer = 0;
-    let lastChanceTarget = null;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
     let touchStart = null;
@@ -950,8 +889,6 @@
     };
     let obstacles = [];
     let coinItems = [];
-    let slowGates = [];
-    let speedPanels = [];
     let particles = [];
 
     const player = {
@@ -977,7 +914,6 @@
       gameOver = false;
       runTime = 0;
       targetTimeAnnounced = false;
-      checkpointIndex = 1;
       distance = 0;
       coins = 0;
       bestPaceAnnounced = false;
@@ -986,24 +922,15 @@
       loopScroll = 0;
       spawnTimer = 1.55;
       coinTimer = 0.55;
-      slowGateTimer = 5.8;
-      panelTimer = 3.0;
-      slowTimer = 0;
-      boostTimer = 0;
       readyTimer = READY_GRACE_TIME;
-      lastChanceTimer = 0;
-      lastChanceTarget = null;
       jumpTimer = 0;
       jumpBufferTimer = 0;
       obstacles = [];
       coinItems = [];
-      slowGates = [];
-      speedPanels = [];
       particles = [];
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
-      spawnStarterCoins();
       resetResultState();
       stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
@@ -1177,41 +1104,12 @@ function endGame() {
       todayRankEl.textContent = String(coins);
       checkBestPace(runScore);
       updateRunStrip();
-      const boostActive = boostTimer > 0;
-      const slowActive = slowTimer > 0;
-      const lastChanceActive = lastChanceTimer > 0;
-      const readyActive = readyTimer > 0;
-      const timedEffectActive = readyActive || lastChanceActive || boostActive || slowActive;
-      const effectRatio = readyActive
-          ? readyTimer / READY_GRACE_TIME
-          : lastChanceActive
-            ? lastChanceTimer / LAST_CHANCE_DURATION
-            : boostActive
-              ? boostTimer / BOOST_DURATION
-              : slowActive
-                ? slowTimer / SLOW_DURATION
-                : Math.min(1, runTime / TWO_MINUTE_TARGET);
-      slowFill.style.width = `${Math.min(100, effectRatio * 100)}%`;
-      slowFill.parentElement.classList.toggle("boost", boostActive);
-      slowFill.parentElement.classList.toggle("slow", (slowActive || lastChanceActive) && !boostActive);
-      slowFill.parentElement.classList.toggle("pace", !timedEffectActive);
     }
 
     function updateRunStrip() {
       timeStatus.textContent = formatRunTime(runTime);
       timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
-      const effectLabel = readyTimer > 0
-        ? "準備"
-        : lastChanceTimer > 0
-          ? "猶予"
-          : boostTimer > 0
-            ? "加速"
-            : slowTimer > 0
-              ? "減速"
-              : "-";
-      effectStatus.textContent = effectLabel;
-      effectPill.classList.toggle("active", effectLabel !== "-");
     }
 
     function computeScore() {
@@ -1229,10 +1127,6 @@ function endGame() {
       if (targetTimeAnnounced || runTime < TWO_MINUTE_TARGET) return;
       targetTimeAnnounced = true;
       hintEl.textContent = "2分突破！ そのまま記録更新へ";
-      for (let i = 0; i < CHECKPOINT_COIN_TRAIL; i += 1) {
-        const lane = i % 3;
-        coinItems.push({ lane, y: PLAYER_Y - 230 - i * 38, r: COIN_RADIUS, collected: false, bonus: true });
-      }
     }
 
     function checkBestPace(runScore) {
@@ -1506,33 +1400,7 @@ function spawnObstacle() {
           return false;
         }
       }
-      for (const panel of speedPanels) {
-        const panelTop = panel.y;
-        const panelBottom = panel.y + panel.h;
-        if (rangesTooClose(obstacleTop, obstacleBottom, panelTop, panelBottom, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
-      for (const gate of slowGates) {
-        if (rangesTooClose(obstacleTop, obstacleBottom, gate.y, gate.y + gate.h, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
       return true;
-    }
-
-    function spawnSlowGate() {
-      if (!hasSlowGateClearance(-58, 34)) {
-        slowGateTimer = 0.75;
-        return;
-      }
-      slowGates.push({ y: -58, h: 34, forced: false });
-    }
-
-    function spawnStarterCoins() {
-      for (let i = 0; i < STARTER_COIN_TRAIL; i += 1) {
-        coinItems.push({ lane: CENTER_LANE, y: PLAYER_Y - 180 - i * 40, r: COIN_RADIUS, collected: false, bonus: true });
-      }
     }
 
 function spawnCoins() {
@@ -1560,59 +1428,6 @@ function spawnCoins() {
           return false;
         }
       }
-      for (const gate of slowGates) {
-        if (rangesTooClose(coinTop, coinBottom, gate.y, gate.y + gate.h, 70)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    function spawnSpeedPanel() {
-      if (!hasPanelClearance()) {
-        panelTimer = 0.45;
-        return;
-      }
-      if (Math.random() < 0.28) {
-        const y = -72;
-        const groupId = `boost-${Date.now()}-${Math.random()}`;
-        for (let lane = 0; lane < 3; lane += 1) {
-          speedPanels.push({ lane, kind: "up", y, h: 58, used: false, group: "tripleBoost", groupId });
-        }
-        return;
-      }
-      const lane = Math.floor(Math.random() * 3);
-      const kind = Math.random() < 0.46 ? "up" : "down";
-      speedPanels.push({ lane, kind, y: -72, h: 58, used: false, group: "solo", groupId: "" });
-    }
-
-    function hasPanelClearance() {
-      const panelTop = -72;
-      const panelBottom = panelTop + 58;
-      for (const gate of slowGates) {
-        if (rangesTooClose(panelTop, panelBottom, gate.y, gate.y + gate.h, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
-      for (const obstacle of obstacles) {
-        const obstacleTop = obstacle.y;
-        const obstacleBottom = obstacle.y + obstacle.h;
-        if (rangesTooClose(panelTop, panelBottom, obstacleTop, obstacleBottom, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    function hasSlowGateClearance(gateY, gateH) {
-      const gateTop = gateY;
-      const gateBottom = gateY + gateH;
-      const blockers = [...obstacles, ...speedPanels];
-      for (const item of blockers) {
-        if (rangesTooClose(gateTop, gateBottom, item.y, item.y + item.h, PANEL_CLEARANCE)) {
-          return false;
-        }
-      }
       return true;
     }
 
@@ -1624,51 +1439,17 @@ function spawnCoins() {
       return Math.max(0, Math.min(1, (runTime - WARMUP_DURATION) / (FULL_DIFFICULTY_TIME - WARMUP_DURATION)));
     }
 
-    function checkDistanceCheckpoint() {
-      while (distance >= checkpointIndex * CHECKPOINT_DISTANCE) {
-        awardCheckpoint(checkpointIndex);
-        checkpointIndex += 1;
-      }
-    }
-
-    function awardCheckpoint(index) {
-      const milestone = index * CHECKPOINT_DISTANCE;
-      spawnCheckpointCoinTrail(index);
-      coinTimer = Math.min(coinTimer, 0.35);
-      hintEl.textContent = `${milestone}m到達！ コイン出現`;
-    }
-
-    function spawnCheckpointCoinTrail(index) {
-      const direction = index % 2 === 0 ? -1 : 1;
-      const sideLane = Math.max(0, Math.min(2, player.lane + direction));
-      for (let i = 0; i < CHECKPOINT_COIN_TRAIL; i += 1) {
-        const lane = i % 2 === 0 ? player.lane : sideLane;
-        coinItems.push({ lane, y: PLAYER_Y - 220 - i * 40, r: COIN_RADIUS, collected: false, bonus: true });
-      }
-    }
-
     function update(dt) {
       if (!running) return;
       runTime += dt;
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
-      slowTimer = Math.max(0, slowTimer - dt);
-      boostTimer = Math.max(0, boostTimer - dt);
       readyTimer = Math.max(0, readyTimer - dt);
-      lastChanceTimer = Math.max(0, lastChanceTimer - dt);
-      if (lastChanceTarget && !obstacles.includes(lastChanceTarget)) {
-        lastChanceTarget = null;
-        lastChanceTimer = 0;
-      }
       speed = rawSpeed;
-      if (boostTimer > 0) speed *= BOOST_FACTOR;
-      if (slowTimer > 0) speed *= SLOW_FACTOR;
-      if (lastChanceTimer > 0) speed *= LAST_CHANCE_SPEED_FACTOR;
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
       jumpTimer = Math.max(0, jumpTimer - dt);
       if (jumpTimer <= 0 && bufferedJump) startJump();
       distance += (speed * dt) / 12;
-      checkDistanceCheckpoint();
       checkPlayTimeTarget();
       roadScroll = (roadScroll + speed * dt) % 80;
       loopScroll += speed * dt;
@@ -1692,17 +1473,6 @@ function spawnCoins() {
           coinTimer = 1.55 + Math.random() * 1.35;
         }
 
-        slowGateTimer -= dt;
-        if (slowGateTimer <= 0) {
-          spawnSlowGate();
-          slowGateTimer = 6.4 + Math.random() * 3.2;
-        }
-
-        panelTimer -= dt;
-        if (panelTimer <= 0) {
-          spawnSpeedPanel();
-          panelTimer = 3.2 + Math.random() * 2.4;
-        }
       }
 
       for (const obstacle of obstacles) {
@@ -1716,16 +1486,6 @@ function spawnCoins() {
       }
       coinItems = coinItems.filter((coin) => coin.y < H + 40 && !coin.collected);
 
-      for (const gate of slowGates) {
-        gate.y += speed * dt;
-      }
-      slowGates = slowGates.filter((gate) => gate.y < H + 70);
-
-      for (const panel of speedPanels) {
-        panel.y += speed * dt;
-      }
-      speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
-
       updateParticles(dt);
       checkCollisions();
       updateHud();
@@ -1734,18 +1494,10 @@ function spawnCoins() {
     function awardPassedObstacles() {
       for (const obstacle of obstacles) {
         if (obstacle.scored || readyTimer > 0 || !laneObjectPassed(obstacle)) continue;
-        if (obstacle === lastChanceTarget && !lastChanceAvoided(obstacle)) {
-          lastChanceTimer = 0;
-          crash();
-          return;
-        }
         obstacle.scored = true;
         if (obstacle.type === "hole") {
           if (obstacle.lanes.includes(player.lane) && isJumping()) {
             burstParticles(LANES[player.lane], PLAYER_Y - 42, "#7beeff", 10, 0.75);
-          }
-          if (obstacle === lastChanceTarget) {
-            awardLastChanceBonus(obstacle);
           }
           continue;
         }
@@ -1753,39 +1505,8 @@ function spawnCoins() {
           const clearX = LANES[player.lane];
           const clearY = PLAYER_Y - 34;
           burstParticles(clearX, clearY, obstacle.lanes.length > 1 ? "#f0c247" : "#7beeff", 8, 0.65);
-          if (obstacle === lastChanceTarget) {
-            awardLastChanceBonus(obstacle);
-          }
         }
       }
-    }
-
-    function lastChanceAvoided(obstacle) {
-      if (obstacle.type === "hole") {
-        return !obstacle.lanes.includes(player.lane) || isJumping();
-      }
-      return !obstacle.lanes.includes(player.lane);
-    }
-
-    function triggerLastChance(obstacle) {
-      if (obstacle.lastChanceUsed) return false;
-      obstacle.lastChanceUsed = true;
-      lastChanceTarget = obstacle;
-      lastChanceTimer = LAST_CHANCE_DURATION;
-      hintEl.textContent = "ラストチャンス！";
-      return true;
-    }
-
-    function shouldHoldCrashForLastChance(obstacle) {
-      if (lastChanceTarget === obstacle && lastChanceTimer > 0) return true;
-      return triggerLastChance(obstacle);
-    }
-
-    function awardLastChanceBonus(obstacle) {
-      lastChanceTarget = null;
-      lastChanceTimer = 0;
-      hintEl.textContent = "ギリギリ回避！";
-      obstacle.lastChanceAwarded = true;
     }
 
     function burstParticles(x, y, color, count = 8, spread = 1) {
@@ -1830,7 +1551,6 @@ function checkCollisions() {
             for (const lane of obstacle.lanes) {
               const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
               if (rectsOverlap(feet, o)) {
-                if (shouldHoldCrashForLastChance(obstacle)) return;
                 crash();
                 return;
               }
@@ -1840,7 +1560,6 @@ function checkCollisions() {
           for (const lane of obstacle.lanes) {
             const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 8, 7);
             if (rectsOverlap(hitP, o)) {
-              if (shouldHoldCrashForLastChance(obstacle)) return;
               crash();
               return;
             }
@@ -1859,42 +1578,6 @@ function checkCollisions() {
         }
       }
 
-      for (let i = slowGates.length - 1; i >= 0; i -= 1) {
-        const gate = slowGates[i];
-        const g = { x: 44, y: gate.y, w: W - 88, h: gate.h };
-        if (rectsOverlap(p, g)) {
-          slowTimer = SLOW_DURATION;
-          boostTimer = 0;
-          slowGates.splice(i, 1);
-          burstParticles(W / 2, gate.y + gate.h / 2, "#65b7d8", 14, 1.1);
-          hintEl.textContent = "強制スロー";
-        }
-      }
-
-      for (let i = speedPanels.length - 1; i >= 0; i -= 1) {
-        const panel = speedPanels[i];
-        const r = panelRect(panel);
-        if (rectsOverlap(feet, r)) {
-          panel.used = true;
-          if (panel.kind === "up") {
-            boostTimer = BOOST_DURATION;
-            slowTimer = 0;
-            burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
-            hintEl.textContent = "スピードアップ";
-          } else {
-            slowTimer = SLOW_DURATION;
-            boostTimer = 0;
-            burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
-            hintEl.textContent = "スピードダウン";
-          }
-          if (panel.group === "tripleBoost") {
-            speedPanels = speedPanels.filter((item) => item.groupId !== panel.groupId);
-          } else {
-            speedPanels.splice(i, 1);
-          }
-          break;
-        }
-      }
     }
 
     function crash() {
@@ -1926,15 +1609,6 @@ function playerRect() {
         y,
         w: 68,
         h
-      };
-    }
-
-    function panelRect(panel) {
-      return {
-        x: LANES[panel.lane] - 36,
-        y: panel.y,
-        w: 72,
-        h: panel.h
       };
     }
 
@@ -1989,14 +1663,11 @@ function draw() {
       drawRoad();
       drawDangerHints();
       drawSafeLaneGuide();
-      drawSpeedPanels();
       drawCoins();
-      drawSlowGates();
       drawObstacles();
       drawParticles();
       if (readyTimer > 0) drawReadyGuide();
       drawPlayer();
-      if (lastChanceTimer > 0) drawLastChancePulse();
       ctx.restore();
     }
 function drawRoad() {
@@ -2375,23 +2046,6 @@ function drawObstacles() {
       }
     }
 
-    function drawSpeedPanels() {
-      for (const panel of speedPanels) {
-        const r = panelRect(panel);
-        const image = panel.kind === "up" ? gimmickSprites.boost : gimmickSprites.slow;
-        if (imageReady(image)) {
-          ctx.drawImage(image, r.x, r.y, r.w, r.h);
-          continue;
-        }
-        ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
-        ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = panel.kind === "up" ? "#f6efd9" : "#e8f8ff";
-        ctx.font = "800 18px Segoe UI, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(panel.kind === "up" ? ">>" : "<<", r.x + r.w / 2, r.y + 35);
-      }
-    }
-
     function drawCoins() {
       for (const coin of coinItems) {
         const x = LANES[coin.lane];
@@ -2416,28 +2070,6 @@ function drawObstacles() {
         ctx.beginPath();
         ctx.arc(x, y, COIN_RADIUS - 3, 0, Math.PI * 2);
         ctx.stroke();
-      }
-    }
-
-    function drawSlowGates() {
-      for (const gate of slowGates) {
-        for (let lane = 0; lane < 3; lane += 1) {
-          const r = {
-            x: LANES[lane] - 36,
-            y: gate.y,
-            w: 72,
-            h: gate.h
-          };
-          if (imageReady(gimmickSprites.slowGate)) {
-            ctx.drawImage(gimmickSprites.slowGate, r.x, r.y, r.w, r.h);
-            continue;
-          }
-          ctx.fillStyle = "rgba(101,183,216,0.34)";
-          ctx.fillRect(r.x, r.y, r.w, r.h);
-          ctx.strokeStyle = "#aee6ff";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(r.x, r.y, r.w, r.h);
-        }
       }
     }
 
@@ -2537,19 +2169,6 @@ function drawObstacles() {
       ctx.closePath();
     }
 
-    function drawLastChancePulse() {
-      const ratio = Math.max(0, Math.min(1, lastChanceTimer / LAST_CHANCE_DURATION));
-      const pulse = 0.35 + Math.sin(loopScroll * 0.22) * 0.12;
-      const strokeAlpha = Math.min(0.95, 0.55 + pulse);
-      ctx.save();
-      ctx.globalAlpha = 0.45 + ratio * 0.35;
-      ctx.strokeStyle = `rgba(123, 238, 255, ${strokeAlpha})`;
-      ctx.lineWidth = 5;
-      ctx.strokeRect(8, 8, W - 16, H - 16);
-      ctx.fillStyle = "rgba(123, 238, 255, 0.12)";
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-    }
     function canvasPoint(event) {
       const rect = canvas.getBoundingClientRect();
       const left = rect.left || 0;
