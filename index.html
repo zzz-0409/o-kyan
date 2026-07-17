@@ -7,14 +7,17 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #101214;
+      --bg: #07101f;
+      --bg-2: #0d1930;
       --road: #273038;
       --road-line: #53606a;
-      --ink: #f6efd9;
-      --muted: #b8c1b2;
-      --accent: #f0c247;
-      --danger: #dd6655;
-      --panel: rgba(13, 15, 16, 0.78);
+      --ink: #fff8df;
+      --muted: #b9c3d4;
+      --accent: #ffc629;
+      --accent-2: #3bd7ff;
+      --danger: #ff5d4d;
+      --panel: rgba(8, 13, 24, 0.86);
+      --panel-strong: rgba(7, 11, 20, 0.94);
     }
 
     * {
@@ -32,10 +35,11 @@
       min-height: 100dvh;
       display: grid;
       place-items: stretch center;
-      background: var(--bg);
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, #08172f 0%, #050910 100%);
       color: var(--ink);
       font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
-      overflow: hidden;
     }
 
     .app {
@@ -45,57 +49,68 @@
       min-height: 0;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto auto;
-      gap: 8px;
+      gap: 7px;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
     }
 
     .hud {
       display: grid;
-      grid-template-columns: 1fr auto auto auto;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: center;
-      gap: 8px;
-      min-height: 46px;
+      gap: 7px;
+      min-height: 54px;
     }
 
     h1 {
-      margin: 0;
-      font-size: 18px;
-      line-height: 1;
-      font-weight: 850;
-      letter-spacing: 0;
+      display: none;
     }
 
     .stat {
-      min-width: 74px;
-      padding: 7px 8px;
-      border: 1px solid rgba(246, 239, 217, 0.14);
-      border-radius: 8px;
-      background: var(--panel);
+      min-width: 0;
+      padding: 8px 6px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      background:
+        linear-gradient(180deg, rgba(24, 35, 54, 0.96), rgba(5, 8, 14, 0.92));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 4px 0 rgba(0, 0, 0, 0.7),
+        0 10px 18px rgba(0, 0, 0, 0.34);
       text-align: center;
     }
 
     .stat span {
       display: block;
-      color: var(--muted);
+      color: var(--accent);
       font-size: 10px;
-      font-weight: 800;
+      font-weight: 950;
       line-height: 1;
+      text-transform: uppercase;
     }
 
     .stat strong {
       display: block;
-      margin-top: 3px;
-      font-size: 17px;
+      margin-top: 5px;
+      overflow: hidden;
+      color: #ffffff;
+      font-size: 19px;
+      font-weight: 950;
       line-height: 1;
+      text-overflow: ellipsis;
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7);
+      white-space: nowrap;
     }
 
     .stage {
       position: relative;
       min-height: 0;
-      border: 1px solid rgba(246, 239, 217, 0.14);
-      border-radius: 8px;
       overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
       background: var(--road);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.75),
+        0 18px 40px rgba(0, 0, 0, 0.45);
       touch-action: none;
     }
 
@@ -108,54 +123,65 @@
 
     .move-controls {
       position: absolute;
-      left: 16px;
-      bottom: 16px;
+      left: 14px;
+      bottom: 14px;
+      z-index: 2;
       display: grid;
-      grid-template-columns: repeat(2, 44px);
-      grid-template-rows: 44px;
-      gap: 4px;
+      grid-template-columns: repeat(2, 50px);
+      grid-template-rows: 50px;
+      gap: 10px;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
-      z-index: 2;
     }
 
     .jump-control {
       position: absolute;
-      right: 18px;
-      bottom: 18px;
+      right: 14px;
+      bottom: 14px;
+      z-index: 2;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
-      z-index: 2;
     }
 
     .stage.playing .move-controls,
     .stage.playing .jump-control {
-      opacity: 1;
+      opacity: 0.94;
       pointer-events: auto;
     }
 
     .control-button {
-      width: 44px;
-      height: 44px;
-      min-height: 44px;
-      padding: 0;
-      border: 2px solid rgba(246, 239, 217, 0.72);
-      border-radius: 50%;
-      background: rgba(240, 194, 71, 0.82);
-      color: #1b1710;
-      box-shadow: 0 5px 14px rgba(0,0,0,0.32);
-      font-size: 24px;
-      line-height: 1;
+      width: 50px;
+      height: 50px;
+      min-height: 50px;
       display: grid;
       place-items: center;
-      transition: transform 0.08s ease, filter 0.08s ease;
+      padding: 0;
+      border: 2px solid rgba(255, 255, 255, 0.76);
+      border-radius: 50%;
+      background:
+        linear-gradient(180deg, #ffe37a 0%, #ffc629 54%, #d79300 100%);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -4px 0 rgba(101, 63, 0, 0.3),
+        0 5px 0 rgba(75, 48, 0, 0.9),
+        0 12px 18px rgba(0, 0, 0, 0.36);
+      color: #1a1405;
+      font-size: 25px;
+      font-weight: 950;
+      line-height: 1;
+      transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
     }
 
     .control-button:active {
-      transform: scale(0.92);
-      filter: brightness(1.08);
+      transform: translateY(4px) scale(0.94);
+      filter: brightness(1.06);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 0 rgba(101, 63, 0, 0.3),
+        0 1px 0 rgba(75, 48, 0, 0.9),
+        0 7px 12px rgba(0, 0, 0, 0.3);
     }
 
     .dir-left {
@@ -169,11 +195,11 @@
     }
 
     .jump-control .control-button {
-      width: 64px;
-      height: 64px;
-      min-height: 64px;
-      font-size: 18px;
-      font-weight: 900;
+      width: 72px;
+      height: 72px;
+      min-height: 72px;
+      font-size: 16px;
+      letter-spacing: 0;
     }
 
     .overlay {
@@ -181,8 +207,8 @@
       inset: 0;
       display: grid;
       place-items: center;
-      padding: 18px;
-      background: rgba(10, 12, 13, 0.45);
+      padding: 16px;
+      background: rgba(2, 5, 10, 0.46);
       opacity: 0;
       pointer-events: none;
     }
@@ -197,79 +223,109 @@
       align-items: stretch;
       padding: 22px 18px;
       background:
-        linear-gradient(180deg, rgba(7, 19, 45, 0.18), rgba(7, 11, 22, 0.95) 72%),
-        radial-gradient(circle at 50% 12%, rgba(123, 238, 255, 0.14), transparent 34%),
-        rgba(7, 11, 22, 0.7);
+        linear-gradient(180deg, rgba(8, 18, 45, 0.2), rgba(4, 8, 18, 0.88) 58%, rgba(3, 6, 13, 0.98)),
+        rgba(5, 9, 18, 0.72);
     }
 
     .dialog {
-      width: min(100%, 340px);
+      width: min(100%, 350px);
+      max-height: 100%;
+      overflow: auto;
       padding: 18px;
-      border: 1px solid rgba(123, 238, 255, 0.24);
-      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
       background:
-        linear-gradient(rgba(7, 11, 17, 0.72), rgba(7, 11, 17, 0.78)),
-        url("assets/ui/imagegen-result-panel.png?v=imagegen-1") center / 100% 100% no-repeat,
-        rgba(15, 17, 18, 0.92);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 34px rgba(93, 232, 255, 0.18);
+        linear-gradient(180deg, rgba(17, 29, 48, 0.95), rgba(5, 9, 17, 0.96));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 22px 60px rgba(0, 0, 0, 0.62),
+        0 0 24px rgba(59, 215, 255, 0.1);
       text-align: center;
     }
 
     .dialog.new-best {
-      border-color: rgba(240, 194, 71, 0.85);
+      border-color: rgba(255, 198, 41, 0.95);
       background:
-        linear-gradient(145deg, rgba(240, 194, 71, 0.18), rgba(15, 17, 18, 0.94) 42%),
-        rgba(15, 17, 18, 0.94);
-      box-shadow: 0 0 0 2px rgba(240, 194, 71, 0.22), 0 18px 44px rgba(240, 194, 71, 0.2);
+        linear-gradient(180deg, rgba(62, 45, 8, 0.96), rgba(6, 10, 18, 0.97) 48%),
+        var(--panel-strong);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 0 2px rgba(255, 198, 41, 0.26),
+        0 0 38px rgba(255, 198, 41, 0.34),
+        0 22px 60px rgba(0, 0, 0, 0.62);
     }
 
-    .dialog.new-best h2 {
-      color: var(--accent);
-      text-shadow: 0 0 18px rgba(240, 194, 71, 0.5);
+    .dialog.new-best h2::before {
+      content: "NEW BEST!";
+      display: block;
+      margin-bottom: 6px;
+      color: #fff2a6;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0;
+      text-shadow: 0 0 12px rgba(255, 198, 41, 0.72);
     }
 
     .dialog h2 {
       margin: 0 0 8px;
-      font-size: 30px;
+      color: #ffffff;
+      font-size: 31px;
+      font-weight: 950;
       line-height: 1;
       letter-spacing: 0;
+      text-shadow: 0 3px 0 rgba(0, 0, 0, 0.66);
     }
 
     .overlay[data-mode="title"] .dialog {
       align-self: stretch;
       display: grid;
       grid-template-rows: 1fr auto auto auto;
-      width: min(100%, 360px);
-      border-color: rgba(246, 239, 217, 0.08);
+      width: min(100%, 366px);
+      overflow: hidden;
+      border: 0;
       background:
-        linear-gradient(180deg, rgba(8, 18, 43, 0.08), rgba(8, 13, 25, 0.72) 48%, rgba(8, 12, 18, 0.94)),
-        transparent;
+        linear-gradient(180deg, rgba(8, 18, 43, 0.03), rgba(8, 13, 25, 0.62) 52%, rgba(5, 9, 17, 0.96));
       box-shadow: none;
     }
 
     .overlay[data-mode="title"] .dialog h2 {
       align-self: end;
-      margin-bottom: 8px;
-      color: #f8c92d;
-      font-size: 56px;
+      margin-bottom: 12px;
+      color: #ffc629;
+      font-size: clamp(52px, 15vw, 72px);
       font-weight: 950;
-      line-height: 0.92;
-      text-shadow: 0 5px 0 #12223b, 0 12px 22px rgba(0,0,0,0.58);
+      line-height: 0.84;
+      text-transform: uppercase;
+      transform: skew(-8deg) rotate(-2deg);
+      text-shadow:
+        -3px -3px 0 #ffffff,
+        3px -3px 0 #ffffff,
+        -3px 3px 0 #ffffff,
+        3px 3px 0 #ffffff,
+        0 8px 0 #0b2a5b,
+        0 16px 22px rgba(0, 0, 0, 0.64);
     }
 
     .overlay[data-mode="title"] .dialog p {
+      justify-self: center;
+      width: min(100%, 310px);
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(4, 9, 18, 0.66);
       color: #ffffff;
-      font-size: 16px;
-      font-weight: 850;
-      text-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      font-size: 15px;
+      font-weight: 900;
+      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
     }
 
     .overlay[data-mode="ranking"] .dialog {
       align-self: stretch;
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
-      width: min(100%, 370px);
-      background: rgba(9, 17, 32, 0.94);
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      width: min(100%, 378px);
+      background:
+        linear-gradient(180deg, rgba(18, 33, 59, 0.98), rgba(5, 10, 22, 0.98));
     }
 
     .overlay[data-mode="ranking"] .dialog h2 {
@@ -287,16 +343,17 @@
       margin: 0 0 14px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.55;
+      font-weight: 750;
+      line-height: 1.5;
     }
 
     .conversion {
       display: none;
       margin: 0 0 14px;
-      padding: 10px;
-      border: 1px solid rgba(246, 239, 217, 0.12);
-      border-radius: 8px;
-      background: rgba(246, 239, 217, 0.06);
+      padding: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.24);
     }
 
     .conversion.show {
@@ -305,31 +362,35 @@
 
     .convert-row {
       display: grid;
-      grid-template-columns: 76px 1fr 88px;
+      grid-template-columns: 74px 1fr 86px;
       align-items: center;
       gap: 8px;
-      min-height: 54px;
+      min-height: 56px;
     }
 
     .convert-box {
-      padding: 7px 6px;
-      border-radius: 8px;
-      background: rgba(13, 15, 16, 0.68);
+      padding: 8px 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      background: rgba(4, 8, 15, 0.84);
       text-align: center;
     }
 
     .convert-box span {
       display: block;
-      color: var(--muted);
+      color: var(--accent);
       font-size: 10px;
-      font-weight: 850;
+      font-weight: 950;
       line-height: 1;
+      text-transform: uppercase;
     }
 
     .convert-box strong {
       display: block;
-      margin-top: 4px;
-      font-size: 19px;
+      margin-top: 5px;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 950;
       line-height: 1;
     }
 
@@ -339,7 +400,7 @@
 
     .convert-lane {
       position: relative;
-      height: 42px;
+      height: 44px;
       overflow: hidden;
     }
 
@@ -348,22 +409,23 @@
       position: absolute;
       left: 4px;
       right: 4px;
-      top: 20px;
-      height: 2px;
-      background: rgba(246, 239, 217, 0.18);
+      top: 21px;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.6), rgba(255, 198, 41, 0.08));
     }
 
     .fly-coin {
       position: absolute;
       left: 0;
-      top: 11px;
-      width: 20px;
-      height: 20px;
+      top: 10px;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #fff4b8;
       border-radius: 50%;
-      background: #f0c247;
-      border: 2px solid #f6efd9;
-      box-shadow: 0 0 10px rgba(240, 194, 71, 0.45);
-      animation: coinToScore 0.18s ease-in forwards;
+      background: radial-gradient(circle at 35% 30%, #fff4a7, #ffc629 58%, #c98600);
+      box-shadow: 0 0 12px rgba(255, 198, 41, 0.58);
+      animation: coinToScore 0.16s ease-in forwards;
     }
 
     @keyframes coinToScore {
@@ -372,7 +434,7 @@
         opacity: 1;
       }
       65% {
-        transform: translateX(calc(var(--coin-travel, 140px) * 0.74)) translateY(-11px) scale(1.08);
+        transform: translateX(calc(var(--coin-travel, 140px) * 0.74)) translateY(-11px) scale(1.1);
         opacity: 1;
       }
       100% {
@@ -395,12 +457,14 @@
     }
 
     .ranking {
+      min-height: 0;
       margin: 0 0 14px;
       padding: 0;
+      overflow: auto;
       list-style: none;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.35;
       text-align: left;
     }
 
@@ -409,8 +473,38 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      border-top: 1px solid rgba(246, 239, 217, 0.12);
-      padding: 6px 0;
+      margin: 0 0 7px;
+      padding: 9px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 11px;
+      background: rgba(7, 13, 25, 0.82);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .ranking li.rank-1,
+    .ranking li.rank-2,
+    .ranking li.rank-3 {
+      min-height: 58px;
+      padding: 12px 12px;
+    }
+
+    .ranking li.rank-1 {
+      border-color: rgba(255, 224, 95, 0.88);
+      background: linear-gradient(180deg, #ffd94f, #e59c00);
+      color: #2a1900;
+      box-shadow: 0 8px 18px rgba(255, 198, 41, 0.22);
+    }
+
+    .ranking li.rank-2 {
+      border-color: rgba(226, 235, 247, 0.82);
+      background: linear-gradient(180deg, #dfe7f2, #8b99ad);
+      color: #111927;
+    }
+
+    .ranking li.rank-3 {
+      border-color: rgba(210, 143, 75, 0.82);
+      background: linear-gradient(180deg, #b87941, #70411f);
+      color: #fff5e7;
     }
 
     .ranking .rank-main {
@@ -421,14 +515,14 @@
     }
 
     .ranking .rank-avatar {
-      width: 30px;
-      height: 30px;
+      width: 34px;
+      height: 34px;
       flex: 0 0 auto;
       display: grid;
       place-items: center;
-      border: 2px solid rgba(246, 239, 217, 0.32);
+      border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 50%;
-      background: rgba(246, 239, 217, 0.1) center / cover no-repeat;
+      background: rgba(255, 255, 255, 0.12) center / cover no-repeat;
       color: var(--accent);
       font-size: 13px;
       font-weight: 950;
@@ -436,32 +530,34 @@
 
     .ranking .rank-name {
       overflow: hidden;
-      color: var(--ink);
-      font-weight: 850;
+      color: inherit;
+      font-size: 14px;
+      font-weight: 950;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .ranking .rank-number {
-      min-width: 22px;
-      color: var(--muted);
-      font-weight: 900;
+      min-width: 26px;
+      color: inherit;
+      font-weight: 950;
       text-align: center;
     }
 
     .ranking .rank-score {
       flex: 0 0 auto;
-      color: var(--ink);
+      color: inherit;
+      font-size: 15px;
       font-weight: 950;
+      white-space: nowrap;
     }
 
     .ranking li.current {
-      margin: 4px -8px;
-      padding: 8px;
-      border: 1px solid rgba(123, 238, 255, 0.35);
-      border-radius: 8px;
-      background: rgba(123, 238, 255, 0.12);
-      box-shadow: 0 0 18px rgba(123, 238, 255, 0.08);
+      border-color: rgba(59, 215, 255, 0.85);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 0 2px rgba(59, 215, 255, 0.2),
+        0 0 22px rgba(59, 215, 255, 0.22);
     }
 
     button {
@@ -469,33 +565,57 @@
       min-height: 44px;
       padding: 10px 18px;
       border: 0;
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--accent);
       color: #1b1710;
       cursor: pointer;
       font: inherit;
-      font-weight: 850;
+      font-weight: 900;
     }
 
     .menu-actions {
       display: grid;
-      gap: 10px;
+      gap: 12px;
     }
 
     .menu-actions button {
       width: 100%;
-      min-height: 54px;
-      border: 2px solid rgba(246, 239, 217, 0.72);
-      border-radius: 12px;
-      box-shadow: 0 7px 0 rgba(70, 45, 0, 0.95), 0 15px 24px rgba(0,0,0,0.38);
-      font-size: 22px;
+      min-height: 62px;
+      border: 2px solid rgba(255, 255, 255, 0.78);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -5px 0 rgba(102, 62, 0, 0.3),
+        0 7px 0 rgba(76, 48, 0, 0.96),
+        0 16px 26px rgba(0, 0, 0, 0.42);
+      color: #151007;
+      font-size: 25px;
+      font-weight: 950;
       text-transform: uppercase;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .menu-actions button:active {
+      transform: translateY(5px);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 0 rgba(102, 62, 0, 0.26),
+        0 2px 0 rgba(76, 48, 0, 0.96),
+        0 9px 18px rgba(0, 0, 0, 0.32);
     }
 
     .menu-actions button + button {
-      background: #182231;
+      min-height: 54px;
+      background:
+        linear-gradient(180deg, #243449, #111926);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -4px 0 rgba(0, 0, 0, 0.34),
+        0 6px 0 rgba(0, 0, 0, 0.86),
+        0 13px 22px rgba(0, 0, 0, 0.36);
       color: var(--ink);
-      box-shadow: 0 6px 0 rgba(0,0,0,0.92), 0 12px 20px rgba(0,0,0,0.32);
       font-size: 18px;
     }
 
@@ -504,10 +624,10 @@
       grid-template-columns: 68px 1fr;
       gap: 10px;
       margin: 0 0 14px;
-      padding: 10px;
-      border: 1px solid rgba(246, 239, 217, 0.14);
-      border-radius: 8px;
-      background: rgba(246, 239, 217, 0.06);
+      padding: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.26);
       text-align: left;
     }
 
@@ -516,43 +636,49 @@
     }
 
     .entry-photo {
-      width: 60px;
-      height: 60px;
+      width: 62px;
+      height: 62px;
       display: grid;
       place-items: center;
-      border: 2px solid rgba(246, 239, 217, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.46);
       border-radius: 50%;
-      background: rgba(13, 15, 16, 0.74) center / cover no-repeat;
-      color: var(--muted);
-      font-weight: 900;
+      background: rgba(4, 8, 15, 0.82) center / cover no-repeat;
+      color: var(--accent);
+      font-weight: 950;
     }
 
     .entry-fields {
       min-width: 0;
       display: grid;
-      gap: 7px;
+      gap: 8px;
     }
 
     .entry-fields input {
       width: 100%;
-      min-height: 38px;
-      padding: 8px 10px;
-      border: 1px solid rgba(246, 239, 217, 0.18);
-      border-radius: 8px;
-      background: rgba(8, 10, 12, 0.74);
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(4, 8, 15, 0.92);
       color: var(--ink);
       font: inherit;
-      font-weight: 850;
+      font-weight: 900;
+      outline: none;
+    }
+
+    .entry-fields input:focus {
+      border-color: rgba(59, 215, 255, 0.86);
+      box-shadow: 0 0 0 3px rgba(59, 215, 255, 0.18);
     }
 
     .entry-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: 7px;
     }
 
     .entry-actions button {
-      min-height: 36px;
+      min-height: 38px;
       padding: 7px 8px;
       font-size: 13px;
     }
@@ -560,6 +686,7 @@
     .entry-fields small {
       color: var(--muted);
       font-size: 10px;
+      font-weight: 700;
       line-height: 1.35;
     }
 
@@ -567,7 +694,7 @@
       grid-column: 1 / -1;
       width: 100%;
       max-height: 160px;
-      border-radius: 8px;
+      border-radius: 10px;
       background: #000;
       object-fit: cover;
     }
@@ -575,56 +702,79 @@
     .run-strip {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 6px;
-      min-height: 34px;
+      min-height: 24px;
     }
 
     .run-pill {
+      position: relative;
       min-width: 0;
-      padding: 5px 6px;
-      border: 1px solid rgba(246, 239, 217, 0.12);
-      border-radius: 8px;
-      background: var(--panel);
+      overflow: hidden;
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      background: rgba(2, 5, 10, 0.52);
       text-align: center;
     }
 
-    .run-pill span {
-      display: block;
-      color: var(--muted);
-      font-size: 8px;
-      font-weight: 850;
-      line-height: 1;
+    .run-pill::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--effect-progress, 0%);
+      background: linear-gradient(90deg, rgba(59, 215, 255, 0.1), rgba(59, 215, 255, 0.56));
+      opacity: 0;
+      transition: width 0.1s linear, opacity 0.12s ease;
     }
 
+    .run-pill.boost::before,
+    .run-pill.slow::before {
+      opacity: 1;
+    }
+
+    .run-pill.slow::before {
+      background: linear-gradient(90deg, rgba(255, 93, 77, 0.12), rgba(255, 93, 77, 0.58));
+    }
+
+    .run-pill span,
     .run-pill strong {
-      display: block;
-      margin-top: 4px;
-      overflow: hidden;
-      color: var(--ink);
+      position: relative;
+      z-index: 1;
+      display: inline;
+      color: var(--muted);
       font-size: 11px;
+      font-weight: 900;
       line-height: 1;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
+    .run-pill span::after {
+      content: " ";
+    }
+
+    .run-pill.boost,
+    .run-pill.slow,
     .run-pill.active {
-      border-color: rgba(123, 238, 255, 0.38);
-      box-shadow: 0 0 16px rgba(123, 238, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 14px rgba(59, 215, 255, 0.12);
     }
 
-    .run-pill.ready strong,
-    .run-pill.active strong {
-      color: #7beeff;
+    .run-pill.boost strong,
+    .run-pill.boost span {
+      color: #dffaff;
+    }
+
+    .run-pill.slow strong,
+    .run-pill.slow span {
+      color: #ffe0dc;
     }
 
     .footer {
-      min-height: 38px;
+      min-height: 28px;
       display: grid;
-      grid-template-columns: 1fr;
       align-items: center;
-      gap: 8px;
       color: var(--muted);
       font-size: 12px;
+      font-weight: 750;
+      text-align: center;
     }
 
     @media (max-width: 430px), (max-height: 700px) {
@@ -634,18 +784,12 @@
       }
 
       .hud {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
-        min-height: 38px;
-      }
-
-      .hud h1 {
-        display: none;
+        gap: 5px;
+        min-height: 46px;
       }
 
       .stat {
-        min-width: 0;
-        padding: 5px 4px;
+        padding: 6px 4px 7px;
       }
 
       .stat span {
@@ -653,55 +797,60 @@
       }
 
       .stat strong {
-        margin-top: 2px;
-        font-size: 15px;
+        margin-top: 4px;
+        font-size: 16px;
       }
 
       .move-controls {
-        left: 12px;
-        bottom: 12px;
-        grid-template-columns: repeat(2, 40px);
-        grid-template-rows: 40px;
-        gap: 3px;
+        left: 10px;
+        bottom: 10px;
+        grid-template-columns: repeat(2, 44px);
+        grid-template-rows: 44px;
+        gap: 8px;
       }
 
       .jump-control {
-        right: 12px;
-        bottom: 12px;
+        right: 10px;
+        bottom: 10px;
       }
 
       .control-button {
-        width: 40px;
-        height: 40px;
-        min-height: 40px;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
       }
 
       .jump-control .control-button {
-        width: 58px;
-        height: 58px;
-        min-height: 58px;
+        width: 64px;
+        height: 64px;
+        min-height: 64px;
+      }
+
+      .overlay[data-mode="title"],
+      .overlay[data-mode="ranking"] {
+        padding: 16px 12px;
+      }
+
+      .dialog {
+        padding: 15px;
+      }
+
+      .overlay[data-mode="title"] .dialog h2 {
+        font-size: clamp(48px, 17vw, 64px);
+      }
+
+      .ranking li {
+        padding: 8px 9px;
+      }
+
+      .ranking li.rank-1,
+      .ranking li.rank-2,
+      .ranking li.rank-3 {
+        min-height: 52px;
       }
 
       .footer {
-        min-height: 28px;
-        grid-template-columns: 1fr;
-        font-size: 10px;
-      }
-
-      .run-strip {
-        gap: 4px;
-        min-height: 30px;
-      }
-
-      .run-pill {
-        padding: 4px 4px;
-      }
-
-      .run-pill span {
-        font-size: 7px;
-      }
-
-      .run-pill strong {
+        min-height: 22px;
         font-size: 10px;
       }
     }
@@ -710,10 +859,10 @@
 <body>
   <main class="app">
     <header class="hud">
-      <h1>3レーンラン</h1>
-      <div class="stat"><span id="scoreLabel">距離</span><strong id="distance">0</strong></div>
-      <div class="stat"><span>ベスト</span><strong id="best">0</strong></div>
-      <div class="stat"><span>コイン</span><strong id="todayRank">0</strong></div>
+      <h1>RUN DASH!</h1>
+      <div class="stat"><span id="scoreLabel">SCORE</span><strong id="distance">0</strong></div>
+      <div class="stat"><span>BEST</span><strong id="best">0</strong></div>
+      <div class="stat"><span>COINS</span><strong id="todayRank">0</strong></div>
     </header>
 
     <section class="stage" id="stage">
@@ -723,17 +872,17 @@
         <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">&rarr;</button>
       </div>
       <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
-        <button class="control-button" id="jumpButton" type="button">ジャンプ</button>
+        <button class="control-button" id="jumpButton" type="button">JUMP</button>
       </div>
       <div class="overlay show" id="overlay">
         <div class="dialog">
-          <h2 id="overlayTitle">3レーンラン</h2>
-          <p id="overlayText">左右でレーン移動、ジャンプで穴を回避。コインを集めながらどこまで走れるか挑戦できます。</p>
+          <h2 id="overlayTitle">RUN DASH!</h2>
+          <p id="overlayText">左右で避けて、ジャンプで穴を越えろ！</p>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
-              <div class="convert-box"><span>コイン</span><strong id="convertCoins">0</strong></div>
+              <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
               <div class="convert-lane" id="convertLane"></div>
-              <div class="convert-box" id="convertScoreBox"><span>スコア</span><strong id="convertScore">0</strong></div>
+              <div class="convert-box" id="convertScoreBox"><span>SCORE</span><strong id="convertScore">0</strong></div>
             </div>
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
@@ -759,7 +908,7 @@
     </section>
 
     <div class="run-strip" aria-label="ラン状態">
-      <div class="run-pill" id="timePill"><span>時間</span><strong id="timeStatus">0:00</strong></div>
+      <div class="run-pill" id="timePill"><span>TIME</span><strong id="timeStatus">0:00</strong></div>
     </div>
 
     <footer class="footer">
@@ -930,7 +1079,7 @@
         document.activeElement.blur();
       }
       overlayMode = "playing";
-      scoreLabel.textContent = "\u8ddd\u96e2";
+      scoreLabel.textContent = "SCORE";
       running = true;
       gameOver = false;
       runTime = 0;
@@ -974,7 +1123,7 @@ function endGame() {
       running = false;
       gameOver = true;
       overlayMode = "result";
-      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
+      scoreLabel.textContent = "SCORE";
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
       overlay.dataset.mode = "result";
@@ -983,19 +1132,17 @@ function endGame() {
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
       const isBest = score > best;
-      const savedScore = saveDailyScore(score);
-      const rank = savedScore.rank;
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${distanceScore}点 + ${collectedCoins}コインを換算`;
-      startButton.textContent = collectedCoins > 0 ? "結果をすぐ見る" : "結果を見る";
+      overlayText.textContent = `SCORE ${score} / 距離 ${distanceScore}m / コイン ${collectedCoins} / 未登録`;
+      startButton.textContent = collectedCoins > 0 ? "SKIP" : "TITLE";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
       }
       overlay.classList.add("show");
-      renderDailyRanking(rank);
+      renderDailyRanking(0);
       hintEl.textContent = "障害物に当たった";
       resultState = {
         active: true,
@@ -1003,12 +1150,12 @@ function endGame() {
         baseScore: distanceScore,
         coinCount: collectedCoins,
         finalScore: score,
-        rank,
+        rank: 0,
         isBest,
-        entryId: savedScore.id
+        entryId: ""
       };
       prepareScoreEntry();
-      startScoreConversion(distanceScore, collectedCoins, score, rank);
+      startScoreConversion(distanceScore, collectedCoins, score);
     }
 
     function resetResultState() {
@@ -1035,9 +1182,9 @@ function endGame() {
       convertScoreBox.classList.remove("pop");
     }
 
-    function startScoreConversion(baseScore, coinCount, finalScore, rank) {
+    function startScoreConversion(baseScore, coinCount, finalScore) {
       clearScoreConversion();
-      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
+      scoreLabel.textContent = "SCORE";
       let remainingCoins = coinCount;
       let shownScore = baseScore;
       distanceEl.textContent = String(shownScore);
@@ -1048,8 +1195,8 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `${finalScore}点 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${rank}`;
-        startButton.textContent = "タイトルへ";
+        overlayText.textContent = `SCORE ${finalScore} / 距離 ${Math.floor(distance)}m / コイン 0 / 未登録`;
+        startButton.textContent = "TITLE";
         return;
       }
 
@@ -1064,7 +1211,7 @@ function endGame() {
         convertScoreBox.classList.remove("pop");
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
-        overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
+        overlayText.textContent = `SCORE ${shownScore} / コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -1074,7 +1221,7 @@ function endGame() {
     function finishScoreConversion() {
       if (!resultState.active) return;
       clearScoreConversion();
-      scoreLabel.textContent = "\u30b9\u30b3\u30a2";
+      scoreLabel.textContent = "SCORE";
       scoreConvert.classList.add("show");
       scoreConvert.setAttribute("aria-hidden", "false");
       convertCoinsEl.textContent = "0";
@@ -1082,8 +1229,9 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `${resultState.finalScore}点 / ${resultState.coinCount}コイン換算 / ${formatRunTime(runTime)} / ${Math.floor(distance)}m / Today #${resultState.rank}`;
-      startButton.textContent = "タイトルへ";
+      const rankLabel = resultState.rank > 0 ? `Today #${resultState.rank}` : "未登録";
+      overlayText.textContent = `SCORE ${resultState.finalScore} / 距離 ${Math.floor(distance)}m / コイン ${resultState.coinCount} / ${rankLabel}`;
+      startButton.textContent = "TITLE";
       resultState.phase = "result";
     }
 
@@ -1123,8 +1271,8 @@ function endGame() {
 
     function updateHud() {
       const runScore = computeScore();
-      scoreLabel.textContent = "\u8ddd\u96e2";
-      distanceEl.textContent = String(Math.floor(distance));
+      scoreLabel.textContent = "SCORE";
+      distanceEl.textContent = String(runScore);
       bestEl.textContent = String(Math.floor(best));
       todayRankEl.textContent = String(coins);
       checkBestPace(runScore);
@@ -1132,6 +1280,25 @@ function endGame() {
     }
 
     function updateRunStrip() {
+      timePill.classList.remove("boost", "slow", "active");
+      timePill.style.setProperty("--effect-progress", "0%");
+      if (boostTimer > 0) {
+        const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
+        timePill.classList.add("boost");
+        timePill.querySelector("span").textContent = "BOOST";
+        timeStatus.textContent = `${boostTimer.toFixed(1)}s`;
+        timePill.style.setProperty("--effect-progress", `${progress}%`);
+        return;
+      }
+      if (slowTimer > 0) {
+        const progress = Math.max(0, Math.min(100, (slowTimer / SLOW_DURATION) * 100));
+        timePill.classList.add("slow");
+        timePill.querySelector("span").textContent = "SLOW";
+        timeStatus.textContent = `${slowTimer.toFixed(1)}s`;
+        timePill.style.setProperty("--effect-progress", `${progress}%`);
+        return;
+      }
+      timePill.querySelector("span").textContent = "TIME";
       timeStatus.textContent = formatRunTime(runTime);
       timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
@@ -1178,18 +1345,18 @@ function endGame() {
       }
     }
 
-    function saveDailyScore(score) {
+    function saveDailyScore(score, name = "プレイヤー", photo = "") {
       const entry = {
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
         score,
         time: Date.now(),
-        name: "プレイヤー",
-        photo: ""
+        name: name || "プレイヤー",
+        photo: photo || ""
       };
       const scores = readDailyScores();
       scores.push(entry);
       scores.sort((a, b) => b.score - a.score || a.time - b.time);
-      const trimmed = scores.slice(0, 10);
+      const trimmed = scores.slice(0, 50);
       localStorage.setItem(todayKey(), JSON.stringify(trimmed));
       return {
         id: entry.id,
@@ -1203,6 +1370,7 @@ function endGame() {
       if (!entry) return false;
       entry.name = name || "プレイヤー";
       entry.photo = photo || "";
+      scores.sort((a, b) => b.score - a.score || a.time - b.time);
       localStorage.setItem(todayKey(), JSON.stringify(scores));
       return true;
     }
@@ -1220,16 +1388,20 @@ function endGame() {
     function renderDailyRanking(currentRank = 0, limit = 5) {
       const scores = readDailyScores().slice(0, limit);
       if (!scores.length) {
-        dailyRankingEl.innerHTML = "<li><span>今日のランキング</span><strong>まだ記録なし</strong></li>";
+        dailyRankingEl.innerHTML = "<li><span class=\"rank-main\"><span class=\"rank-number\">-</span><span class=\"rank-name\">今日のランキング</span></span><strong class=\"rank-score\">まだ記録なし</strong></li>";
         return;
       }
       dailyRankingEl.innerHTML = scores.map((item, index) => {
         const rank = index + 1;
-        const mark = rank === currentRank ? " current" : "";
+        const mark = [
+          `rank-${rank}`,
+          rank === currentRank ? "current" : ""
+        ].filter(Boolean).join(" ");
         const name = escapeHtml(item.name || "プレイヤー");
         const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
         const avatar = item.photo ? "" : name.slice(0, 1);
-        return `<li class="${mark.trim()}"><span class="rank-main"><span class="rank-number">${rank}</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
+        const medal = rank === 1 ? "★" : rank === 2 ? "◆" : rank === 3 ? "●" : rank;
+        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${medal}</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
       }).join("");
     }
 
@@ -1246,7 +1418,7 @@ function endGame() {
       scoreEntry.hidden = true;
       dailyRankingEl.innerHTML = "";
       overlayTitle.textContent = "RUN DASH!";
-      overlayText.textContent = "3レーンを駆け抜けろ！";
+      overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       startButton.textContent = "START";
       rankingButton.hidden = false;
       rankingButton.textContent = "RANKING";
@@ -1273,7 +1445,7 @@ function endGame() {
       capturedPhoto = localStorage.getItem("laneRunnerLastPhoto") || "";
       playerNameInput.value = localStorage.getItem("laneRunnerPlayerName") || "プレイヤー";
       updatePhotoPreview(capturedPhoto);
-      photoStatus.textContent = "名前と写真を登録できます";
+      photoStatus.textContent = "写真なしでも登録できます";
       photoButton.textContent = capturedPhoto ? "撮り直し" : "写真";
       saveEntryButton.textContent = "登録";
       scoreEntry.hidden = false;
@@ -1285,16 +1457,27 @@ function endGame() {
     }
 
     function saveEntryProfile() {
-      if (!resultState.entryId) return;
+      if (!resultState.active) return;
       const name = playerNameInput.value.trim() || "プレイヤー";
-      const saved = updateDailyScoreProfile(resultState.entryId, name, capturedPhoto);
-      if (!saved) return;
+      if (!resultState.entryId) {
+        const savedScore = saveDailyScore(resultState.finalScore, name, capturedPhoto);
+        resultState.entryId = savedScore.id;
+        resultState.rank = savedScore.rank;
+      } else {
+        const saved = updateDailyScoreProfile(resultState.entryId, name, capturedPhoto);
+        if (!saved) return;
+      }
       localStorage.setItem("laneRunnerPlayerName", name);
       if (capturedPhoto) {
         localStorage.setItem("laneRunnerLastPhoto", capturedPhoto);
       }
       saveEntryButton.textContent = "保存済み";
-      photoStatus.textContent = "ランキングに登録しました";
+      photoStatus.textContent = resultState.rank > 0
+        ? `ランキングに登録しました Today #${resultState.rank}`
+        : "ランキングに登録しました";
+      if (resultState.phase === "result") {
+        overlayText.textContent = `SCORE ${resultState.finalScore} / 距離 ${Math.floor(distance)}m / コイン ${resultState.coinCount} / Today #${resultState.rank}`;
+      }
       renderDailyRanking(resultState.rank);
     }
 
