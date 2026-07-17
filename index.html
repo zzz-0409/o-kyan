@@ -602,7 +602,10 @@
     .ranking::-webkit-scrollbar-thumb {
       border: 2px solid rgba(4, 8, 15, 0.62);
       border-radius: 999px;
-      background: linear-gradient(180deg, #fff077, #ffc629 55%, #d48a00);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.38), transparent 42%),
+        linear-gradient(180deg, #fff077, #ffc629 55%, #d48a00);
+      box-shadow: inset 0 -2px 0 rgba(102, 62, 0, 0.22);
     }
 
     .dialog.new-best {
