@@ -729,6 +729,17 @@
       white-space: nowrap;
     }
 
+    .overlay[data-mode="ranking"] .dialog h2::after {
+      content: "";
+      display: block;
+      width: min(68%, 168px);
+      height: 3px;
+      margin: 9px auto 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.74), transparent);
+      box-shadow: 0 0 12px rgba(59, 215, 255, 0.22);
+    }
+
     .overlay[data-mode="result"] .dialog h2::after {
       content: "";
       display: block;
