@@ -1456,6 +1456,7 @@
     }
 
     .ranking li.empty-rank .rank-number {
+      position: relative;
       width: 46px;
       height: 46px;
       display: grid;
@@ -1466,6 +1467,17 @@
       color: #fff3a2;
       font-size: 22px;
       box-shadow: 0 0 18px rgba(255, 198, 41, 0.16);
+    }
+
+    .ranking li.empty-rank .rank-number::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.24), transparent 62%);
+      transform: translate(-5px, -6px);
+      pointer-events: none;
     }
 
     .ranking li.empty-rank .rank-name {
