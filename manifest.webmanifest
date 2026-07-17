@@ -1,7 +1,7 @@
 {
-  "name": "RUN DASH! 3レーン・スワイプラン",
+  "name": "RUN DASH! オープンキャンパスラン",
   "short_name": "RUN DASH!",
-  "description": "左右移動とジャンプで走り続ける3レーン・スワイプランゲーム",
+  "description": "オープンキャンパスで気軽に遊べる3レーン・スワイプランゲーム",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
