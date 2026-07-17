@@ -2756,6 +2756,7 @@ function endGame() {
     function setOverlayOpen(isOpen) {
       overlay.classList.toggle("show", isOpen);
       overlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      overlay.inert = !isOpen;
     }
 
     function setElementHidden(element, isHidden) {
