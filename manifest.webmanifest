@@ -1,0 +1,19 @@
+{
+  "name": "RUN DASH! 3レーン・スワイプラン",
+  "short_name": "RUN DASH!",
+  "description": "左右移動とジャンプで走り続ける3レーン・スワイプランゲーム",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07101f",
+  "theme_color": "#07101f",
+  "icons": [
+    {
+      "src": "assets/ui/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
