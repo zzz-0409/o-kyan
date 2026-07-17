@@ -2375,7 +2375,7 @@
         <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">&rarr;</button>
       </div>
       <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
-        <button class="control-button" id="jumpButton" type="button">JUMP</button>
+        <button class="control-button" id="jumpButton" type="button" aria-label="ジャンプ">JUMP</button>
       </div>
       <div class="overlay show" id="overlay" aria-hidden="false">
         <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" aria-describedby="overlayText">
@@ -2413,7 +2413,7 @@
     </section>
 
     <div class="run-strip" aria-label="ラン状態">
-      <div class="run-pill" id="timePill"><span>TIME</span><strong id="timeStatus">0:00</strong></div>
+      <div class="run-pill" id="timePill" role="group" aria-label="経過時間 0:00"><span>TIME</span><strong id="timeStatus">0:00</strong></div>
     </div>
 
     <footer class="footer">
@@ -2907,6 +2907,7 @@ function endGame() {
         timePill.classList.add("boost");
         timePill.querySelector("span").textContent = "BOOST";
         timeStatus.textContent = `${boostTimer.toFixed(1)}s`;
+        timePill.setAttribute("aria-label", `スピードアップ 残り${boostTimer.toFixed(1)}秒`);
         timePill.style.setProperty("--effect-progress", `${progress}%`);
         return;
       }
@@ -2915,11 +2916,13 @@ function endGame() {
         timePill.classList.add("slow");
         timePill.querySelector("span").textContent = "SLOW";
         timeStatus.textContent = `${slowTimer.toFixed(1)}s`;
+        timePill.setAttribute("aria-label", `スピードダウン 残り${slowTimer.toFixed(1)}秒`);
         timePill.style.setProperty("--effect-progress", `${progress}%`);
         return;
       }
       timePill.querySelector("span").textContent = "TIME";
       timeStatus.textContent = formatRunTime(runTime);
+      timePill.setAttribute("aria-label", `経過時間 ${formatRunTime(runTime)}`);
       timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
     }
