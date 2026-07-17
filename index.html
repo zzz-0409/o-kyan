@@ -37,12 +37,15 @@
       place-items: stretch center;
       overflow: hidden;
       background:
+        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 34%),
+        radial-gradient(circle at 50% 100%, rgba(255, 198, 41, 0.08), transparent 34%),
         linear-gradient(180deg, #08172f 0%, #050910 100%);
       color: var(--ink);
       font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
     }
 
     .app {
+      position: relative;
       width: min(100vw, 430px);
       height: 100svh;
       height: 100dvh;
@@ -51,6 +54,12 @@
       grid-template-rows: auto minmax(0, 1fr) auto auto;
       gap: 7px;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent 10%, transparent 90%, rgba(255, 255, 255, 0.06)),
+        linear-gradient(180deg, rgba(7, 16, 32, 0.72), rgba(2, 5, 10, 0.52));
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 0 44px rgba(0, 0, 0, 0.46);
     }
 
     .hud {
