@@ -2515,7 +2515,11 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 9px;
       background:
+        linear-gradient(90deg, rgba(255, 198, 41, 0.14), transparent 38%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.1));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
     }
 
     .entry-fields small::before {
@@ -2539,8 +2543,12 @@
     .score-entry.saved .entry-fields small {
       border-color: rgba(59, 215, 255, 0.28);
       background:
+        linear-gradient(90deg, rgba(59, 215, 255, 0.18), transparent 42%),
         linear-gradient(180deg, rgba(59, 215, 255, 0.13), rgba(0, 0, 0, 0.08));
       color: #dffaff;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 0 12px rgba(59, 215, 255, 0.1);
     }
 
     .score-entry.saved .entry-fields small::before {
