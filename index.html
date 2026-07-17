@@ -1203,6 +1203,23 @@
       text-align: center;
     }
 
+    .convert-box:first-child {
+      border-color: rgba(255, 198, 41, 0.2);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 12px rgba(255, 198, 41, 0.08);
+    }
+
+    .convert-box:last-child {
+      border-color: rgba(59, 215, 255, 0.22);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.1), transparent 56%),
+        rgba(4, 8, 15, 0.86);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.09),
+        0 0 14px rgba(59, 215, 255, 0.1);
+    }
+
     .convert-box::after {
       content: "";
       position: absolute;
