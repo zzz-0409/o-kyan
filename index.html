@@ -2382,7 +2382,7 @@
           <div class="score-entry" id="scoreEntry" hidden>
             <button class="entry-photo" id="photoPreview" type="button" aria-label="写真を撮る"><span>写真</span></button>
             <div class="entry-fields">
-              <input id="playerName" type="text" maxlength="12" placeholder="名前">
+              <input id="playerName" type="text" maxlength="12" placeholder="名前" autocomplete="nickname" enterkeyhint="done" aria-label="ランキングに登録する名前">
               <div class="entry-actions">
                 <button id="photoButton" type="button">写真</button>
                 <button id="saveEntryButton" type="button">登録</button>
@@ -3049,6 +3049,7 @@ function endGame() {
     function updatePhotoPreview(photo) {
       photoPreview.style.backgroundImage = photo ? `url("${photo}")` : "";
       photoPreview.innerHTML = photo ? "" : "<span>写真</span>";
+      photoPreview.setAttribute("aria-label", photo ? "写真を撮り直す" : "写真を撮る");
     }
 
     function saveEntryProfile() {
