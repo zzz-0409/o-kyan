@@ -3432,7 +3432,8 @@ function endGame() {
       photoPreview.setAttribute("aria-label", photo ? "写真を撮り直す" : "写真を撮る");
     }
 
-    function saveEntryProfile() {
+    function saveEntryProfile(event) {
+      if (!event || event.currentTarget !== saveEntryButton) return;
       if (!resultState.active) return;
       if (resultState.entryId) {
         photoStatus.textContent = `登録済み 本日 #${resultState.rank}`;
@@ -4448,7 +4449,7 @@ function onPointerDown(event) {
     rankingButton.addEventListener("click", showRankingScreen);
     photoButton.addEventListener("click", handlePhotoButton);
     photoPreview.addEventListener("click", handlePhotoButton);
-    saveEntryButton.addEventListener("click", saveEntryProfile);
+    saveEntryButton.addEventListener("click", (event) => saveEntryProfile(event));
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
