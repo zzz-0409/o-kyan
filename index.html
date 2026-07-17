@@ -2592,7 +2592,7 @@ function endGame() {
       const todayBest = scores.length ? scores[0].score : 0;
       titleMeta.hidden = false;
       titleMeta.innerHTML = [
-        ["TODAY BEST", todayBest ? `${todayBest}点` : "未登録", "B"],
+        ["TODAY BEST", todayBest ? `${formatNumber(todayBest)}点` : "未登録", "B"],
         ["PLAYS", `${scores.length}回`, "P"]
       ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
@@ -2606,9 +2606,9 @@ function endGame() {
         RANK: "#"
       };
       resultStats.innerHTML = [
-        ["SCORE", score],
-        ["DISTANCE", `${meters}m`],
-        ["COINS", coinCount],
+        ["SCORE", formatNumber(score)],
+        ["DISTANCE", `${formatNumber(meters)}m`],
+        ["COINS", formatNumber(coinCount)],
         ["RANK", rankLabel]
       ].map(([label, value]) => {
         const icon = statIcons[label] || "";
@@ -2629,13 +2629,13 @@ function endGame() {
       scoreLabel.textContent = "SCORE";
       let remainingCoins = coinCount;
       let shownScore = baseScore;
-      distanceEl.textContent = String(shownScore);
-      todayRankEl.textContent = String(remainingCoins);
-      bestEl.textContent = String(Math.floor(best));
+      distanceEl.textContent = formatNumber(shownScore);
+      todayRankEl.textContent = formatNumber(remainingCoins);
+      bestEl.textContent = formatNumber(best);
       scoreConvert.classList.add("show");
       scoreConvert.setAttribute("aria-hidden", "false");
-      convertCoinsEl.textContent = String(remainingCoins);
-      convertScoreEl.textContent = String(shownScore);
+      convertCoinsEl.textContent = formatNumber(remainingCoins);
+      convertScoreEl.textContent = formatNumber(shownScore);
       if (remainingCoins <= 0) {
         overlayText.textContent = "登録するとランキングに残せます";
         showResultStats(finalScore, Math.floor(distance), 0, "未登録");
@@ -2648,10 +2648,10 @@ function endGame() {
         flyResultCoin();
         remainingCoins -= 1;
         shownScore += COIN_VALUE;
-        distanceEl.textContent = String(shownScore);
-        todayRankEl.textContent = String(Math.max(0, remainingCoins));
-        convertCoinsEl.textContent = String(Math.max(0, remainingCoins));
-        convertScoreEl.textContent = String(shownScore);
+        distanceEl.textContent = formatNumber(shownScore);
+        todayRankEl.textContent = formatNumber(Math.max(0, remainingCoins));
+        convertCoinsEl.textContent = formatNumber(Math.max(0, remainingCoins));
+        convertScoreEl.textContent = formatNumber(shownScore);
         convertScoreBox.classList.remove("pop");
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
@@ -2670,8 +2670,8 @@ function endGame() {
       scoreConvert.classList.add("show");
       scoreConvert.setAttribute("aria-hidden", "false");
       convertCoinsEl.textContent = "0";
-      convertScoreEl.textContent = String(resultState.finalScore);
-      distanceEl.textContent = String(resultState.finalScore);
+      convertScoreEl.textContent = formatNumber(resultState.finalScore);
+      distanceEl.textContent = formatNumber(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
@@ -2719,9 +2719,9 @@ function endGame() {
     function updateHud() {
       const runScore = computeScore();
       scoreLabel.textContent = "SCORE";
-      distanceEl.textContent = String(runScore);
-      bestEl.textContent = String(Math.floor(best));
-      todayRankEl.textContent = String(coins);
+      distanceEl.textContent = formatNumber(runScore);
+      bestEl.textContent = formatNumber(best);
+      todayRankEl.textContent = formatNumber(coins);
       checkBestPace(runScore);
       updateRunStrip();
     }
@@ -2797,7 +2797,7 @@ function endGame() {
       burstParticles(player.x, PLAYER_Y - 78, "#f0c247", 20, 1.15);
       pulseStat(bestStat, "stat-best");
       pulseStat(scoreStat, "stat-best");
-      setHint(`新記録ペース ${runScore}点`);
+      setHint(`新記録ペース ${formatNumber(runScore)}点`);
     }
 
     function todayKey() {
@@ -2849,6 +2849,11 @@ function endGame() {
       }[char]));
     }
 
+    function formatNumber(value) {
+      const number = Number(value) || 0;
+      return Math.floor(number).toLocaleString("ja-JP");
+    }
+
     function renderDailyRanking(currentRank = 0, limit = 5, currentEntryId = resultState.entryId) {
       const allScores = readDailyScores();
       const scores = allScores.slice(0, limit);
@@ -2869,7 +2874,7 @@ function endGame() {
         const name = escapeHtml(item.name || "プレイヤー");
         const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
         const avatar = item.photo ? "" : name.slice(0, 1);
-        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${rank}位</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
+        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${rank}位</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${formatNumber(item.score)}点</strong></li>`;
       }).join("");
     }
 
@@ -3964,7 +3969,7 @@ function onPointerDown(event) {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
 
-    bestEl.textContent = String(Math.floor(best));
+    bestEl.textContent = formatNumber(best);
     updateHud();
     resizeCanvas();
     showTitleScreen();
