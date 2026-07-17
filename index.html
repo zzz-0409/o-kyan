@@ -1631,13 +1631,22 @@
       padding: 9px 11px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
-      background: rgba(4, 8, 15, 0.92);
+      background:
+        linear-gradient(180deg, rgba(11, 21, 36, 0.92), rgba(4, 8, 15, 0.92));
       color: var(--ink);
       font: inherit;
       font-weight: 900;
       outline: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.28);
       user-select: text;
       -webkit-user-select: text;
+    }
+
+    .entry-fields input::placeholder {
+      color: rgba(255, 248, 223, 0.38);
+      font-weight: 850;
     }
 
     .entry-fields input:disabled {
@@ -1649,7 +1658,11 @@
 
     .entry-fields input:focus {
       border-color: rgba(59, 215, 255, 0.86);
-      box-shadow: 0 0 0 3px rgba(59, 215, 255, 0.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+        0 0 0 3px rgba(59, 215, 255, 0.18),
+        0 0 16px rgba(59, 215, 255, 0.16);
     }
 
     .entry-actions {
@@ -1731,6 +1744,7 @@
       font-size: 10px;
       font-weight: 700;
       line-height: 1.35;
+      padding: 0 2px;
     }
 
     #photoVideo {
