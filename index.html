@@ -2620,7 +2620,7 @@
       stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
       scoreEntry.hidden = true;
-      rankingButton.hidden = true;
+      setElementHidden(rankingButton, true);
       setOverlayOpen(false);
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
@@ -2640,7 +2640,7 @@ function endGame() {
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
       overlay.dataset.mode = "result";
-      rankingButton.hidden = true;
+      setElementHidden(rankingButton, true);
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
@@ -2757,6 +2757,11 @@ function endGame() {
     function setOverlayOpen(isOpen) {
       overlay.classList.toggle("show", isOpen);
       overlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    }
+
+    function setElementHidden(element, isHidden) {
+      element.hidden = isHidden;
+      element.setAttribute("aria-hidden", isHidden ? "true" : "false");
     }
 
     function startScoreConversion(baseScore, coinCount, finalScore) {
@@ -3039,7 +3044,7 @@ function endGame() {
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       setActionButton(startButton, "START", "▶", "ゲームを開始");
-      rankingButton.hidden = false;
+      setElementHidden(rankingButton, false);
       setActionButton(rankingButton, "RANKING", "★", "ランキングを見る");
       setHint("STARTでラン、RANKINGで記録確認", false);
       updateHud();
@@ -3060,7 +3065,7 @@ function endGame() {
       overlayText.textContent = "今日の上位記録";
       renderDailyRanking(0, 10);
       setActionButton(startButton, "もどる", "‹", "タイトル画面へ戻る");
-      rankingButton.hidden = true;
+      setElementHidden(rankingButton, true);
     }
 
     function prepareScoreEntry() {
