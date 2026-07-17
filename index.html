@@ -879,7 +879,9 @@
       position: absolute;
       inset: 0 0 auto;
       height: 44%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent);
+      background:
+        linear-gradient(90deg, transparent 8%, rgba(255, 255, 255, 0.08), transparent 92%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent);
       pointer-events: none;
     }
 
@@ -925,7 +927,17 @@
       font-weight: 950;
       line-height: 1;
       text-overflow: ellipsis;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.68),
+        0 0 12px rgba(59, 215, 255, 0.12);
       white-space: nowrap;
+    }
+
+    .title-chip:first-child strong {
+      color: #fff8d2;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.72),
+        0 0 14px rgba(255, 198, 41, 0.22);
     }
 
     .overlay[data-mode="ranking"] .dialog {
