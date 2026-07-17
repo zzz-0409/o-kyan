@@ -829,6 +829,24 @@
       animation-delay: 0.04s;
     }
 
+    .title-chip::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 5px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.62), transparent);
+      box-shadow: 0 0 10px rgba(255, 198, 41, 0.16);
+      pointer-events: none;
+    }
+
+    .title-chip:nth-child(2)::before {
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.58), transparent);
+      box-shadow: 0 0 10px rgba(59, 215, 255, 0.16);
+    }
+
     .title-chip::after {
       content: "";
       position: absolute;
