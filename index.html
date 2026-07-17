@@ -1013,18 +1013,37 @@
     }
 
     .ranking .rank-number {
-      min-width: 26px;
+      min-width: 34px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.16);
       color: inherit;
+      font-size: 12px;
       font-weight: 950;
       text-align: center;
     }
 
     .ranking .rank-score {
       flex: 0 0 auto;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.16);
       color: inherit;
       font-size: 15px;
       font-weight: 950;
       white-space: nowrap;
+    }
+
+    .ranking li.rank-1 .rank-number,
+    .ranking li.rank-2 .rank-number,
+    .ranking li.rank-3 .rank-number {
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .ranking li.rank-1 .rank-score,
+    .ranking li.rank-2 .rank-score,
+    .ranking li.rank-3 .rank-score {
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .ranking li.current {
@@ -1581,6 +1600,17 @@
 
       .ranking li {
         padding: 8px 9px;
+      }
+
+      .ranking .rank-number {
+        min-width: 30px;
+        padding: 3px 5px;
+        font-size: 11px;
+      }
+
+      .ranking .rank-score {
+        padding: 4px 6px;
+        font-size: 13px;
       }
 
       .ranking li.rank-1,
@@ -2227,8 +2257,7 @@ function endGame() {
         const name = escapeHtml(item.name || "プレイヤー");
         const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
         const avatar = item.photo ? "" : name.slice(0, 1);
-        const medal = rank === 1 ? "★" : rank === 2 ? "◆" : rank === 3 ? "●" : rank;
-        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${medal}</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
+        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${rank}位</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${item.score}点</strong></li>`;
       }).join("");
     }
 
