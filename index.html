@@ -230,7 +230,13 @@
       display: block;
       width: 100%;
       height: 100%;
+      transition: filter 0.22s ease, transform 0.22s ease;
       user-select: none;
+    }
+
+    .stage.title-screen canvas {
+      filter: saturate(0.72) brightness(0.64);
+      transform: scale(1.015);
     }
 
     .move-controls {
