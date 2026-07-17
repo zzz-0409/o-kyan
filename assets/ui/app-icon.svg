@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="RUN DASH icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10264b"/>
+      <stop offset="1" stop-color="#050910"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#394653"/>
+      <stop offset="1" stop-color="#151b23"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff077"/>
+      <stop offset="0.55" stop-color="#ffc629"/>
+      <stop offset="1" stop-color="#d48a00"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <rect x="18" y="8" width="92" height="128" rx="10" fill="url(#road)"/>
+  <path d="M49 8v112M79 8v112" fill="none" stroke="#dbe8ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 14" opacity="0.75"/>
+  <circle cx="64" cy="68" r="22" fill="url(#gold)" stroke="#fff7bd" stroke-width="4"/>
+  <path d="M55 70l8 8 15-20" fill="none" stroke="#111725" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 35h24M20 49h22M86 37h24M88 53h18" stroke="#3bd7ff" stroke-width="5" stroke-linecap="round" opacity="0.82"/>
+  <rect x="22" y="94" width="84" height="16" rx="8" fill="#07101f" opacity="0.78"/>
+  <path d="M38 102h52" stroke="#ffc629" stroke-width="5" stroke-linecap="round"/>
+</svg>
