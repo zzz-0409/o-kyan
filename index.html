@@ -1864,7 +1864,9 @@
     .entry-fields input:focus-visible {
       outline: 3px solid rgba(59, 215, 255, 0.86);
       outline-offset: 3px;
-      filter: drop-shadow(0 0 10px rgba(59, 215, 255, 0.28));
+      filter:
+        drop-shadow(0 0 10px rgba(59, 215, 255, 0.28))
+        brightness(1.04);
     }
 
     button:disabled,
@@ -2315,6 +2317,9 @@
     .entry-actions button:focus-visible {
       outline: 3px solid rgba(59, 215, 255, 0.58);
       outline-offset: 2px;
+      filter:
+        drop-shadow(0 0 9px rgba(59, 215, 255, 0.24))
+        brightness(1.04);
     }
 
     .entry-actions button:disabled {
