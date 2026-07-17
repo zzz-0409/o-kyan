@@ -1304,6 +1304,21 @@
       white-space: normal;
     }
 
+    .ranking li.empty-rank .empty-title {
+      display: block;
+      color: #fff8df;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .ranking li.empty-rank .empty-sub {
+      display: block;
+      margin-top: 4px;
+      color: rgba(255, 248, 223, 0.66);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .ranking li.rank-1,
     .ranking li.rank-2,
     .ranking li.rank-3 {
@@ -2893,7 +2908,7 @@ function endGame() {
         if (current) scores.push(current);
       }
       if (!scores.length) {
-        dailyRankingEl.innerHTML = "<li class=\"empty-rank\"><span class=\"rank-main\"><span class=\"rank-number\">★</span><span class=\"rank-name\">まだ記録がありません<br>最初のランでランキングを作ろう</span></span></li>";
+        dailyRankingEl.innerHTML = "<li class=\"empty-rank\"><span class=\"rank-main\"><span class=\"rank-number\">★</span><span class=\"rank-name\"><span class=\"empty-title\">まだ記録がありません</span><span class=\"empty-sub\">STARTで最初のランを登録しよう</span></span></span></li>";
         return;
       }
       dailyRankingEl.innerHTML = scores.map((item, index) => {
