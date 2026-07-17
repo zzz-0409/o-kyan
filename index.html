@@ -133,6 +133,8 @@
       opacity: 0;
       pointer-events: none;
       touch-action: none;
+      transform: translateY(6px);
+      transition: opacity 0.16s ease, transform 0.16s ease;
     }
 
     .jump-control {
@@ -143,12 +145,15 @@
       opacity: 0;
       pointer-events: none;
       touch-action: none;
+      transform: translateY(6px);
+      transition: opacity 0.16s ease, transform 0.16s ease;
     }
 
     .stage.playing .move-controls,
     .stage.playing .jump-control {
       opacity: 0.94;
       pointer-events: auto;
+      transform: translateY(0);
     }
 
     .control-button {
@@ -211,11 +216,16 @@
       background: rgba(2, 5, 10, 0.46);
       opacity: 0;
       pointer-events: none;
+      transition: opacity 0.16s ease;
     }
 
     .overlay.show {
       opacity: 1;
       pointer-events: auto;
+    }
+
+    .overlay.show .dialog {
+      animation: dialogPop 0.18s ease-out both;
     }
 
     .overlay[data-mode="title"],
@@ -242,6 +252,7 @@
         0 22px 60px rgba(0, 0, 0, 0.62),
         0 0 24px rgba(59, 215, 255, 0.1);
       text-align: center;
+      transform-origin: center;
     }
 
     .dialog.new-best {
@@ -578,6 +589,32 @@
       }
     }
 
+    @keyframes dialogPop {
+      0% {
+        transform: translateY(10px) scale(0.97);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes savedPulse {
+      0% {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 rgba(59, 215, 255, 0);
+      }
+      65% {
+        transform: scale(1.015);
+        box-shadow: 0 0 24px rgba(59, 215, 255, 0.28);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
+      }
+    }
+
     .ranking {
       min-height: 0;
       margin: 0 0 14px;
@@ -695,6 +732,20 @@
       font-weight: 900;
     }
 
+    button:focus-visible,
+    .control-button:focus-visible,
+    .entry-fields input:focus-visible {
+      outline: 3px solid rgba(59, 215, 255, 0.86);
+      outline-offset: 3px;
+    }
+
+    button:disabled,
+    button[disabled] {
+      cursor: default;
+      filter: grayscale(0.18) brightness(0.88);
+      opacity: 0.78;
+    }
+
     .menu-actions {
       display: grid;
       gap: 12px;
@@ -716,7 +767,7 @@
       font-size: 25px;
       font-weight: 950;
       text-transform: uppercase;
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
     }
 
     .menu-actions button::before {
@@ -745,6 +796,10 @@
         inset 0 -2px 0 rgba(102, 62, 0, 0.26),
         0 2px 0 rgba(76, 48, 0, 0.96),
         0 9px 18px rgba(0, 0, 0, 0.32);
+    }
+
+    .menu-actions button:hover {
+      filter: brightness(1.04);
     }
 
     .menu-actions button + button {
@@ -777,6 +832,7 @@
       background:
         linear-gradient(180deg, rgba(22, 57, 76, 0.42), rgba(0, 0, 0, 0.24));
       box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
+      animation: savedPulse 0.22s ease-out both;
     }
 
     .score-entry[hidden] {
@@ -946,6 +1002,16 @@
       font-size: 12px;
       font-weight: 750;
       text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
     }
 
     @media (max-width: 430px), (max-height: 700px) {
