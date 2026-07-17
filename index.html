@@ -277,6 +277,21 @@
       white-space: nowrap;
     }
 
+    .stat strong::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -4px;
+      width: 42px;
+      max-width: 62%;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+      opacity: 0.72;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
     .stat strong,
     .title-chip strong,
     .result-stat strong,
