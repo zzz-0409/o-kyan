@@ -2142,6 +2142,14 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.001ms !important;
       }
+
+      .overlay[data-mode="title"] .menu-actions button:first-child {
+        animation: none !important;
+      }
+
+      .overlay[data-mode="title"] .menu-actions button:first-child::after {
+        display: none;
+      }
     }
 
     @media (max-width: 430px), (max-height: 700px) {
