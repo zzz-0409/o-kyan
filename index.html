@@ -2337,7 +2337,9 @@
       position: absolute;
       inset: 0 auto 0 0;
       width: var(--effect-progress, 0%);
-      background: linear-gradient(90deg, rgba(59, 215, 255, 0.1), rgba(59, 215, 255, 0.56));
+      background:
+        radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.58), transparent 18px),
+        linear-gradient(90deg, rgba(59, 215, 255, 0.1), rgba(59, 215, 255, 0.56));
       opacity: 0;
       transition: width 0.1s linear, opacity 0.12s ease;
     }
@@ -2357,7 +2359,9 @@
     }
 
     .run-pill.slow::before {
-      background: linear-gradient(90deg, rgba(255, 93, 77, 0.12), rgba(255, 93, 77, 0.58));
+      background:
+        radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.48), transparent 18px),
+        linear-gradient(90deg, rgba(255, 93, 77, 0.12), rgba(255, 93, 77, 0.58));
     }
 
     .run-pill span,
@@ -2398,9 +2402,17 @@
       color: #dffaff;
     }
 
+    .run-pill.boost span {
+      background: rgba(59, 215, 255, 0.18);
+    }
+
     .run-pill.slow strong,
     .run-pill.slow span {
       color: #ffe0dc;
+    }
+
+    .run-pill.slow span {
+      background: rgba(255, 93, 77, 0.18);
     }
 
     .footer {
