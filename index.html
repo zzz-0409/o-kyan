@@ -2483,6 +2483,7 @@
       grid-template-columns: 1fr;
       min-height: 24px;
       padding: 0 2px;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.22));
     }
 
     .run-pill {
@@ -2502,9 +2503,11 @@
         radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 54%),
         linear-gradient(180deg, rgba(22, 34, 55, 0.74), rgba(3, 6, 13, 0.78));
       box-shadow:
+        0 0 0 1px rgba(59, 215, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
         inset 0 -1px 0 rgba(0, 0, 0, 0.36),
-        0 6px 14px rgba(0, 0, 0, 0.22);
+        0 6px 14px rgba(0, 0, 0, 0.22),
+        0 0 18px rgba(59, 215, 255, 0.06);
       text-align: center;
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
@@ -2527,7 +2530,9 @@
       position: absolute;
       inset: 0 0 auto;
       height: 45%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+      background:
+        linear-gradient(90deg, transparent 8%, rgba(255, 198, 41, 0.12), rgba(59, 215, 255, 0.12), transparent 92%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
       pointer-events: none;
     }
 
@@ -2607,6 +2612,7 @@
     }
 
     .footer {
+      position: relative;
       min-height: 30px;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
@@ -2626,6 +2632,19 @@
       text-align: center;
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
+    }
+
+    .footer::after {
+      content: "";
+      position: absolute;
+      left: 54px;
+      right: 12px;
+      bottom: 5px;
+      height: 1px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255, 198, 41, 0.34), rgba(59, 215, 255, 0.26), transparent);
+      opacity: 0.7;
+      pointer-events: none;
     }
 
     .footer::before {
