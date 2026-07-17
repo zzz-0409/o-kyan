@@ -1438,6 +1438,22 @@
       pointer-events: none;
     }
 
+    .ranking::after {
+      content: "";
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      display: block;
+      height: 14px;
+      margin: 7px -8px -8px;
+      border-radius: 0 0 12px 12px;
+      background:
+        linear-gradient(180deg, transparent, rgba(2, 5, 10, 0.82) 76%),
+        linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.26), transparent);
+      box-shadow: 0 -8px 16px rgba(2, 5, 10, 0.2);
+      pointer-events: none;
+    }
+
     .ranking li {
       position: relative;
       display: flex;
