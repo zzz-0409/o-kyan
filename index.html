@@ -131,6 +131,14 @@
       white-space: nowrap;
     }
 
+    .stat.stat-pop {
+      animation: statPop 0.24s ease-out both;
+    }
+
+    .stat.stat-best {
+      animation: statBestGlow 0.48s ease-out both;
+    }
+
     .stage {
       position: relative;
       min-height: 0;
@@ -853,6 +861,44 @@
       50% {
         transform: scale(1.18);
         color: var(--accent);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes statPop {
+      0% {
+        transform: translateY(0) scale(1);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.14),
+          0 4px 0 rgba(0, 0, 0, 0.7),
+          0 10px 18px rgba(0, 0, 0, 0.34);
+      }
+      48% {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.2),
+          0 4px 0 rgba(83, 55, 0, 0.72),
+          0 0 22px rgba(255, 198, 41, 0.28),
+          0 14px 24px rgba(0, 0, 0, 0.38);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes statBestGlow {
+      0% {
+        transform: scale(1);
+      }
+      45% {
+        transform: scale(1.045);
+        border-color: rgba(255, 198, 41, 0.7);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.2),
+          0 4px 0 rgba(83, 55, 0, 0.72),
+          0 0 28px rgba(255, 198, 41, 0.36);
       }
       100% {
         transform: scale(1);
@@ -1779,6 +1825,9 @@
     const distanceEl = document.getElementById("distance");
     const bestEl = document.getElementById("best");
     const todayRankEl = document.getElementById("todayRank");
+    const scoreStat = distanceEl.closest(".stat");
+    const bestStat = bestEl.closest(".stat");
+    const coinStat = todayRankEl.closest(".stat");
     const hintEl = document.getElementById("hint");
     const timePill = document.getElementById("timePill");
     const timeStatus = document.getElementById("timeStatus");
@@ -2192,6 +2241,16 @@ function endGame() {
       updateRunStrip();
     }
 
+    function pulseStat(statElement, className = "stat-pop") {
+      if (!statElement) return;
+      statElement.classList.remove(className);
+      void statElement.offsetWidth;
+      statElement.classList.add(className);
+      statElement.addEventListener("animationend", () => {
+        statElement.classList.remove(className);
+      }, { once: true });
+    }
+
     function updateRunStrip() {
       timePill.classList.remove("boost", "slow", "active");
       timePill.style.setProperty("--effect-progress", "0%");
@@ -2238,6 +2297,8 @@ function endGame() {
       if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
       bestPaceAnnounced = true;
       burstParticles(player.x, PLAYER_Y - 78, "#f0c247", 20, 1.15);
+      pulseStat(bestStat, "stat-best");
+      pulseStat(scoreStat, "stat-best");
       hintEl.textContent = `新記録ペース ${runScore}点`;
     }
 
@@ -2758,6 +2819,7 @@ function checkCollisions() {
           coin.collected = true;
           coinItems.splice(i, 1);
           burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
+          pulseStat(coinStat);
           hintEl.textContent = `コイン +1 / ${coins}`;
         }
       }
