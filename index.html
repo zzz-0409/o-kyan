@@ -600,6 +600,27 @@
         0 16px 22px rgba(0, 0, 0, 0.64);
     }
 
+    .overlay[data-mode="title"] .dialog h2::before {
+      content: "OPEN CAMPUS RUN";
+      display: block;
+      width: max-content;
+      margin: 0 auto 8px;
+      padding: 4px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(12, 24, 43, 0.86), rgba(2, 7, 15, 0.86));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 14px rgba(59, 215, 255, 0.22);
+      color: #dffaff;
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1;
+      text-shadow: none;
+      transform: skew(8deg) rotate(2deg);
+    }
+
     .overlay[data-mode="title"] .dialog h2::after {
       content: "";
       position: absolute;
