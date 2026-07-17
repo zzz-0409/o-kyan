@@ -2105,20 +2105,21 @@
 
     .footer span {
       position: relative;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-width: 0;
       overflow: hidden;
-      padding-left: 18px;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .footer span::before {
       content: "!";
-      position: absolute;
-      left: 0;
-      top: 50%;
       width: 13px;
       height: 13px;
+      flex: 0 0 13px;
       display: grid;
       place-items: center;
       border-radius: 50%;
@@ -2127,7 +2128,6 @@
       font-size: 9px;
       font-weight: 950;
       line-height: 1;
-      transform: translateY(-50%);
     }
 
     .footer.hint-pop {
