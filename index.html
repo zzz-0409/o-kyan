@@ -676,6 +676,13 @@
       text-align: left;
     }
 
+    .score-entry.saved {
+      border-color: rgba(59, 215, 255, 0.5);
+      background:
+        linear-gradient(180deg, rgba(22, 57, 76, 0.42), rgba(0, 0, 0, 0.24));
+      box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
+    }
+
     .score-entry[hidden] {
       display: none;
     }
@@ -726,6 +733,11 @@
       min-height: 38px;
       padding: 7px 8px;
       font-size: 13px;
+    }
+
+    .score-entry.saved #saveEntryButton {
+      background: linear-gradient(180deg, #96f0ff, #3bd7ff 52%, #188aa8);
+      color: #03131a;
     }
 
     .entry-fields small {
@@ -1452,17 +1464,22 @@ function endGame() {
       }[char]));
     }
 
-    function renderDailyRanking(currentRank = 0, limit = 5) {
-      const scores = readDailyScores().slice(0, limit);
+    function renderDailyRanking(currentRank = 0, limit = 5, currentEntryId = resultState.entryId) {
+      const allScores = readDailyScores();
+      const scores = allScores.slice(0, limit);
+      if (currentEntryId && !scores.some((item) => item.id === currentEntryId)) {
+        const current = allScores.find((item) => item.id === currentEntryId);
+        if (current) scores.push(current);
+      }
       if (!scores.length) {
         dailyRankingEl.innerHTML = "<li><span class=\"rank-main\"><span class=\"rank-number\">-</span><span class=\"rank-name\">今日のランキング</span></span><strong class=\"rank-score\">まだ記録なし</strong></li>";
         return;
       }
       dailyRankingEl.innerHTML = scores.map((item, index) => {
-        const rank = index + 1;
+        const rank = allScores.findIndex((score) => score.id === item.id) + 1 || index + 1;
         const mark = [
           `rank-${rank}`,
-          rank === currentRank ? "current" : ""
+          item.id === currentEntryId || rank === currentRank ? "current" : ""
         ].filter(Boolean).join(" ");
         const name = escapeHtml(item.name || "プレイヤー");
         const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
@@ -1483,6 +1500,7 @@ function endGame() {
       overlay.querySelector(".dialog").classList.remove("new-best");
       overlay.classList.add("show");
       scoreEntry.hidden = true;
+      scoreEntry.classList.remove("saved");
       dailyRankingEl.innerHTML = "";
       hideResultStats();
       overlayTitle.textContent = "RUN DASH!";
@@ -1502,6 +1520,7 @@ function endGame() {
       overlay.querySelector(".dialog").classList.remove("new-best");
       overlay.classList.add("show");
       scoreEntry.hidden = true;
+      scoreEntry.classList.remove("saved");
       hideResultStats();
       overlayTitle.textContent = "ランキング";
       overlayText.textContent = "今日の上位記録";
@@ -1517,6 +1536,7 @@ function endGame() {
       photoStatus.textContent = "写真なしでも登録できます";
       photoButton.textContent = capturedPhoto ? "撮り直し" : "写真";
       saveEntryButton.textContent = "登録";
+      scoreEntry.classList.remove("saved");
       scoreEntry.hidden = false;
     }
 
@@ -1540,7 +1560,8 @@ function endGame() {
       if (capturedPhoto) {
         localStorage.setItem("laneRunnerLastPhoto", capturedPhoto);
       }
-      saveEntryButton.textContent = "保存済み";
+      scoreEntry.classList.add("saved");
+      saveEntryButton.textContent = "更新";
       photoStatus.textContent = resultState.rank > 0
         ? `ランキングに登録しました Today #${resultState.rank}`
         : "ランキングに登録しました";
@@ -1548,7 +1569,7 @@ function endGame() {
         overlayText.textContent = "ランキング登録済み";
         showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, `Today #${resultState.rank}`);
       }
-      renderDailyRanking(resultState.rank);
+      renderDailyRanking(resultState.rank, 5, resultState.entryId);
     }
 
     async function handlePhotoButton() {
