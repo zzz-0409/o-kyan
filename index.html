@@ -2378,7 +2378,7 @@
         <button class="control-button" id="jumpButton" type="button">JUMP</button>
       </div>
       <div class="overlay show" id="overlay">
-        <div class="dialog">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" aria-describedby="overlayText">
           <h2 id="overlayTitle">RUN DASH!</h2>
           <p id="overlayText">左右で避けて、ジャンプで穴を越えろ！</p>
           <div class="title-meta" id="titleMeta" hidden></div>
@@ -2390,7 +2390,7 @@
               <div class="convert-box" id="convertScoreBox"><span>SCORE</span><strong id="convertScore">0</strong></div>
             </div>
           </div>
-          <ol class="ranking" id="dailyRanking"></ol>
+          <ol class="ranking" id="dailyRanking" aria-label="今日のランキング"></ol>
           <div class="score-entry" id="scoreEntry" hidden>
             <button class="entry-photo" id="photoPreview" type="button" aria-label="写真を撮る"><span>写真</span></button>
             <div class="entry-fields">
