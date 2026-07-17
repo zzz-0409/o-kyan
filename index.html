@@ -643,6 +643,13 @@
       animation: cardIn 0.2s ease-out both;
     }
 
+    .title-chip:first-child {
+      border-color: rgba(255, 198, 41, 0.26);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.16), transparent 54%),
+        linear-gradient(180deg, rgba(35, 32, 24, 0.88), rgba(8, 8, 12, 0.84));
+    }
+
     .title-chip:nth-child(2) {
       animation-delay: 0.04s;
     }
@@ -680,6 +687,11 @@
       font-size: 8px;
       line-height: 1;
       vertical-align: -1px;
+    }
+
+    .title-chip:first-child span::before {
+      background: rgba(255, 198, 41, 0.28);
+      color: #fff8df;
     }
 
     .title-chip strong {
@@ -2638,8 +2650,8 @@ function endGame() {
       const todayBest = scores.length ? scores[0].score : 0;
       titleMeta.hidden = false;
       titleMeta.innerHTML = [
-        ["TODAY BEST", todayBest ? `${formatNumber(todayBest)}点` : "未登録", "B"],
-        ["PLAYS", `${scores.length}回`, "P"]
+        ["BEST", todayBest ? `${formatNumber(todayBest)}点` : "未登録", "★"],
+        ["PLAYS", `${scores.length}回`, "▶"]
       ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
 
