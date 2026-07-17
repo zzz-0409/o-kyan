@@ -729,6 +729,17 @@
       white-space: nowrap;
     }
 
+    .overlay[data-mode="result"] .dialog h2::after {
+      content: "";
+      display: block;
+      width: min(64%, 160px);
+      height: 3px;
+      margin: 9px auto 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.84), transparent);
+      box-shadow: 0 0 12px rgba(255, 198, 41, 0.24);
+    }
+
     .overlay[data-mode="ranking"] .dialog p {
       justify-self: center;
       width: min(100%, 250px);
