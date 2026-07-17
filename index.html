@@ -524,6 +524,7 @@
       line-height: 0.84;
       text-transform: uppercase;
       transform: skew(-8deg) rotate(-2deg);
+      filter: drop-shadow(0 0 14px rgba(255, 198, 41, 0.22));
       text-shadow:
         -3px -3px 0 #ffffff,
         3px -3px 0 #ffffff,
@@ -531,6 +532,20 @@
         3px 3px 0 #ffffff,
         0 8px 0 #0b2a5b,
         0 16px 22px rgba(0, 0, 0, 0.64);
+    }
+
+    .overlay[data-mode="title"] .dialog h2::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 14%;
+      top: 13%;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+      opacity: 0.72;
+      transform: skewX(-18deg);
+      pointer-events: none;
     }
 
     .overlay[data-mode="title"] .dialog p {
