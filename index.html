@@ -2345,6 +2345,7 @@
     const FIRST_CENTER_BLOCK_TIME = 8;
     const READY_GRACE_TIME = 1.8;
     const TWO_MINUTE_TARGET = 120;
+    const REGISTER_SAVE_TOKEN = Symbol("register-save");
 
     let running = false;
     let gameOver = false;
@@ -2756,7 +2757,10 @@ function endGame() {
       }
     }
 
-    function saveDailyScore(score, name = "プレイヤー", photo = "") {
+    function saveDailyScore(score, name = "プレイヤー", photo = "", saveToken = null) {
+      if (saveToken !== REGISTER_SAVE_TOKEN) {
+        return null;
+      }
       const entry = {
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
         score,
@@ -2880,7 +2884,8 @@ function endGame() {
         return;
       }
       const name = playerNameInput.value.trim() || "プレイヤー";
-      const savedScore = saveDailyScore(resultState.finalScore, name, capturedPhoto);
+      const savedScore = saveDailyScore(resultState.finalScore, name, capturedPhoto, REGISTER_SAVE_TOKEN);
+      if (!savedScore) return;
       resultState.entryId = savedScore.id;
       resultState.rank = savedScore.rank;
       localStorage.setItem("laneRunnerPlayerName", name);
