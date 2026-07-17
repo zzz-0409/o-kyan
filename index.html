@@ -2018,6 +2018,7 @@
       background:
         linear-gradient(180deg, rgba(11, 21, 36, 0.92), rgba(4, 8, 15, 0.92));
       color: var(--ink);
+      caret-color: var(--accent-2);
       font: inherit;
       font-weight: 900;
       outline: none;
@@ -2031,6 +2032,11 @@
     .entry-fields input::placeholder {
       color: rgba(255, 248, 223, 0.38);
       font-weight: 850;
+    }
+
+    .entry-fields input::selection {
+      background: rgba(59, 215, 255, 0.32);
+      color: #ffffff;
     }
 
     .entry-fields input:disabled {
