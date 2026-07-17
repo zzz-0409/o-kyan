@@ -2081,6 +2081,7 @@
       min-height: 54px;
       border-color: rgba(255, 255, 255, 0.42);
       background:
+        linear-gradient(90deg, transparent 10%, rgba(59, 215, 255, 0.26), transparent 90%) center calc(100% - 8px) / 86% 2px no-repeat,
         linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%),
         radial-gradient(circle at 50% 112%, rgba(0, 0, 0, 0.42), transparent 48%),
         linear-gradient(180deg, #2b3b51, #111926);
@@ -2095,6 +2096,16 @@
       text-shadow:
         0 2px 0 rgba(0, 0, 0, 0.58),
         0 0 12px rgba(59, 215, 255, 0.16);
+    }
+
+    .menu-actions button + button::after {
+      content: "";
+      position: absolute;
+      inset: 3px 5px auto;
+      height: 38%;
+      border-radius: 10px 10px 14px 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent);
+      pointer-events: none;
     }
 
     .score-entry {
