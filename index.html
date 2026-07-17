@@ -614,6 +614,11 @@
         inset 0 -1px 0 rgba(0, 0, 0, 0.22),
         0 8px 16px rgba(0, 0, 0, 0.22);
       text-align: center;
+      animation: cardIn 0.2s ease-out both;
+    }
+
+    .title-chip:nth-child(2) {
+      animation-delay: 0.04s;
     }
 
     .title-chip::after {
@@ -1420,6 +1425,10 @@
     .menu-actions {
       display: grid;
       gap: 12px;
+    }
+
+    .overlay[data-mode="title"] .menu-actions {
+      animation: cardIn 0.2s ease-out 0.08s both;
     }
 
     .menu-actions button {
