@@ -2322,10 +2322,15 @@
 
     #saveEntryButton {
       border: 1px solid rgba(255, 255, 255, 0.32);
-      background: linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.34), transparent 38%),
+        radial-gradient(circle at 50% 112%, rgba(116, 72, 0, 0.42), transparent 50%),
+        linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
       color: #151007;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        inset 0 -3px 0 rgba(102, 62, 0, 0.24),
+        0 0 12px rgba(255, 198, 41, 0.12),
         0 4px 0 rgba(76, 48, 0, 0.78);
     }
 
