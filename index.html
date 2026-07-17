@@ -54,11 +54,31 @@
     }
 
     .hud {
+      position: relative;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: center;
       gap: 7px;
       min-height: 54px;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(13, 24, 43, 0.7), rgba(2, 5, 10, 0.28));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 22px rgba(0, 0, 0, 0.24);
+    }
+
+    .hud::before {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border-radius: 11px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(255, 198, 41, 0.12), transparent 34%),
+        radial-gradient(circle at 82% 0%, rgba(59, 215, 255, 0.11), transparent 34%);
+      pointer-events: none;
     }
 
     h1 {
@@ -67,6 +87,7 @@
 
     .stat {
       position: relative;
+      z-index: 1;
       min-width: 0;
       overflow: hidden;
       padding: 8px 6px 9px;
@@ -148,8 +169,21 @@
       background: var(--road);
       box-shadow:
         0 0 0 1px rgba(0, 0, 0, 0.75),
-        0 18px 40px rgba(0, 0, 0, 0.45);
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 0 28px rgba(59, 215, 255, 0.08);
       touch-action: none;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      border-radius: inherit;
+      background:
+        linear-gradient(90deg, rgba(59, 215, 255, 0.18), transparent 10%, transparent 90%, rgba(255, 198, 41, 0.14));
+      opacity: 0.65;
+      pointer-events: none;
     }
 
     .stage::after {
@@ -1680,6 +1714,7 @@
       .hud {
         gap: 5px;
         min-height: 46px;
+        padding: 3px;
       }
 
       .stat {
