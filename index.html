@@ -1701,8 +1701,11 @@
       position: relative;
       width: 62px;
       height: 62px;
+      min-height: 62px;
       display: grid;
       place-items: center;
+      overflow: visible;
+      padding: 0;
       border: 2px solid rgba(255, 255, 255, 0.46);
       border-radius: 50%;
       background:
@@ -1713,6 +1716,25 @@
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
         0 0 14px rgba(255, 198, 41, 0.08);
+      cursor: pointer;
+      transition:
+        transform 0.12s ease,
+        filter 0.12s ease,
+        box-shadow 0.12s ease;
+    }
+
+    .entry-photo:active:not(:disabled) {
+      transform: scale(0.96);
+      filter: brightness(1.08);
+    }
+
+    .entry-photo:disabled {
+      cursor: default;
+    }
+
+    .score-entry.saved .entry-photo:disabled {
+      filter: none;
+      opacity: 1;
     }
 
     .entry-photo::after {
@@ -1875,6 +1897,7 @@
 
     @media (hover: hover) and (pointer: fine) {
       .control-button:hover,
+      .entry-photo:hover:not(:disabled),
       .entry-actions button:hover:not(:disabled),
       .menu-actions button:hover {
         filter: brightness(1.05);
@@ -2282,6 +2305,7 @@
       .entry-photo {
         width: 54px;
         height: 54px;
+        min-height: 54px;
       }
 
       .entry-fields {
@@ -2356,7 +2380,7 @@
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
           <div class="score-entry" id="scoreEntry" hidden>
-            <div class="entry-photo" id="photoPreview"><span>写真</span></div>
+            <button class="entry-photo" id="photoPreview" type="button" aria-label="写真を撮る"><span>写真</span></button>
             <div class="entry-fields">
               <input id="playerName" type="text" maxlength="12" placeholder="名前">
               <div class="entry-actions">
@@ -3011,6 +3035,7 @@ function endGame() {
       capturedPhoto = localStorage.getItem("laneRunnerLastPhoto") || "";
       playerNameInput.value = localStorage.getItem("laneRunnerPlayerName") || "プレイヤー";
       playerNameInput.disabled = false;
+      photoPreview.disabled = false;
       photoButton.disabled = false;
       saveEntryButton.disabled = false;
       updatePhotoPreview(capturedPhoto);
@@ -3046,6 +3071,7 @@ function endGame() {
       saveEntryButton.textContent = "登録済み";
       saveEntryButton.disabled = true;
       playerNameInput.disabled = true;
+      photoPreview.disabled = true;
       photoButton.disabled = true;
       photoStatus.textContent = resultState.rank > 0
         ? `ランキングに登録しました 本日 #${resultState.rank}`
@@ -4040,6 +4066,7 @@ function onPointerDown(event) {
     startButton.addEventListener("click", handleMainButton);
     rankingButton.addEventListener("click", showRankingScreen);
     photoButton.addEventListener("click", handlePhotoButton);
+    photoPreview.addEventListener("click", handlePhotoButton);
     saveEntryButton.addEventListener("click", saveEntryProfile);
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
