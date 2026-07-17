@@ -344,6 +344,21 @@
       pointer-events: none;
     }
 
+    .move-controls::after,
+    .jump-control::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 42%;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.36), transparent);
+      opacity: 0.7;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
     .jump-control {
       position: absolute;
       right: 14px;
@@ -377,6 +392,7 @@
       border: 2px solid rgba(255, 255, 255, 0.76);
       border-radius: 50%;
       background:
+        radial-gradient(circle at 50% 106%, rgba(111, 70, 0, 0.46), transparent 48%),
         linear-gradient(180deg, #ffe37a 0%, #ffc629 54%, #d79300 100%);
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.42),
@@ -438,6 +454,7 @@
       border-color: rgba(255, 255, 255, 0.9);
       background:
         radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.34), transparent 34%),
+        radial-gradient(circle at 50% 108%, rgba(111, 70, 0, 0.48), transparent 50%),
         linear-gradient(180deg, #fff173 0%, #ffc629 52%, #d48800 100%);
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.46),
