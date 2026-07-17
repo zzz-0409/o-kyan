@@ -449,8 +449,10 @@
     }
 
     .title-chip {
+      position: relative;
       min-width: 0;
-      padding: 8px 7px;
+      overflow: hidden;
+      padding: 8px 7px 9px;
       border: 1px solid rgba(255, 255, 255, 0.13);
       border-radius: 12px;
       background:
@@ -461,7 +463,18 @@
       text-align: center;
     }
 
+    .title-chip::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 44%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent);
+      pointer-events: none;
+    }
+
     .title-chip span {
+      position: relative;
+      z-index: 1;
       display: block;
       color: var(--accent);
       font-size: 10px;
@@ -469,7 +482,24 @@
       line-height: 1;
     }
 
+    .title-chip span::before {
+      content: attr(data-icon);
+      display: inline-grid;
+      place-items: center;
+      width: 15px;
+      height: 15px;
+      margin-right: 4px;
+      border-radius: 50%;
+      background: rgba(255, 198, 41, 0.16);
+      color: #fff3a2;
+      font-size: 8px;
+      line-height: 1;
+      vertical-align: -1px;
+    }
+
     .title-chip strong {
+      position: relative;
+      z-index: 1;
       display: block;
       margin-top: 5px;
       overflow: hidden;
@@ -1399,6 +1429,25 @@
         font-size: 56px;
       }
 
+      .title-chip {
+        padding: 7px 5px 8px;
+      }
+
+      .title-chip span {
+        font-size: 9px;
+      }
+
+      .title-chip span::before {
+        width: 13px;
+        height: 13px;
+        margin-right: 3px;
+        font-size: 7px;
+      }
+
+      .title-chip strong {
+        font-size: 14px;
+      }
+
       .ranking li {
         padding: 8px 9px;
       }
@@ -1798,9 +1847,9 @@ function endGame() {
       const todayBest = scores.length ? scores[0].score : 0;
       titleMeta.hidden = false;
       titleMeta.innerHTML = [
-        ["TODAY BEST", todayBest ? `${todayBest}点` : "未登録"],
-        ["PLAYS", `${scores.length}回`]
-      ].map(([label, value]) => `<div class="title-chip"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+        ["TODAY BEST", todayBest ? `${todayBest}点` : "未登録", "B"],
+        ["PLAYS", `${scores.length}回`, "P"]
+      ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
 
     function showResultStats(score, meters, coinCount, rankLabel) {
