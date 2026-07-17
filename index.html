@@ -935,6 +935,19 @@
         0 0 22px rgba(255, 198, 41, 0.12);
     }
 
+    .result-stat:first-child::before {
+      content: "";
+      position: absolute;
+      left: 14%;
+      right: 14%;
+      bottom: 7px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.78), transparent);
+      box-shadow: 0 0 12px rgba(255, 198, 41, 0.24);
+      pointer-events: none;
+    }
+
     .result-stat span {
       position: relative;
       z-index: 1;
