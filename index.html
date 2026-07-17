@@ -983,15 +983,31 @@
     }
 
     .score-entry {
+      position: relative;
       display: grid;
       grid-template-columns: 68px 1fr;
       gap: 10px;
       margin: 0 0 14px;
-      padding: 11px;
+      padding: 31px 11px 11px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      background: rgba(0, 0, 0, 0.26);
+      background:
+        linear-gradient(180deg, rgba(18, 30, 50, 0.48), rgba(0, 0, 0, 0.26));
       text-align: left;
+    }
+
+    .score-entry::before {
+      content: "スコア登録";
+      position: absolute;
+      left: 11px;
+      top: 9px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 198, 41, 0.14);
+      color: #fff3a2;
+      font-size: 10px;
+      font-weight: 950;
+      line-height: 1;
     }
 
     .score-entry.saved {
@@ -1000,6 +1016,12 @@
         linear-gradient(180deg, rgba(22, 57, 76, 0.42), rgba(0, 0, 0, 0.24));
       box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
       animation: savedPulse 0.22s ease-out both;
+    }
+
+    .score-entry.saved::before {
+      content: "登録済み";
+      background: rgba(59, 215, 255, 0.18);
+      color: #dffaff;
     }
 
     .score-entry[hidden] {
@@ -1043,6 +1065,13 @@
       outline: none;
     }
 
+    .entry-fields input:disabled {
+      border-color: rgba(59, 215, 255, 0.24);
+      background: rgba(6, 16, 24, 0.76);
+      color: rgba(255, 248, 223, 0.68);
+      -webkit-text-fill-color: rgba(255, 248, 223, 0.68);
+    }
+
     .entry-fields input:focus {
       border-color: rgba(59, 215, 255, 0.86);
       box-shadow: 0 0 0 3px rgba(59, 215, 255, 0.18);
@@ -1070,11 +1099,17 @@
       border: 1px solid rgba(255, 255, 255, 0.32);
       background: linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
       color: #151007;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        0 4px 0 rgba(76, 48, 0, 0.78);
     }
 
     .score-entry.saved #saveEntryButton {
       background: linear-gradient(180deg, #96f0ff, #3bd7ff 52%, #188aa8);
       color: #03131a;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.38),
+        0 3px 0 rgba(0, 62, 82, 0.76);
     }
 
     .entry-fields small {
@@ -1300,6 +1335,26 @@
       .ranking li.rank-2,
       .ranking li.rank-3 {
         min-height: 52px;
+      }
+
+      .score-entry {
+        grid-template-columns: 58px 1fr;
+        gap: 8px;
+        padding: 29px 9px 9px;
+      }
+
+      .entry-photo {
+        width: 54px;
+        height: 54px;
+      }
+
+      .entry-fields {
+        gap: 6px;
+      }
+
+      .entry-fields input {
+        min-height: 38px;
+        padding: 8px 10px;
       }
 
       .run-pill {
