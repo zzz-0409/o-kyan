@@ -1128,8 +1128,15 @@
       top: 21px;
       height: 4px;
       border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.6), rgba(255, 198, 41, 0.08));
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 243, 162, 0.0) 0 8px, rgba(255, 243, 162, 0.7) 8px 14px),
+        linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.6), rgba(255, 198, 41, 0.08));
+      background-size: 44px 100%, 100% 100%;
       box-shadow: 0 0 12px rgba(255, 198, 41, 0.18);
+    }
+
+    .conversion.show .convert-lane::before {
+      animation: bonusLaneFlow 0.55s linear infinite;
     }
 
     .convert-lane::after {
@@ -1171,6 +1178,12 @@
       100% {
         transform: translateX(var(--coin-travel, 140px)) translateY(1px) scale(0.35);
         opacity: 0;
+      }
+    }
+
+    @keyframes bonusLaneFlow {
+      to {
+        background-position: 44px 0, 0 0;
       }
     }
 
