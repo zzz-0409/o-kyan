@@ -1056,6 +1056,14 @@
       pointer-events: none;
     }
 
+    .result-stat:first-child::after {
+      height: 100%;
+      background:
+        linear-gradient(110deg, transparent 0 32%, rgba(255, 255, 255, 0.12) 42%, transparent 54%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 46%);
+      opacity: 0.86;
+    }
+
     .result-stat span {
       position: relative;
       z-index: 1;
