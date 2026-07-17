@@ -115,6 +115,19 @@
       pointer-events: none;
     }
 
+    .hud::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: -4px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.52), rgba(255, 198, 41, 0.42), transparent);
+      box-shadow: 0 0 12px rgba(59, 215, 255, 0.18);
+      pointer-events: none;
+    }
+
     h1 {
       display: none;
     }
