@@ -1926,6 +1926,19 @@
       line-height: 1;
     }
 
+    .score-entry::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 28px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255, 198, 41, 0.74), rgba(59, 215, 255, 0.36), transparent);
+      box-shadow: 0 0 10px rgba(255, 198, 41, 0.16);
+      pointer-events: none;
+    }
+
     .score-entry.saved {
       border-color: rgba(59, 215, 255, 0.5);
       background:
@@ -1938,6 +1951,11 @@
       content: "登録済み";
       background: rgba(59, 215, 255, 0.18);
       color: #dffaff;
+    }
+
+    .score-entry.saved::after {
+      background: linear-gradient(90deg, rgba(59, 215, 255, 0.86), rgba(255, 255, 255, 0.28), transparent);
+      box-shadow: 0 0 12px rgba(59, 215, 255, 0.2);
     }
 
     .score-entry.saved .entry-photo {
