@@ -2377,7 +2377,7 @@
       <div class="jump-control" id="jumpControl" aria-label="ジャンプボタン">
         <button class="control-button" id="jumpButton" type="button">JUMP</button>
       </div>
-      <div class="overlay show" id="overlay">
+      <div class="overlay show" id="overlay" aria-hidden="false">
         <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" aria-describedby="overlayText">
           <h2 id="overlayTitle">RUN DASH!</h2>
           <p id="overlayText">左右で避けて、ジャンプで穴を越えろ！</p>
@@ -2621,7 +2621,7 @@
       stageEl.classList.add("playing");
       scoreEntry.hidden = true;
       rankingButton.hidden = true;
-      overlay.classList.remove("show");
+      setOverlayOpen(false);
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
       hideResultStats();
@@ -2660,7 +2660,7 @@ function endGame() {
       if (isBest) {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
       }
-      overlay.classList.add("show");
+      setOverlayOpen(true);
       renderDailyRanking(0);
       setHint("障害物に当たった");
       resultState = {
@@ -2752,6 +2752,11 @@ function endGame() {
       button.textContent = text;
       setButtonIcon(button, icon);
       button.setAttribute("aria-label", label);
+    }
+
+    function setOverlayOpen(isOpen) {
+      overlay.classList.toggle("show", isOpen);
+      overlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
     }
 
     function startScoreConversion(baseScore, coinCount, finalScore) {
@@ -3025,7 +3030,7 @@ function endGame() {
       stageEl.classList.remove("playing");
       stageEl.classList.add("title-screen");
       overlay.querySelector(".dialog").classList.remove("new-best");
-      overlay.classList.add("show");
+      setOverlayOpen(true);
       scoreEntry.hidden = true;
       scoreEntry.classList.remove("saved");
       dailyRankingEl.innerHTML = "";
@@ -3046,7 +3051,7 @@ function endGame() {
       overlayMode = "ranking";
       overlay.dataset.mode = "ranking";
       overlay.querySelector(".dialog").classList.remove("new-best");
-      overlay.classList.add("show");
+      setOverlayOpen(true);
       scoreEntry.hidden = true;
       scoreEntry.classList.remove("saved");
       hideResultStats();
