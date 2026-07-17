@@ -748,6 +748,12 @@
       font-weight: 950;
     }
 
+    .entry-photo span {
+      font-size: 10px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
     .entry-fields {
       min-width: 0;
       display: grid;
@@ -782,6 +788,18 @@
       min-height: 38px;
       padding: 7px 8px;
       font-size: 13px;
+    }
+
+    #photoButton {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(180deg, #243449, #111926);
+      color: var(--ink);
+    }
+
+    #saveEntryButton {
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
+      color: #151007;
     }
 
     .score-entry.saved #saveEntryButton {
@@ -994,7 +1012,7 @@
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
           <div class="score-entry" id="scoreEntry" hidden>
-            <div class="entry-photo" id="photoPreview"><span>顔</span></div>
+            <div class="entry-photo" id="photoPreview"><span>PHOTO</span></div>
             <div class="entry-fields">
               <input id="playerName" type="text" maxlength="12" placeholder="名前">
               <div class="entry-actions">
@@ -1605,7 +1623,7 @@ function endGame() {
 
     function updatePhotoPreview(photo) {
       photoPreview.style.backgroundImage = photo ? `url("${photo}")` : "";
-      photoPreview.innerHTML = photo ? "" : "<span>顔</span>";
+      photoPreview.innerHTML = photo ? "" : "<span>PHOTO</span>";
     }
 
     function saveEntryProfile() {
