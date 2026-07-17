@@ -2351,9 +2351,9 @@
   <main class="app">
     <header class="hud">
       <h1>RUN DASH!</h1>
-      <div class="stat"><span id="scoreLabel" data-icon="S">SCORE</span><strong id="distance">0</strong></div>
-      <div class="stat"><span data-icon="B">BEST</span><strong id="best">0</strong></div>
-      <div class="stat"><span data-icon="C">COINS</span><strong id="todayRank">0</strong></div>
+      <div class="stat" role="group" aria-label="スコア 0点"><span id="scoreLabel" data-icon="S">SCORE</span><strong id="distance">0</strong></div>
+      <div class="stat" role="group" aria-label="ベスト 0点"><span data-icon="B">BEST</span><strong id="best">0</strong></div>
+      <div class="stat" role="group" aria-label="コイン 0枚"><span data-icon="C">COINS</span><strong id="todayRank">0</strong></div>
     </header>
 
     <section class="stage" id="stage">
@@ -2740,6 +2740,7 @@ function endGame() {
       distanceEl.textContent = formatNumber(shownScore);
       todayRankEl.textContent = formatNumber(remainingCoins);
       bestEl.textContent = formatNumber(best);
+      updateHudLabels(shownScore, best, remainingCoins);
       scoreConvert.classList.add("show");
       scoreConvert.setAttribute("aria-hidden", "false");
       convertCoinsEl.textContent = formatNumber(remainingCoins);
@@ -2760,6 +2761,7 @@ function endGame() {
         todayRankEl.textContent = formatNumber(Math.max(0, remainingCoins));
         convertCoinsEl.textContent = formatNumber(Math.max(0, remainingCoins));
         convertScoreEl.textContent = formatNumber(shownScore);
+        updateHudLabels(shownScore, best, Math.max(0, remainingCoins));
         convertScoreBox.classList.remove("pop");
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
@@ -2781,6 +2783,7 @@ function endGame() {
       convertScoreEl.textContent = formatNumber(resultState.finalScore);
       distanceEl.textContent = formatNumber(resultState.finalScore);
       todayRankEl.textContent = "0";
+      updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
       overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
@@ -2824,12 +2827,19 @@ function endGame() {
       coin.addEventListener("animationend", () => coin.remove(), { once: true });
     }
 
+    function updateHudLabels(scoreValue, bestValue, coinValue) {
+      scoreStat.setAttribute("aria-label", `スコア ${formatNumber(scoreValue)}点`);
+      bestStat.setAttribute("aria-label", `ベスト ${formatNumber(bestValue)}点`);
+      coinStat.setAttribute("aria-label", `コイン ${formatNumber(coinValue)}枚`);
+    }
+
     function updateHud() {
       const runScore = computeScore();
       scoreLabel.textContent = "SCORE";
       distanceEl.textContent = formatNumber(runScore);
       bestEl.textContent = formatNumber(best);
       todayRankEl.textContent = formatNumber(coins);
+      updateHudLabels(runScore, best, coins);
       checkBestPace(runScore);
       updateRunStrip();
     }
