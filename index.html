@@ -1887,7 +1887,7 @@ function endGame() {
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "登録するとランキングに残せます";
       showResultStats(score, distanceScore, collectedCoins, "未登録");
-      startButton.textContent = collectedCoins > 0 ? "SKIP" : "タイトルへ";
+      startButton.textContent = collectedCoins > 0 ? "スキップ" : "タイトルへ";
       setButtonIcon(startButton, collectedCoins > 0 ? "»" : "‹");
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
@@ -2031,7 +2031,7 @@ function endGame() {
       distanceEl.textContent = String(resultState.finalScore);
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      const rankLabel = resultState.rank > 0 ? `Today #${resultState.rank}` : "未登録";
+      const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
       overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, rankLabel);
       startButton.textContent = "タイトルへ";
@@ -2270,7 +2270,7 @@ function endGame() {
     function saveEntryProfile() {
       if (!resultState.active) return;
       if (resultState.entryId) {
-        photoStatus.textContent = `登録済み Today #${resultState.rank}`;
+        photoStatus.textContent = `登録済み 本日 #${resultState.rank}`;
         return;
       }
       const name = playerNameInput.value.trim() || "プレイヤー";
@@ -2288,11 +2288,11 @@ function endGame() {
       playerNameInput.disabled = true;
       photoButton.disabled = true;
       photoStatus.textContent = resultState.rank > 0
-        ? `ランキングに登録しました Today #${resultState.rank}`
+        ? `ランキングに登録しました 本日 #${resultState.rank}`
         : "ランキングに登録しました";
       if (resultState.phase === "result") {
         overlayText.textContent = "ランキング登録済み";
-        showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, `Today #${resultState.rank}`);
+        showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, `本日 #${resultState.rank}`);
       }
       renderDailyRanking(resultState.rank, 5, resultState.entryId);
     }
