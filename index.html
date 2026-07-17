@@ -2381,8 +2381,8 @@
         <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" aria-describedby="overlayText">
           <h2 id="overlayTitle">RUN DASH!</h2>
           <p id="overlayText">左右で避けて、ジャンプで穴を越えろ！</p>
-          <div class="title-meta" id="titleMeta" hidden></div>
-          <div class="result-stats" id="resultStats" hidden></div>
+          <div class="title-meta" id="titleMeta" hidden aria-hidden="true"></div>
+          <div class="result-stats" id="resultStats" hidden aria-hidden="true"></div>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -2702,19 +2702,19 @@ function endGame() {
     }
 
     function hideResultStats() {
-      resultStats.hidden = true;
+      setElementHidden(resultStats, true);
       resultStats.innerHTML = "";
     }
 
     function hideTitleMeta() {
-      titleMeta.hidden = true;
+      setElementHidden(titleMeta, true);
       titleMeta.innerHTML = "";
     }
 
     function updateTitleMeta() {
       const scores = readDailyScores();
       const todayBest = scores.length ? scores[0].score : 0;
-      titleMeta.hidden = false;
+      setElementHidden(titleMeta, false);
       titleMeta.innerHTML = [
         ["BEST", todayBest ? `${formatNumber(todayBest)}点` : "未登録", "★"],
         ["PLAYS", `${scores.length}回`, "▶"]
@@ -2722,7 +2722,7 @@ function endGame() {
     }
 
     function showResultStats(score, meters, coinCount, rankLabel) {
-      resultStats.hidden = false;
+      setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
         DISTANCE: "M",
