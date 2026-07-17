@@ -2087,7 +2087,9 @@
     .footer {
       min-height: 30px;
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
+      gap: 7px;
       padding: 4px 10px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 999px;
@@ -2104,31 +2106,48 @@
       backdrop-filter: blur(8px);
     }
 
+    .footer::before {
+      content: "INFO";
+      display: inline-grid;
+      place-items: center;
+      min-width: 38px;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 220, 96, 0.98), rgba(255, 177, 25, 0.96));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 2px 5px rgba(0, 0, 0, 0.22);
+      color: #18110a;
+      font-size: 9px;
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
     .footer span {
       position: relative;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
+      justify-content: flex-start;
+      gap: 6px;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      text-align: left;
     }
 
     .footer span::before {
       content: "!";
-      width: 13px;
-      height: 13px;
-      flex: 0 0 13px;
-      display: grid;
-      place-items: center;
+      width: 6px;
+      height: 6px;
+      flex: 0 0 6px;
       border-radius: 50%;
-      background: rgba(255, 198, 41, 0.18);
-      color: #fff3a2;
-      font-size: 9px;
-      font-weight: 950;
-      line-height: 1;
+      background: #fff3a2;
+      box-shadow: 0 0 9px rgba(255, 198, 41, 0.72);
+      color: transparent;
     }
 
     .footer.hint-pop {
