@@ -1214,21 +1214,50 @@
     }
 
     .entry-photo {
+      position: relative;
       width: 62px;
       height: 62px;
       display: grid;
       place-items: center;
       border: 2px solid rgba(255, 255, 255, 0.46);
       border-radius: 50%;
-      background: rgba(4, 8, 15, 0.82) center / cover no-repeat;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255, 198, 41, 0.16), transparent 46%),
+        rgba(4, 8, 15, 0.82) center / cover no-repeat;
       color: var(--accent);
       font-weight: 950;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 14px rgba(255, 198, 41, 0.08);
+    }
+
+    .entry-photo::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 1px solid rgba(255, 198, 41, 0.22);
+      border-radius: inherit;
+      pointer-events: none;
     }
 
     .entry-photo span {
-      font-size: 10px;
+      display: grid;
+      gap: 3px;
+      place-items: center;
+      color: #fff3a2;
+      font-size: 9px;
       font-weight: 950;
       line-height: 1;
+      text-align: center;
+    }
+
+    .entry-photo span::before {
+      content: "";
+      width: 22px;
+      height: 16px;
+      border: 2px solid currentColor;
+      border-radius: 5px;
+      box-shadow: inset 0 0 0 3px rgba(255, 198, 41, 0.12);
     }
 
     .entry-fields {
@@ -1633,7 +1662,7 @@
           </div>
           <ol class="ranking" id="dailyRanking"></ol>
           <div class="score-entry" id="scoreEntry" hidden>
-            <div class="entry-photo" id="photoPreview"><span>PHOTO</span></div>
+            <div class="entry-photo" id="photoPreview"><span>写真</span></div>
             <div class="entry-fields">
               <input id="playerName" type="text" maxlength="12" placeholder="名前">
               <div class="entry-actions">
@@ -2264,7 +2293,7 @@ function endGame() {
 
     function updatePhotoPreview(photo) {
       photoPreview.style.backgroundImage = photo ? `url("${photo}")` : "";
-      photoPreview.innerHTML = photo ? "" : "<span>PHOTO</span>";
+      photoPreview.innerHTML = photo ? "" : "<span>写真</span>";
     }
 
     function saveEntryProfile() {
