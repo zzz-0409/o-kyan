@@ -1044,10 +1044,15 @@
       position: relative;
       min-width: 0;
       overflow: hidden;
-      padding: 4px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 28px;
+      padding: 5px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 999px;
-      background: rgba(2, 5, 10, 0.52);
+      background:
+        linear-gradient(180deg, rgba(22, 34, 55, 0.74), rgba(3, 6, 13, 0.78));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 6px 14px rgba(0, 0, 0, 0.22);
       text-align: center;
     }
 
@@ -1059,6 +1064,15 @@
       background: linear-gradient(90deg, rgba(59, 215, 255, 0.1), rgba(59, 215, 255, 0.56));
       opacity: 0;
       transition: width 0.1s linear, opacity 0.12s ease;
+    }
+
+    .run-pill::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 45%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+      pointer-events: none;
     }
 
     .run-pill.boost::before,
@@ -1081,8 +1095,16 @@
       line-height: 1;
     }
 
-    .run-pill span::after {
-      content: " ";
+    .run-pill span {
+      display: inline-grid;
+      place-items: center;
+      min-width: 42px;
+      margin-right: 6px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(255, 198, 41, 0.14);
+      color: #fff3a2;
+      font-size: 10px;
     }
 
     .run-pill.boost,
@@ -1103,10 +1125,15 @@
     }
 
     .footer {
-      min-height: 28px;
+      min-height: 30px;
       display: grid;
       align-items: center;
-      color: var(--muted);
+      padding: 4px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      background: rgba(2, 5, 10, 0.36);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      color: rgba(255, 248, 223, 0.78);
       font-size: 12px;
       font-weight: 750;
       text-align: center;
@@ -1216,8 +1243,21 @@
         min-height: 52px;
       }
 
+      .run-pill {
+        min-height: 24px;
+        padding: 4px 8px;
+      }
+
+      .run-pill span {
+        min-width: 36px;
+        margin-right: 5px;
+        padding: 2px 6px;
+        font-size: 9px;
+      }
+
       .footer {
         min-height: 22px;
+        padding: 3px 8px;
         font-size: 10px;
       }
     }
