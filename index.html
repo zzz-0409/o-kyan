@@ -223,6 +223,7 @@
       align-items: stretch;
       padding: 22px 18px;
       background:
+        repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 22px),
         linear-gradient(180deg, rgba(8, 18, 45, 0.2), rgba(4, 8, 18, 0.88) 58%, rgba(3, 6, 13, 0.98)),
         rgba(5, 9, 18, 0.72);
     }
@@ -284,12 +285,39 @@
       overflow: hidden;
       border: 0;
       background:
+        radial-gradient(circle at 50% 26%, rgba(59, 215, 255, 0.2), transparent 28%),
         linear-gradient(180deg, rgba(8, 18, 43, 0.03), rgba(8, 13, 25, 0.62) 52%, rgba(5, 9, 17, 0.96));
       box-shadow: none;
     }
 
+    .overlay[data-mode="title"] .dialog::before,
+    .overlay[data-mode="title"] .dialog::after {
+      content: "";
+      align-self: end;
+      justify-self: center;
+      grid-column: 1;
+      grid-row: 1;
+      width: min(88%, 330px);
+      height: 10px;
+      margin-bottom: 82px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.92), transparent);
+      filter: drop-shadow(0 0 10px rgba(255, 198, 41, 0.58));
+      transform: skewX(-24deg);
+    }
+
+    .overlay[data-mode="title"] .dialog::after {
+      width: min(66%, 260px);
+      height: 7px;
+      margin-bottom: 62px;
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.86), transparent);
+      filter: drop-shadow(0 0 10px rgba(59, 215, 255, 0.48));
+    }
+
     .overlay[data-mode="title"] .dialog h2 {
       align-self: end;
+      position: relative;
+      z-index: 1;
       margin-bottom: 12px;
       color: #ffc629;
       font-size: clamp(52px, 15vw, 72px);
@@ -307,6 +335,8 @@
     }
 
     .overlay[data-mode="title"] .dialog p {
+      position: relative;
+      z-index: 1;
       justify-self: center;
       width: min(100%, 310px);
       margin-bottom: 18px;
@@ -640,6 +670,25 @@
       font-weight: 950;
       text-transform: uppercase;
       transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .menu-actions button::before {
+      content: attr(data-icon);
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.18);
+      color: inherit;
+      font-size: 18px;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    .menu-actions button:not([data-icon])::before {
+      content: none;
     }
 
     .menu-actions button:active {
@@ -1197,7 +1246,8 @@ function endGame() {
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "登録するとランキングに残せます";
       showResultStats(score, distanceScore, collectedCoins, "未登録");
-      startButton.textContent = collectedCoins > 0 ? "SKIP" : "TITLE";
+      startButton.textContent = collectedCoins > 0 ? "SKIP" : "タイトルへ";
+      setButtonIcon(startButton, collectedCoins > 0 ? "»" : "‹");
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
@@ -1258,6 +1308,14 @@ function endGame() {
       ].map(([label, value]) => `<div class="result-stat"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
 
+    function setButtonIcon(button, icon) {
+      if (icon) {
+        button.dataset.icon = icon;
+      } else {
+        delete button.dataset.icon;
+      }
+    }
+
     function startScoreConversion(baseScore, coinCount, finalScore) {
       clearScoreConversion();
       scoreLabel.textContent = "SCORE";
@@ -1273,7 +1331,8 @@ function endGame() {
       if (remainingCoins <= 0) {
         overlayText.textContent = "登録するとランキングに残せます";
         showResultStats(finalScore, Math.floor(distance), 0, "未登録");
-        startButton.textContent = "TITLE";
+        startButton.textContent = "タイトルへ";
+        setButtonIcon(startButton, "‹");
         return;
       }
 
@@ -1310,7 +1369,8 @@ function endGame() {
       const rankLabel = resultState.rank > 0 ? `Today #${resultState.rank}` : "未登録";
       overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, rankLabel);
-      startButton.textContent = "TITLE";
+      startButton.textContent = "タイトルへ";
+      setButtonIcon(startButton, "‹");
       resultState.phase = "result";
     }
 
@@ -1506,8 +1566,10 @@ function endGame() {
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       startButton.textContent = "START";
+      setButtonIcon(startButton, "▶");
       rankingButton.hidden = false;
       rankingButton.textContent = "RANKING";
+      setButtonIcon(rankingButton, "★");
       hintEl.textContent = "STARTでラン、RANKINGで記録確認";
       updateHud();
     }
@@ -1526,6 +1588,7 @@ function endGame() {
       overlayText.textContent = "今日の上位記録";
       renderDailyRanking(0, 10);
       startButton.textContent = "もどる";
+      setButtonIcon(startButton, "‹");
       rankingButton.hidden = true;
     }
 
