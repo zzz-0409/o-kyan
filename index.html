@@ -1641,6 +1641,14 @@
       color: #dffaff;
     }
 
+    .score-entry.saved .entry-photo {
+      border-color: rgba(59, 215, 255, 0.68);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 0 0 4px rgba(59, 215, 255, 0.08),
+        0 0 18px rgba(59, 215, 255, 0.22);
+    }
+
     .score-entry[hidden] {
       display: none;
     }
@@ -1825,11 +1833,49 @@
     }
 
     .entry-fields small {
+      position: relative;
+      display: block;
+      min-height: 28px;
       color: var(--muted);
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 850;
       line-height: 1.35;
-      padding: 0 2px;
+      padding: 6px 8px 6px 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.1));
+    }
+
+    .entry-fields small::before {
+      content: "i";
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 198, 41, 0.2);
+      color: #fff3a2;
+      font-size: 8px;
+      font-weight: 950;
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+
+    .score-entry.saved .entry-fields small {
+      border-color: rgba(59, 215, 255, 0.28);
+      background:
+        linear-gradient(180deg, rgba(59, 215, 255, 0.13), rgba(0, 0, 0, 0.08));
+      color: #dffaff;
+    }
+
+    .score-entry.saved .entry-fields small::before {
+      content: "✓";
+      background: rgba(59, 215, 255, 0.24);
+      color: #dffaff;
     }
 
     #photoVideo {
@@ -2165,6 +2211,12 @@
       .entry-fields input {
         min-height: 38px;
         padding: 8px 10px;
+      }
+
+      .entry-fields small {
+        min-height: 25px;
+        padding: 5px 7px 5px 23px;
+        font-size: 9px;
       }
 
       .run-pill {
