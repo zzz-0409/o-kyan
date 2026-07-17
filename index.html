@@ -968,8 +968,10 @@
       height: 3px;
       margin: 9px auto 0;
       border-radius: 999px;
-      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.74), transparent);
-      box-shadow: 0 0 12px rgba(59, 215, 255, 0.22);
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.68), rgba(255, 198, 41, 0.72), rgba(59, 215, 255, 0.68), transparent);
+      box-shadow:
+        0 0 12px rgba(59, 215, 255, 0.2),
+        0 0 10px rgba(255, 198, 41, 0.16);
     }
 
     .overlay[data-mode="result"] .dialog h2::after {
@@ -3704,7 +3706,7 @@ function endGame() {
     }
 
     function saveEntryProfile(event) {
-      if (!event || event.currentTarget !== saveEntryButton) return;
+      if (!event || event.type !== "click" || event.currentTarget !== saveEntryButton) return;
       if (!resultState.active) return;
       if (resultState.entryId) {
         photoStatus.textContent = `登録済み 本日 #${resultState.rank}`;
@@ -4670,6 +4672,7 @@ function onPointerDown(event) {
     function onKeyDown(event) {
       if (isTextEntryTarget(event.target)) return;
       if (event.repeat) return;
+      if (resultAdvanceRequested() && isResultControlTarget(event.target)) return;
       if ((event.code === "Space" || event.code === "Enter" || event.code === "KeyR") && resultAdvanceRequested()) {
         event.preventDefault();
         handleMainButton();
