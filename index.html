@@ -1821,12 +1821,16 @@
       top: -1px;
       padding: 2px 7px 3px;
       border-radius: 0 0 8px 8px;
-      background: rgba(59, 215, 255, 0.9);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 42%),
+        rgba(59, 215, 255, 0.9);
       color: #03131a;
       font-size: 9px;
       font-weight: 950;
       line-height: 1;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      box-shadow:
+        0 0 10px rgba(59, 215, 255, 0.18),
+        0 3px 8px rgba(0, 0, 0, 0.2);
     }
 
     .ranking li.current .rank-number,
