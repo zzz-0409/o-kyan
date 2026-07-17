@@ -2550,6 +2550,7 @@
     .run-pill strong {
       min-width: 48px;
       text-align: left;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
     }
 
     .run-pill.boost,
@@ -2564,6 +2565,12 @@
       color: #dffaff;
     }
 
+    .run-pill.boost strong {
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.55),
+        0 0 10px rgba(59, 215, 255, 0.2);
+    }
+
     .run-pill.boost span {
       background: rgba(59, 215, 255, 0.18);
     }
@@ -2571,6 +2578,12 @@
     .run-pill.slow strong,
     .run-pill.slow span {
       color: #ffe0dc;
+    }
+
+    .run-pill.slow strong {
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.55),
+        0 0 10px rgba(255, 93, 77, 0.18);
     }
 
     .run-pill.slow span {
