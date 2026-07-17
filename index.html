@@ -347,6 +347,51 @@
       line-height: 1.5;
     }
 
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
+    .result-stats[hidden],
+    .overlay[data-mode="title"] .result-stats,
+    .overlay[data-mode="ranking"] .result-stats {
+      display: none;
+    }
+
+    .result-stat {
+      min-width: 0;
+      padding: 9px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 11px;
+      background:
+        linear-gradient(180deg, rgba(21, 32, 51, 0.92), rgba(4, 8, 15, 0.92));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .result-stat span {
+      display: block;
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 950;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .result-stat strong {
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 950;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .conversion {
       display: none;
       margin: 0 0 14px;
@@ -878,6 +923,7 @@
         <div class="dialog">
           <h2 id="overlayTitle">RUN DASH!</h2>
           <p id="overlayText">左右で避けて、ジャンプで穴を越えろ！</p>
+          <div class="result-stats" id="resultStats" hidden></div>
           <div class="conversion" id="scoreConvert" aria-hidden="true">
             <div class="convert-row">
               <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
@@ -930,6 +976,7 @@
     const overlay = document.getElementById("overlay");
     const overlayTitle = document.getElementById("overlayTitle");
     const overlayText = document.getElementById("overlayText");
+    const resultStats = document.getElementById("resultStats");
     const scoreConvert = document.getElementById("scoreConvert");
     const convertCoinsEl = document.getElementById("convertCoins");
     const convertLane = document.getElementById("convertLane");
@@ -1113,6 +1160,7 @@
       overlay.classList.remove("show");
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
+      hideResultStats();
       hintEl.textContent = "準備OK、2分目安で遊べます";
       updateHud();
       lastTime = performance.now();
@@ -1135,7 +1183,8 @@ function endGame() {
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = `SCORE ${score} / 距離 ${distanceScore}m / コイン ${collectedCoins} / 未登録`;
+      overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "登録するとランキングに残せます";
+      showResultStats(score, distanceScore, collectedCoins, "未登録");
       startButton.textContent = collectedCoins > 0 ? "SKIP" : "TITLE";
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
@@ -1182,6 +1231,21 @@ function endGame() {
       convertScoreBox.classList.remove("pop");
     }
 
+    function hideResultStats() {
+      resultStats.hidden = true;
+      resultStats.innerHTML = "";
+    }
+
+    function showResultStats(score, meters, coinCount, rankLabel) {
+      resultStats.hidden = false;
+      resultStats.innerHTML = [
+        ["SCORE", score],
+        ["DISTANCE", `${meters}m`],
+        ["COINS", coinCount],
+        ["RANK", rankLabel]
+      ].map(([label, value]) => `<div class="result-stat"><span>${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+    }
+
     function startScoreConversion(baseScore, coinCount, finalScore) {
       clearScoreConversion();
       scoreLabel.textContent = "SCORE";
@@ -1195,7 +1259,8 @@ function endGame() {
       convertCoinsEl.textContent = String(remainingCoins);
       convertScoreEl.textContent = String(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = `SCORE ${finalScore} / 距離 ${Math.floor(distance)}m / コイン 0 / 未登録`;
+        overlayText.textContent = "登録するとランキングに残せます";
+        showResultStats(finalScore, Math.floor(distance), 0, "未登録");
         startButton.textContent = "TITLE";
         return;
       }
@@ -1211,7 +1276,8 @@ function endGame() {
         convertScoreBox.classList.remove("pop");
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
-        overlayText.textContent = `SCORE ${shownScore} / コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
+        overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
+        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), "未登録");
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -1230,7 +1296,8 @@ function endGame() {
       todayRankEl.textContent = "0";
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       const rankLabel = resultState.rank > 0 ? `Today #${resultState.rank}` : "未登録";
-      overlayText.textContent = `SCORE ${resultState.finalScore} / 距離 ${Math.floor(distance)}m / コイン ${resultState.coinCount} / ${rankLabel}`;
+      overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
+      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, rankLabel);
       startButton.textContent = "TITLE";
       resultState.phase = "result";
     }
@@ -1417,6 +1484,7 @@ function endGame() {
       overlay.classList.add("show");
       scoreEntry.hidden = true;
       dailyRankingEl.innerHTML = "";
+      hideResultStats();
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       startButton.textContent = "START";
@@ -1434,6 +1502,7 @@ function endGame() {
       overlay.querySelector(".dialog").classList.remove("new-best");
       overlay.classList.add("show");
       scoreEntry.hidden = true;
+      hideResultStats();
       overlayTitle.textContent = "ランキング";
       overlayText.textContent = "今日の上位記録";
       renderDailyRanking(0, 10);
@@ -1476,7 +1545,8 @@ function endGame() {
         ? `ランキングに登録しました Today #${resultState.rank}`
         : "ランキングに登録しました";
       if (resultState.phase === "result") {
-        overlayText.textContent = `SCORE ${resultState.finalScore} / 距離 ${Math.floor(distance)}m / コイン ${resultState.coinCount} / Today #${resultState.rank}`;
+        overlayText.textContent = "ランキング登録済み";
+        showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, `Today #${resultState.rank}`);
       }
       renderDailyRanking(resultState.rank);
     }
