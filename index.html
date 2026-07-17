@@ -1583,10 +1583,6 @@
         0 9px 18px rgba(0, 0, 0, 0.32);
     }
 
-    .menu-actions button:hover {
-      filter: brightness(1.04);
-    }
-
     .menu-actions button + button {
       min-height: 54px;
       border-color: rgba(255, 255, 255, 0.42);
@@ -1814,6 +1810,18 @@
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.38),
         0 3px 0 rgba(0, 62, 82, 0.76);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .control-button:hover,
+      .entry-actions button:hover:not(:disabled),
+      .menu-actions button:hover {
+        filter: brightness(1.05);
+      }
+
+      .menu-actions button + button:hover {
+        filter: brightness(1.12);
+      }
     }
 
     .entry-fields small {
