@@ -2391,7 +2391,7 @@
             </div>
           </div>
           <ol class="ranking" id="dailyRanking" aria-label="今日のランキング"></ol>
-          <div class="score-entry" id="scoreEntry" hidden>
+          <div class="score-entry" id="scoreEntry" hidden aria-hidden="true">
             <button class="entry-photo" id="photoPreview" type="button" aria-label="写真を撮る"><span>写真</span></button>
             <div class="entry-fields">
               <input id="playerName" type="text" maxlength="12" placeholder="名前" autocomplete="nickname" enterkeyhint="done" aria-label="ランキングに登録する名前">
@@ -2619,7 +2619,7 @@
       resetResultState();
       stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
-      scoreEntry.hidden = true;
+      setElementHidden(scoreEntry, true);
       setElementHidden(rankingButton, true);
       setOverlayOpen(false);
       overlay.dataset.mode = "";
@@ -3036,7 +3036,7 @@ function endGame() {
       stageEl.classList.add("title-screen");
       overlay.querySelector(".dialog").classList.remove("new-best");
       setOverlayOpen(true);
-      scoreEntry.hidden = true;
+      setElementHidden(scoreEntry, true);
       scoreEntry.classList.remove("saved");
       dailyRankingEl.innerHTML = "";
       hideResultStats();
@@ -3057,7 +3057,7 @@ function endGame() {
       overlay.dataset.mode = "ranking";
       overlay.querySelector(".dialog").classList.remove("new-best");
       setOverlayOpen(true);
-      scoreEntry.hidden = true;
+      setElementHidden(scoreEntry, true);
       scoreEntry.classList.remove("saved");
       hideResultStats();
       hideTitleMeta();
@@ -3080,7 +3080,7 @@ function endGame() {
       photoButton.textContent = capturedPhoto ? "撮り直し" : "写真";
       saveEntryButton.textContent = "登録";
       scoreEntry.classList.remove("saved");
-      scoreEntry.hidden = false;
+      setElementHidden(scoreEntry, false);
     }
 
     function updatePhotoPreview(photo) {
