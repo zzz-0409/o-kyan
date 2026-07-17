@@ -1864,6 +1864,15 @@
         0 3px 0 rgba(0, 62, 82, 0.76);
     }
 
+    .score-entry.saved #saveEntryButton:disabled {
+      filter: none;
+      opacity: 1;
+    }
+
+    .score-entry.saved #photoButton:disabled {
+      opacity: 0.58;
+    }
+
     @media (hover: hover) and (pointer: fine) {
       .control-button:hover,
       .entry-actions button:hover:not(:disabled),
