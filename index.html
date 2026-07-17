@@ -22,6 +22,7 @@
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html {
@@ -42,6 +43,7 @@
         linear-gradient(180deg, #08172f 0%, #050910 100%);
       color: var(--ink);
       font-family: "Segoe UI", "Yu Gothic UI", Meiryo, sans-serif;
+      user-select: none;
     }
 
     .app {
@@ -1308,6 +1310,8 @@
       cursor: pointer;
       font: inherit;
       font-weight: 900;
+      touch-action: manipulation;
+      user-select: none;
     }
 
     button:focus-visible,
@@ -1533,6 +1537,8 @@
       font: inherit;
       font-weight: 900;
       outline: none;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .entry-fields input:disabled {
