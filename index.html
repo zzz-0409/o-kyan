@@ -3487,6 +3487,7 @@
     const SWIPE_MIN = 36;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
+    const OBSTACLE_CLEARANCE_HARD = 345;
     const PANEL_CLEARANCE = 170;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
@@ -3540,6 +3541,7 @@
     let lastObstacleMask = 0;
     let lastObstacleType = "";
     let repeatedObstacleCount = 0;
+    let obstacleSpacingBonus = 0;
     let lastCoinLane = CENTER_LANE;
     let coinPatternFlip = 1;
     let touchStart = null;
@@ -3614,6 +3616,7 @@
       lastObstacleMask = 0;
       lastObstacleType = "";
       repeatedObstacleCount = 0;
+      obstacleSpacingBonus = 0;
       lastCoinLane = CENTER_LANE;
       coinPatternFlip = Math.random() < 0.5 ? -1 : 1;
       obstacles = [];
@@ -4371,6 +4374,11 @@ function spawnObstacle() {
       repeatedObstacleCount = mask === lastObstacleMask ? repeatedObstacleCount + 1 : 1;
       lastObstacleMask = mask;
       lastObstacleType = obstacle.type;
+      obstacleSpacingBonus = obstacle.type === "hole"
+        ? 0.28
+        : obstacle.lanes.length > 1
+          ? 0.22
+          : 0;
     }
 
     function chooseSingleBlockLane() {
@@ -4402,10 +4410,13 @@ function spawnObstacle() {
     function hasObstacleClearance() {
       const obstacleTop = -132;
       const obstacleBottom = -38;
+      const requiredClearance = lastObstacleType === "hole" || lastObstacleMask === lanesToMask([0, 1]) || lastObstacleMask === lanesToMask([1, 2])
+        ? OBSTACLE_CLEARANCE_HARD
+        : OBSTACLE_CLEARANCE;
       for (const obstacle of obstacles) {
         const currentTop = obstacle.y;
         const currentBottom = obstacle.y + obstacle.h;
-        if (rangesTooClose(obstacleTop, obstacleBottom, currentTop, currentBottom, OBSTACLE_CLEARANCE)) {
+        if (rangesTooClose(obstacleTop, obstacleBottom, currentTop, currentBottom, requiredClearance)) {
           return false;
         }
       }
@@ -4504,10 +4515,13 @@ function spawnCoins() {
     function hasPanelClearance() {
       const panelTop = -124;
       const panelBottom = panelTop + 58;
+      const requiredClearance = lastObstacleType === "hole" || lastObstacleMask === lanesToMask([0, 1]) || lastObstacleMask === lanesToMask([1, 2])
+        ? PANEL_CLEARANCE + 60
+        : PANEL_CLEARANCE;
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
         const obstacleBottom = obstacle.y + obstacle.h;
-        if (rangesTooClose(panelTop, panelBottom, obstacleTop, obstacleBottom, PANEL_CLEARANCE)) {
+        if (rangesTooClose(panelTop, panelBottom, obstacleTop, obstacleBottom, requiredClearance)) {
           return false;
         }
       }
@@ -4573,7 +4587,8 @@ function spawnCoins() {
           const rate = speed / BASE_SPEED;
           const difficulty = difficultyRatio();
           const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
-          spawnTimer = Math.max(0.78, 1.36 + warmupSpace - difficulty * 0.24 - rate * 0.05 + Math.random() * 0.48);
+          spawnTimer = Math.max(0.86, 1.36 + warmupSpace + obstacleSpacingBonus - difficulty * 0.2 - rate * 0.04 + Math.random() * 0.5);
+          obstacleSpacingBonus = 0;
         }
 
         coinTimer -= dt;
