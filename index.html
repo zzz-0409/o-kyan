@@ -3537,6 +3537,11 @@
     let ambientTimer = 0;
     let ambientPulseTimer = 0;
     let ambientPulseColor = "123, 238, 255";
+    let lastObstacleMask = 0;
+    let lastObstacleType = "";
+    let repeatedObstacleCount = 0;
+    let lastCoinLane = CENTER_LANE;
+    let coinPatternFlip = 1;
     let touchStart = null;
     let overlayMode = "title";
     let cameraStream = null;
@@ -3606,6 +3611,11 @@
       ambientTimer = 2.4;
       ambientPulseTimer = 0;
       ambientPulseColor = "123, 238, 255";
+      lastObstacleMask = 0;
+      lastObstacleType = "";
+      repeatedObstacleCount = 0;
+      lastCoinLane = CENTER_LANE;
+      coinPatternFlip = Math.random() < 0.5 ? -1 : 1;
       obstacles = [];
       coinItems = [];
       speedPanels = [];
@@ -4336,30 +4346,57 @@ function spawnObstacle() {
       }
       const difficulty = difficultyRatio();
       const canSpawnHole = runTime >= FIRST_HOLE_TIME;
-      const type = canSpawnHole && Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
+      const holeChance = lastObstacleType === "hole"
+        ? 0.08
+        : 0.2 + difficulty * 0.14;
+      const type = canSpawnHole && Math.random() < holeChance ? "hole" : "car";
       if (type === "hole") {
-        obstacles.push({ type, lanes: [0, 1, 2], y: -118, h: 52, group: "solo" });
+        addObstacle({ type, lanes: [0, 1, 2], y: -118, h: 52, group: "solo" });
         return;
       }
 
-      const lane = runTime < FIRST_CENTER_BLOCK_TIME
-        ? (Math.random() < 0.5 ? 0 : 2)
-        : Math.floor(Math.random() * 3);
       const wide = runTime > WARMUP_DURATION && Math.random() < 0.1 + difficulty * 0.16;
       if (wide) {
         const left = chooseWideBlockLeft();
-        obstacles.push({ type, lanes: [left, left + 1], y: -132, h: 82, group: "solo" });
+        addObstacle({ type, lanes: [left, left + 1], y: -132, h: 82, group: "solo" });
       } else {
-        obstacles.push({ type, lanes: [lane], y: -132, h: 82, group: "solo" });
+        const lane = chooseSingleBlockLane();
+        addObstacle({ type, lanes: [lane], y: -132, h: 82, group: "solo" });
       }
+    }
+
+    function addObstacle(obstacle) {
+      obstacles.push(obstacle);
+      const mask = lanesToMask(obstacle.lanes);
+      repeatedObstacleCount = mask === lastObstacleMask ? repeatedObstacleCount + 1 : 1;
+      lastObstacleMask = mask;
+      lastObstacleType = obstacle.type;
+    }
+
+    function chooseSingleBlockLane() {
+      if (runTime < FIRST_CENTER_BLOCK_TIME) {
+        return Math.random() < 0.5 ? 0 : 2;
+      }
+      const options = [0, 1, 2].filter((lane) => {
+        const repeatsSameLane = lastObstacleMask === lanesToMask([lane]) && repeatedObstacleCount >= 2;
+        return !repeatsSameLane;
+      });
+      const playableOptions = options.filter((lane) => Math.abs(lane - player.lane) <= 1);
+      const pool = playableOptions.length ? playableOptions : options;
+      return pool[Math.floor(Math.random() * pool.length)] ?? Math.floor(Math.random() * 3);
     }
 
     function chooseWideBlockLeft() {
       const options = [0, 1].filter((left) => {
         const openLane = left === 0 ? 2 : 0;
-        return Math.abs(openLane - player.lane) <= 1;
+        const repeatsSameBlock = lastObstacleMask === lanesToMask([left, left + 1]) && repeatedObstacleCount >= 2;
+        return Math.abs(openLane - player.lane) <= 1 && !repeatsSameBlock;
       });
       return options.length ? options[Math.floor(Math.random() * options.length)] : Math.floor(Math.random() * 2);
+    }
+
+    function lanesToMask(lanes) {
+      return lanes.reduce((mask, lane) => mask | (1 << lane), 0);
     }
 
     function hasObstacleClearance() {
@@ -4388,13 +4425,35 @@ function spawnCoins() {
         return;
       }
 
-      const lane = Math.floor(Math.random() * 3);
-      const count = 2 + Math.floor(Math.random() * 3);
-      const stagger = Math.random() < 0.35;
+      const lane = chooseCoinStartLane();
+      const count = 3 + Math.floor(Math.random() * 3);
+      const pattern = Math.random();
+      const patternDirection = coinPatternFlip;
       for (let i = 0; i < count; i += 1) {
-        const nextLane = stagger ? Math.max(0, Math.min(2, lane + (i % 2 === 0 ? 0 : (lane === 2 ? -1 : 1)))) : lane;
+        const nextLane = coinLaneForPattern(lane, i, pattern, patternDirection);
         coinItems.push({ lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false });
       }
+      if (pattern >= 0.5) {
+        coinPatternFlip *= -1;
+      }
+      lastCoinLane = coinItems[coinItems.length - 1]?.lane ?? lane;
+    }
+
+    function chooseCoinStartLane() {
+      const available = [0, 1, 2].filter((lane) => lane !== lastCoinLane);
+      const pool = available.length ? available : [0, 1, 2];
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function coinLaneForPattern(startLane, index, patternRoll, directionHint) {
+      if (patternRoll < 0.5) {
+        return startLane;
+      }
+      if (patternRoll < 0.82) {
+        const direction = startLane === 2 ? -1 : startLane === 0 ? 1 : directionHint;
+        return Math.max(0, Math.min(2, startLane + direction * Math.min(index, 2)));
+      }
+      return Math.max(0, Math.min(2, startLane + (index % 2 === 0 ? 0 : directionHint)));
     }
 
     function hasCoinClearance() {
