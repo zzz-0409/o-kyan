@@ -349,8 +349,6 @@
     .title-chip strong,
     .result-stat strong,
     .convert-box strong,
-    .ranking .rank-number,
-    .ranking .rank-score,
     .run-pill strong {
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum";
@@ -737,8 +735,7 @@
       animation: dialogPop 0.18s ease-out both;
     }
 
-    .overlay[data-mode="title"],
-    .overlay[data-mode="ranking"] {
+    .overlay[data-mode="title"] {
       align-items: stretch;
       padding: 22px 18px;
       background:
@@ -782,19 +779,16 @@
       backdrop-filter: blur(10px);
     }
 
-    .dialog::-webkit-scrollbar,
-    .ranking::-webkit-scrollbar {
+    .dialog::-webkit-scrollbar {
       width: 5px;
     }
 
-    .dialog::-webkit-scrollbar-track,
-    .ranking::-webkit-scrollbar-track {
+    .dialog::-webkit-scrollbar-track {
       border-radius: 999px;
       background: rgba(4, 8, 15, 0.62);
     }
 
-    .dialog::-webkit-scrollbar-thumb,
-    .ranking::-webkit-scrollbar-thumb {
+    .dialog::-webkit-scrollbar-thumb {
       border: 1px solid rgba(4, 8, 15, 0.42);
       border-radius: 999px;
       background:
@@ -1151,60 +1145,12 @@
         0 0 14px rgba(255, 198, 41, 0.22);
     }
 
-    .overlay[data-mode="ranking"] .dialog {
-      align-self: stretch;
-      display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
-      width: min(100%, 378px);
-      background:
-        linear-gradient(180deg, rgba(4, 8, 18, 0.18), rgba(4, 8, 18, 0.72)),
-        url("assets/ui/result-panel-campus.png?v=imagegen-9") center / cover no-repeat,
-        linear-gradient(180deg, rgba(18, 33, 59, 0.98), rgba(5, 10, 22, 0.98));
-    }
-
     .overlay[data-mode="result"] .dialog:not(.new-best) {
       background:
         linear-gradient(180deg, rgba(4, 8, 18, 0.2), rgba(4, 8, 18, 0.8)),
         url("assets/ui/result-panel-campus.png?v=imagegen-9") center / cover no-repeat,
         radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 58%),
         linear-gradient(180deg, rgba(17, 29, 48, 0.96), rgba(5, 9, 17, 0.97));
-    }
-
-    .overlay[data-mode="ranking"] .dialog h2 {
-      position: relative;
-      justify-self: center;
-      padding-top: 19px;
-      font-size: 34px;
-    }
-
-    .overlay[data-mode="ranking"] .dialog h2::before {
-      content: "TODAY RANK";
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translateX(-50%);
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: rgba(255, 198, 41, 0.14);
-      color: #fff3a2;
-      font-size: 10px;
-      font-weight: 950;
-      line-height: 1;
-      text-shadow: none;
-      white-space: nowrap;
-    }
-
-    .overlay[data-mode="ranking"] .dialog h2::after {
-      content: "";
-      display: block;
-      width: min(68%, 168px);
-      height: 3px;
-      margin: 9px auto 0;
-      border-radius: 999px;
-      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.68), rgba(255, 198, 41, 0.72), rgba(59, 215, 255, 0.68), transparent);
-      box-shadow:
-        0 0 12px rgba(59, 215, 255, 0.2),
-        0 0 10px rgba(255, 198, 41, 0.16);
     }
 
     .overlay[data-mode="result"] .dialog h2::after {
@@ -1216,17 +1162,6 @@
       border-radius: 999px;
       background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.84), transparent);
       box-shadow: 0 0 12px rgba(255, 198, 41, 0.24);
-    }
-
-    .overlay[data-mode="ranking"] .dialog p {
-      justify-self: center;
-      width: min(100%, 250px);
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(4, 9, 18, 0.5);
-      color: rgba(255, 248, 223, 0.8);
-      font-size: 13px;
-      line-height: 1.25;
     }
 
     .overlay[data-mode="result"] .dialog p {
@@ -1246,10 +1181,7 @@
       line-height: 1.25;
     }
 
-    .overlay[data-mode="title"] .ranking,
-    .overlay[data-mode="title"] .conversion,
-    .overlay[data-mode="ranking"] .conversion,
-    .overlay[data-mode="ranking"] .score-entry {
+    .overlay[data-mode="title"] .conversion {
       display: none;
     }
 
@@ -1270,8 +1202,7 @@
     }
 
     .result-stats[hidden],
-    .overlay[data-mode="title"] .result-stats,
-    .overlay[data-mode="ranking"] .result-stats {
+    .overlay[data-mode="title"] .result-stats {
       display: none;
     }
 
@@ -1713,21 +1644,6 @@
       }
     }
 
-    @keyframes savedPulse {
-      0% {
-        transform: scale(0.98);
-        box-shadow: 0 0 0 rgba(59, 215, 255, 0);
-      }
-      65% {
-        transform: scale(1.015);
-        box-shadow: 0 0 24px rgba(59, 215, 255, 0.28);
-      }
-      100% {
-        transform: scale(1);
-        box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
-      }
-    }
-
     @keyframes startButtonGlow {
       0%,
       100% {
@@ -1765,431 +1681,6 @@
       }
     }
 
-    .ranking {
-      position: relative;
-      min-height: 0;
-      margin: 0 0 14px;
-      padding: 7px;
-      overflow: auto;
-      overscroll-behavior: contain;
-      scrollbar-gutter: stable;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 198, 41, 0.72) rgba(4, 8, 15, 0.62);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      background:
-        linear-gradient(180deg, rgba(10, 18, 32, 0.68), rgba(2, 5, 10, 0.36));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        inset 0 18px 18px -22px rgba(255, 255, 255, 0.34),
-        inset 0 -20px 18px -22px rgba(0, 0, 0, 0.9);
-      list-style: none;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.35;
-      text-align: left;
-    }
-
-    .ranking::before {
-      content: "";
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      display: block;
-      height: 1px;
-      margin: -8px -8px 7px;
-      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.52), transparent);
-      box-shadow: 0 0 10px rgba(59, 215, 255, 0.18);
-      pointer-events: none;
-    }
-
-    .ranking::after {
-      content: "";
-      position: sticky;
-      bottom: 0;
-      z-index: 2;
-      display: block;
-      height: 14px;
-      margin: 7px -8px -8px;
-      border-radius: 0 0 12px 12px;
-      background:
-        linear-gradient(180deg, transparent, rgba(2, 5, 10, 0.82) 76%),
-        linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.26), transparent);
-      box-shadow: 0 -8px 16px rgba(2, 5, 10, 0.2);
-      pointer-events: none;
-    }
-
-    .ranking li {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin: 0 0 7px;
-      padding: 8px 9px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 44%),
-        linear-gradient(90deg, rgba(59, 215, 255, 0.1), transparent 24%),
-        rgba(7, 13, 25, 0.82);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        inset 3px 0 0 rgba(59, 215, 255, 0.18),
-        0 5px 12px rgba(0, 0, 0, 0.12);
-      animation: cardIn 0.18s ease-out both;
-    }
-
-    .ranking li:nth-child(2) {
-      animation-delay: 0.03s;
-    }
-
-    .ranking li:nth-child(3) {
-      animation-delay: 0.06s;
-    }
-
-    .ranking li:nth-child(4) {
-      animation-delay: 0.09s;
-    }
-
-    .ranking li:nth-child(5) {
-      animation-delay: 0.12s;
-    }
-
-    .ranking li:last-child {
-      margin-bottom: 0;
-    }
-
-    .ranking li.empty-rank {
-      min-height: 142px;
-      display: grid;
-      place-items: center;
-      padding: 20px 16px;
-      border: 1px dashed rgba(255, 255, 255, 0.18);
-      background:
-        linear-gradient(90deg, transparent 8%, rgba(59, 215, 255, 0.1), transparent 92%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%),
-        radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.12), transparent 55%),
-        rgba(7, 13, 25, 0.72);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.07),
-        inset 0 0 0 1px rgba(255, 198, 41, 0.04);
-      text-align: center;
-    }
-
-    .ranking li.empty-rank .rank-main {
-      display: grid;
-      gap: 8px;
-      justify-items: center;
-    }
-
-    .ranking li.empty-rank .rank-number {
-      position: relative;
-      width: 46px;
-      height: 46px;
-      display: grid;
-      place-items: center;
-      border: 2px solid rgba(255, 198, 41, 0.46);
-      border-radius: 50%;
-      background: rgba(255, 198, 41, 0.12);
-      color: #fff3a2;
-      font-size: 22px;
-      box-shadow:
-        0 0 0 5px rgba(255, 198, 41, 0.06),
-        0 0 18px rgba(255, 198, 41, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    }
-
-    .ranking li.empty-rank .rank-number::after {
-      content: "";
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.24), transparent 62%);
-      transform: translate(-5px, -6px);
-      pointer-events: none;
-    }
-
-    .ranking li.empty-rank .rank-name {
-      max-width: 220px;
-      color: rgba(255, 248, 223, 0.86);
-      font-size: 14px;
-      line-height: 1.45;
-      white-space: normal;
-    }
-
-    .ranking li.empty-rank .empty-title {
-      display: block;
-      color: #fff8df;
-      font-size: 15px;
-      font-weight: 950;
-    }
-
-    .ranking li.empty-rank .empty-sub {
-      display: block;
-      margin-top: 4px;
-      color: rgba(255, 248, 223, 0.66);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .ranking li.rank-1,
-    .ranking li.rank-2,
-    .ranking li.rank-3 {
-      overflow: hidden;
-      min-height: 58px;
-      padding: 12px 12px;
-    }
-
-    .ranking li.rank-1::before,
-    .ranking li.rank-2::before,
-    .ranking li.rank-3::before {
-      content: "";
-      position: absolute;
-      inset: -40% auto -40% -26%;
-      width: 42%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-      transform: rotate(18deg);
-      pointer-events: none;
-    }
-
-    .ranking li.rank-1 {
-      border-color: rgba(255, 224, 95, 0.88);
-      background: linear-gradient(180deg, #ffd94f, #e59c00);
-      color: #2a1900;
-      box-shadow: 0 8px 18px rgba(255, 198, 41, 0.22);
-    }
-
-    .ranking li.rank-2 {
-      border-color: rgba(226, 235, 247, 0.82);
-      background: linear-gradient(180deg, #dfe7f2, #8b99ad);
-      color: #111927;
-    }
-
-    .ranking li.rank-3 {
-      border-color: rgba(210, 143, 75, 0.82);
-      background: linear-gradient(180deg, #b87941, #70411f);
-      color: #fff5e7;
-    }
-
-    .ranking .rank-main {
-      position: relative;
-      z-index: 1;
-      min-width: 0;
-      flex: 1 1 auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding-right: 6px;
-    }
-
-    .ranking .rank-avatar {
-      position: relative;
-      width: 34px;
-      height: 34px;
-      flex: 0 0 auto;
-      display: grid;
-      place-items: center;
-      border: 2px solid rgba(255, 255, 255, 0.72);
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 40% 24%, rgba(255, 255, 255, 0.22), transparent 34%),
-        radial-gradient(circle at 50% 120%, rgba(59, 215, 255, 0.16), transparent 48%),
-        rgba(255, 255, 255, 0.12) center / cover no-repeat;
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 950;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.18),
-        0 0 0 3px rgba(255, 255, 255, 0.035);
-    }
-
-    .ranking .rank-avatar::after {
-      content: "";
-      position: absolute;
-      inset: 3px 4px auto;
-      height: 36%;
-      border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent);
-      pointer-events: none;
-    }
-
-    .ranking .rank-name {
-      overflow: hidden;
-      color: inherit;
-      font-size: 14px;
-      font-weight: 950;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .ranking .rank-number {
-      min-width: 34px;
-      padding: 3px 5px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.16);
-      color: inherit;
-      font-size: 12px;
-      font-weight: 950;
-      text-align: center;
-    }
-
-    .ranking .rank-score {
-      position: relative;
-      z-index: 1;
-      flex: 0 0 86px;
-      padding: 4px 7px;
-      border: 1px solid rgba(255, 198, 41, 0.12);
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, rgba(255, 198, 41, 0.12), rgba(0, 0, 0, 0.16));
-      color: #fff3a2;
-      font-size: 15px;
-      font-weight: 950;
-      text-align: right;
-      white-space: nowrap;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    .ranking li.rank-1 .rank-number,
-    .ranking li.rank-2 .rank-number,
-    .ranking li.rank-3 .rank-number {
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.34),
-        0 2px 0 rgba(0, 0, 0, 0.12);
-    }
-
-    .ranking li.rank-1 .rank-avatar,
-    .ranking li.rank-2 .rank-avatar,
-    .ranking li.rank-3 .rank-avatar {
-      border-color: rgba(255, 255, 255, 0.9);
-      box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-        0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .ranking li.rank-1 .rank-avatar::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: -10px;
-      width: 20px;
-      height: 10px;
-      border-radius: 3px 3px 1px 1px;
-      background:
-        linear-gradient(135deg, transparent 0 22%, #fff1a6 23% 42%, transparent 43% 57%, #fff1a6 58% 77%, transparent 78%),
-        linear-gradient(180deg, #ffe869, #c88400);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.45),
-        0 2px 4px rgba(0, 0, 0, 0.22);
-      transform: translateX(-50%) rotate(-4deg);
-      pointer-events: none;
-    }
-
-    .ranking li.rank-1 .rank-score,
-    .ranking li.rank-2 .rank-score,
-    .ranking li.rank-3 .rank-score {
-      background: rgba(255, 255, 255, 0.22);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.24),
-        0 2px 0 rgba(0, 0, 0, 0.12);
-    }
-
-    .ranking li.rank-1 .rank-score,
-    .ranking li.rank-2 .rank-score {
-      color: #1d1608;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
-    }
-
-    .ranking li.rank-3 .rank-score {
-      color: #fff8df;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.32);
-    }
-
-    .ranking li.current {
-      border-color: rgba(59, 215, 255, 0.85);
-      background:
-        linear-gradient(90deg, rgba(59, 215, 255, 0.2), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 44%),
-        rgba(7, 13, 25, 0.88);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 4px 0 0 rgba(59, 215, 255, 0.34),
-        0 0 0 2px rgba(59, 215, 255, 0.18),
-        0 0 18px rgba(59, 215, 255, 0.18);
-    }
-
-    .ranking li.current:not(.rank-1):not(.rank-2):not(.rank-3) {
-      padding-top: 15px;
-    }
-
-    .ranking li.current::after {
-      content: "今回";
-      position: absolute;
-      z-index: 2;
-      right: 8px;
-      top: -1px;
-      padding: 2px 7px 3px;
-      border-radius: 0 0 8px 8px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent 42%),
-        rgba(59, 215, 255, 0.9);
-      color: #03131a;
-      font-size: 9px;
-      font-weight: 950;
-      line-height: 1;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.24),
-        0 0 10px rgba(59, 215, 255, 0.18),
-        0 3px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .ranking li.current .rank-number,
-    .ranking li.current .rank-score {
-      border-color: rgba(59, 215, 255, 0.38);
-      background:
-        linear-gradient(180deg, rgba(59, 215, 255, 0.24), rgba(0, 0, 0, 0.16));
-      color: #dffaff;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        0 0 12px rgba(59, 215, 255, 0.16);
-    }
-
-    button {
-      appearance: none;
-      min-height: 44px;
-      padding: 10px 18px;
-      border: 0;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #1b1710;
-      cursor: pointer;
-      font: inherit;
-      font-weight: 900;
-      touch-action: manipulation;
-      user-select: none;
-    }
-
-    button:focus-visible,
-    .control-button:focus-visible,
-    .entry-fields input:focus-visible {
-      outline: 3px solid rgba(59, 215, 255, 0.86);
-      outline-offset: 3px;
-      filter:
-        drop-shadow(0 0 10px rgba(59, 215, 255, 0.28))
-        brightness(1.04);
-    }
-
-    button:disabled,
-    button[disabled] {
-      cursor: default;
-      filter: grayscale(0.18) brightness(0.88);
-      opacity: 0.78;
-    }
-
     .menu-actions {
       display: grid;
       gap: 10px;
@@ -2197,14 +1688,6 @@
 
     .overlay[data-mode="title"] .menu-actions {
       animation: cardIn 0.2s ease-out 0.08s both;
-    }
-
-    .overlay[data-mode="ranking"] .menu-actions {
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow:
-        inset 0 1px 0 rgba(0, 0, 0, 0.28),
-        0 -10px 22px -24px rgba(59, 215, 255, 0.8);
     }
 
     .overlay[data-mode="result"] .menu-actions {
@@ -2343,383 +1826,8 @@
       pointer-events: none;
     }
 
-    .score-entry {
-      position: relative;
-      display: grid;
-      grid-template-columns: 62px 1fr;
-      gap: 9px;
-      margin: 0 0 14px;
-      padding: 30px 10px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 12px;
-      background:
-        linear-gradient(90deg, rgba(255, 198, 41, 0.1), transparent 28%, transparent 72%, rgba(59, 215, 255, 0.08)),
-        linear-gradient(180deg, rgba(12, 22, 38, 0.72), rgba(0, 0, 0, 0.34));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.32),
-        0 10px 20px rgba(0, 0, 0, 0.18);
-      text-align: left;
-      animation: cardIn 0.2s ease-out both;
-    }
-
-    .score-entry::before {
-      content: "ランキング登録";
-      position: absolute;
-      left: 11px;
-      top: 9px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(255, 198, 41, 0.14);
-      color: #fff3a2;
-      font-size: 10px;
-      font-weight: 950;
-      line-height: 1;
-    }
-
-    .score-entry::after {
-      content: "";
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      top: 28px;
-      height: 2px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(255, 198, 41, 0.74), rgba(59, 215, 255, 0.36), transparent);
-      box-shadow: 0 0 10px rgba(255, 198, 41, 0.16);
-      pointer-events: none;
-    }
-
-    .score-entry.saved {
-      border-color: rgba(59, 215, 255, 0.5);
-      background:
-        linear-gradient(180deg, rgba(22, 57, 76, 0.42), rgba(0, 0, 0, 0.24));
-      box-shadow: 0 0 18px rgba(59, 215, 255, 0.12);
-      animation: savedPulse 0.22s ease-out both;
-    }
-
-    .score-entry.saved::before {
-      content: "登録済み";
-      background: rgba(59, 215, 255, 0.18);
-      color: #dffaff;
-    }
-
-    .score-entry.saved::after {
-      background: linear-gradient(90deg, rgba(59, 215, 255, 0.86), rgba(255, 255, 255, 0.28), transparent);
-      box-shadow: 0 0 12px rgba(59, 215, 255, 0.2);
-    }
-
-    .score-entry.saved .entry-photo {
-      border-color: rgba(59, 215, 255, 0.68);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        0 0 0 4px rgba(59, 215, 255, 0.08),
-        0 0 18px rgba(59, 215, 255, 0.22);
-    }
-
-    .score-entry[hidden] {
-      display: none;
-    }
-
-    .entry-photo {
-      position: relative;
-      width: 56px;
-      height: 56px;
-      min-height: 56px;
-      display: grid;
-      place-items: center;
-      overflow: visible;
-      padding: 0;
-      border: 2px solid rgba(255, 255, 255, 0.46);
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at 42% 18%, rgba(255, 255, 255, 0.2), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 48%),
-        radial-gradient(circle at 50% 30%, rgba(255, 198, 41, 0.16), transparent 46%),
-        rgba(4, 8, 15, 0.82) center / cover no-repeat;
-      color: var(--accent);
-      font-weight: 950;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 0 -8px 12px rgba(0, 0, 0, 0.18),
-        0 0 0 4px rgba(255, 198, 41, 0.055),
-        0 0 14px rgba(255, 198, 41, 0.1);
-      cursor: pointer;
-      transition:
-        transform 0.12s ease,
-        filter 0.12s ease,
-        box-shadow 0.12s ease;
-    }
-
-    .entry-photo:active:not(:disabled) {
-      transform: scale(0.96);
-      filter: brightness(1.08);
-    }
-
-    .entry-photo:disabled {
-      cursor: default;
-    }
-
-    .score-entry.saved .entry-photo:disabled {
-      filter: none;
-      opacity: 1;
-    }
-
-    .entry-photo::after {
-      content: "";
-      position: absolute;
-      inset: -5px;
-      border: 1px solid rgba(255, 198, 41, 0.22);
-      border-radius: inherit;
-      box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-        0 0 10px rgba(255, 198, 41, 0.1);
-      pointer-events: none;
-    }
-
-    .entry-photo::before {
-      content: "ID";
-      position: absolute;
-      left: 50%;
-      top: -10px;
-      display: grid;
-      place-items: center;
-      min-width: 26px;
-      height: 17px;
-      padding: 0 6px;
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, rgba(255, 224, 105, 0.98), rgba(255, 178, 28, 0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.42),
-        0 2px 6px rgba(0, 0, 0, 0.28);
-      color: #191106;
-      font-size: 8px;
-      font-weight: 950;
-      line-height: 1;
-      transform: translateX(-50%);
-      pointer-events: none;
-    }
-
-    .entry-photo span {
-      display: grid;
-      gap: 3px;
-      place-items: center;
-      color: #fff3a2;
-      font-size: 9px;
-      font-weight: 950;
-      line-height: 1;
-      text-align: center;
-    }
-
-    .entry-photo span::before {
-      content: "";
-      width: 22px;
-      height: 16px;
-      border: 2px solid currentColor;
-      border-radius: 5px;
-      box-shadow: inset 0 0 0 3px rgba(255, 198, 41, 0.12);
-    }
-
-    .entry-fields {
-      min-width: 0;
-      display: grid;
-      gap: 7px;
-    }
-
-    .entry-fields input {
-      width: 100%;
-      min-height: 40px;
-      padding: 8px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      background:
-        linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.22), transparent) center calc(100% - 4px) / 86% 2px no-repeat,
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05), transparent 54%),
-        linear-gradient(180deg, rgba(11, 21, 36, 0.92), rgba(4, 8, 15, 0.92));
-      color: var(--ink);
-      caret-color: var(--accent-2);
-      font: inherit;
-      font-weight: 900;
-      outline: none;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.28),
-        0 3px 8px rgba(0, 0, 0, 0.16);
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    .entry-fields input::placeholder {
-      color: rgba(255, 248, 223, 0.38);
-      font-weight: 850;
-    }
-
-    .entry-fields input::selection {
-      background: rgba(59, 215, 255, 0.32);
-      color: #ffffff;
-    }
-
-    .entry-fields input:disabled {
-      border-color: rgba(59, 215, 255, 0.24);
-      background: rgba(6, 16, 24, 0.76);
-      color: rgba(255, 248, 223, 0.68);
-      -webkit-text-fill-color: rgba(255, 248, 223, 0.68);
-    }
-
-    .score-entry.saved .entry-fields input:disabled {
-      border-color: rgba(59, 215, 255, 0.42);
-      background:
-        linear-gradient(180deg, rgba(11, 33, 45, 0.84), rgba(4, 10, 16, 0.84));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 0 0 2px rgba(59, 215, 255, 0.08);
-      color: rgba(223, 250, 255, 0.86);
-      -webkit-text-fill-color: rgba(223, 250, 255, 0.86);
-    }
-
-    .entry-fields input:focus {
-      border-color: rgba(59, 215, 255, 0.86);
-      background:
-        linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.68), transparent) center calc(100% - 4px) / 86% 2px no-repeat,
-        linear-gradient(180deg, rgba(11, 21, 36, 0.96), rgba(4, 8, 15, 0.96));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.28),
-        0 0 0 3px rgba(59, 215, 255, 0.18),
-        0 0 16px rgba(59, 215, 255, 0.16);
-    }
-
-    .entry-actions {
-      display: grid;
-      grid-template-columns: 0.82fr 1.18fr;
-      gap: 7px;
-    }
-
-    .entry-actions button {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      overflow: hidden;
-      min-height: 40px;
-      padding: 7px 8px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 950;
-      letter-spacing: 0;
-      transition:
-        transform 0.12s ease,
-        filter 0.12s ease,
-        box-shadow 0.12s ease;
-    }
-
-    .entry-actions button::before {
-      position: relative;
-      z-index: 1;
-      display: inline-grid;
-      place-items: center;
-      min-width: 24px;
-      height: 18px;
-      padding: 0 5px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      background: rgba(0, 0, 0, 0.18);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      font-size: 8px;
-      font-weight: 950;
-      line-height: 1;
-      letter-spacing: 0;
-    }
-
-    #photoButton::before {
-      content: "CAM";
-      color: #dffaff;
-    }
-
-    #saveEntryButton::before {
-      content: "OK";
-      color: #151007;
-      background: rgba(255, 255, 255, 0.28);
-      border-color: rgba(255, 255, 255, 0.36);
-    }
-
-    .entry-actions button::after {
-      content: "";
-      position: absolute;
-      inset: 1px 2px auto;
-      height: 38%;
-      border-radius: 8px 8px 12px 12px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent);
-      pointer-events: none;
-    }
-
-    .entry-actions button:active:not(:disabled) {
-      transform: translateY(2px) scale(0.98);
-      filter: brightness(0.98);
-    }
-
-    .entry-actions button:focus-visible {
-      outline: 3px solid rgba(59, 215, 255, 0.58);
-      outline-offset: 2px;
-      filter:
-        drop-shadow(0 0 9px rgba(59, 215, 255, 0.24))
-        brightness(1.04);
-    }
-
-    .entry-actions button:disabled {
-      cursor: default;
-      filter: saturate(0.72) brightness(0.86);
-      opacity: 0.72;
-    }
-
-    #photoButton {
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: linear-gradient(180deg, #243449, #111926);
-      color: var(--ink);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        inset 0 -3px 0 rgba(0, 0, 0, 0.34),
-        0 3px 0 rgba(0, 0, 0, 0.72);
-    }
-
-    #saveEntryButton {
-      border: 1px solid rgba(255, 255, 255, 0.32);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.34), transparent 38%),
-        radial-gradient(circle at 50% 112%, rgba(116, 72, 0, 0.42), transparent 50%),
-        linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
-      color: #151007;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.42),
-        inset 0 -3px 0 rgba(102, 62, 0, 0.24),
-        0 0 12px rgba(255, 198, 41, 0.12),
-        0 4px 0 rgba(76, 48, 0, 0.78);
-    }
-
-    .score-entry.saved #saveEntryButton {
-      background: linear-gradient(180deg, #96f0ff, #3bd7ff 52%, #188aa8);
-      color: #03131a;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.38),
-        0 3px 0 rgba(0, 62, 82, 0.76);
-    }
-
-    .score-entry.saved #saveEntryButton:disabled {
-      filter: none;
-      opacity: 1;
-    }
-
-    .score-entry.saved #photoButton:disabled {
-      opacity: 0.58;
-    }
-
     @media (hover: hover) and (pointer: fine) {
       .control-button:hover,
-      .entry-photo:hover:not(:disabled),
-      .entry-actions button:hover:not(:disabled),
       .menu-actions button:hover {
         filter: brightness(1.05);
       }
@@ -2727,78 +1835,6 @@
       .menu-actions button + button:hover {
         filter: brightness(1.12);
       }
-    }
-
-    .entry-fields small {
-      position: relative;
-      display: block;
-      min-height: 28px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 850;
-      line-height: 1.35;
-      padding: 6px 8px 6px 25px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 9px;
-      background:
-        linear-gradient(90deg, rgba(255, 198, 41, 0.14), transparent 38%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.1));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
-    }
-
-    .entry-fields small::before {
-      content: "i";
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      width: 12px;
-      height: 12px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: rgba(255, 198, 41, 0.2);
-      color: #fff3a2;
-      font-size: 8px;
-      font-weight: 950;
-      line-height: 1;
-      transform: translateY(-50%);
-    }
-
-    .score-entry.saved .entry-fields small {
-      border-color: rgba(59, 215, 255, 0.28);
-      background:
-        linear-gradient(90deg, rgba(59, 215, 255, 0.18), transparent 42%),
-        linear-gradient(180deg, rgba(59, 215, 255, 0.13), rgba(0, 0, 0, 0.08));
-      color: #dffaff;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.07),
-        0 0 12px rgba(59, 215, 255, 0.1);
-    }
-
-    .score-entry.saved .entry-fields small::before {
-      content: "✓";
-      background: rgba(59, 215, 255, 0.24);
-      color: #dffaff;
-    }
-
-    #photoVideo {
-      grid-column: 1 / -1;
-      width: 100%;
-      max-height: 160px;
-      border-radius: 10px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 46%),
-        #000;
-      object-fit: cover;
-      border: 1px solid rgba(59, 215, 255, 0.42);
-      box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 10px 22px rgba(0, 0, 0, 0.34),
-        0 0 18px rgba(59, 215, 255, 0.12);
-      animation: cardIn 0.18s ease-out both;
     }
 
     .run-strip {
@@ -3202,8 +2238,7 @@
         min-height: 62px;
       }
 
-      .overlay[data-mode="title"],
-      .overlay[data-mode="ranking"] {
+      .overlay[data-mode="title"] {
         padding: 16px 12px;
       }
 
@@ -3229,16 +2264,6 @@
         font-size: 15px;
       }
 
-      .overlay[data-mode="ranking"] .dialog h2 {
-        padding-top: 17px;
-        font-size: 30px;
-      }
-
-      .overlay[data-mode="ranking"] .dialog p {
-        margin-bottom: 10px;
-        font-size: 12px;
-      }
-
       .overlay[data-mode="result"] .dialog p {
         padding: 5px 9px;
         font-size: 12px;
@@ -3261,83 +2286,6 @@
 
       .title-chip strong {
         font-size: 13px;
-      }
-
-      .ranking li {
-        padding: 8px 9px;
-      }
-
-      .ranking {
-        padding: 6px;
-      }
-
-      .ranking .rank-number {
-        min-width: 30px;
-        padding: 3px 5px;
-        font-size: 11px;
-      }
-
-      .ranking .rank-score {
-        padding: 4px 6px;
-        flex-basis: 78px;
-        font-size: 13px;
-      }
-
-      .ranking li.rank-1,
-      .ranking li.rank-2,
-      .ranking li.rank-3 {
-        min-height: 52px;
-      }
-
-      .score-entry {
-        grid-template-columns: 54px 1fr;
-        gap: 8px;
-        padding: 29px 9px 9px;
-      }
-
-      .entry-photo {
-        width: 52px;
-        height: 52px;
-        min-height: 52px;
-      }
-
-      .entry-photo::before {
-        top: -8px;
-        min-width: 22px;
-        height: 15px;
-        padding: 0 5px;
-        font-size: 7px;
-      }
-
-      .entry-fields {
-        gap: 6px;
-      }
-
-      .entry-fields input {
-        min-height: 38px;
-        padding: 8px 10px;
-      }
-
-      .entry-actions {
-        gap: 6px;
-      }
-
-      .entry-actions button {
-        min-height: 36px;
-        padding: 6px 7px;
-        font-size: 12px;
-      }
-
-      .entry-actions button::before {
-        min-width: 21px;
-        height: 16px;
-        font-size: 7px;
-      }
-
-      .entry-fields small {
-        min-height: 25px;
-        padding: 5px 7px 5px 23px;
-        font-size: 9px;
       }
 
       .run-pill {
@@ -5823,7 +4771,7 @@ function onPointerDown(event) {
     }
 
     function isResultControlTarget(target) {
-      return target && target.closest && target.closest("button, input, textarea, select, label, .score-entry");
+      return target && target.closest && target.closest("button, input, textarea, select, label");
     }
 
     function isTextEntryTarget(target) {
