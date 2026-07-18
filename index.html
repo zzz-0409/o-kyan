@@ -3599,6 +3599,7 @@
     let speedPanels = [];
     let ambientItems = [];
     let particles = [];
+    let coinFlyers = [];
 
     const player = {
       lane: CENTER_LANE,
@@ -3669,6 +3670,7 @@
       speedPanels = [];
       ambientItems = [];
       particles = [];
+      coinFlyers = [];
       screenShakeTimer = 0;
       screenShakePower = 0;
       player.lane = CENTER_LANE;
@@ -3699,6 +3701,7 @@ function endGame() {
       running = false;
       gameOver = true;
       autoPaused = false;
+      coinFlyers = [];
       overlayMode = "result";
       appEl.dataset.screen = "result";
       scoreLabel.textContent = "SCORE";
@@ -4697,6 +4700,7 @@ function spawnCoins() {
       updateAmbientItems(dt);
 
       updateParticles(dt);
+      updateCoinFlyers(dt);
       checkCollisions();
       updateHud();
     }
@@ -4787,6 +4791,41 @@ function spawnCoins() {
       }
       particles = particles.filter((particle) => particle.life > 0);
     }
+
+    function spawnCoinFlyer(x, y) {
+      const target = hudTargetPoint(coinStat);
+      coinFlyers.push({
+        x,
+        y,
+        sx: x,
+        sy: y,
+        tx: target.x,
+        ty: target.y,
+        life: 0,
+        duration: 0.42
+      });
+      if (coinFlyers.length > 12) {
+        coinFlyers.splice(0, coinFlyers.length - 12);
+      }
+    }
+
+    function hudTargetPoint(element) {
+      const canvasRect = canvas.getBoundingClientRect();
+      const targetRect = element.getBoundingClientRect();
+      const sx = W / Math.max(1, canvasRect.width);
+      const sy = H / Math.max(1, canvasRect.height);
+      return {
+        x: (targetRect.left + targetRect.width / 2 - canvasRect.left) * sx,
+        y: (targetRect.top + targetRect.height / 2 - canvasRect.top) * sy
+      };
+    }
+
+    function updateCoinFlyers(dt) {
+      for (const flyer of coinFlyers) {
+        flyer.life += dt;
+      }
+      coinFlyers = coinFlyers.filter((flyer) => flyer.life < flyer.duration);
+    }
 function checkCollisions() {
       const p = playerRect();
       const hitP = shrinkRect(p, 5, 6);
@@ -4823,6 +4862,7 @@ function checkCollisions() {
           coin.collected = true;
           coinItems.splice(i, 1);
           burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
+          spawnCoinFlyer(LANES[coin.lane], coin.y);
           pulseStat(coinStat);
           flashStage("coin");
           playSound("coin");
@@ -4982,6 +5022,7 @@ function draw() {
       drawCoins();
       drawObstacles();
       drawParticles();
+      drawCoinFlyers();
       drawPlayer();
       drawReadyPrompt();
       ctx.restore();
@@ -5693,6 +5734,42 @@ function drawObstacles() {
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.r * (0.75 + alpha * 0.45), 0, Math.PI * 2);
         ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawCoinFlyers() {
+      if (!coinFlyers.length) return;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const flyer of coinFlyers) {
+        const t = Math.max(0, Math.min(1, flyer.life / flyer.duration));
+        const eased = 1 - Math.pow(1 - t, 3);
+        const arc = Math.sin(t * Math.PI) * 42;
+        const x = flyer.sx + (flyer.tx - flyer.sx) * eased;
+        const y = flyer.sy + (flyer.ty - flyer.sy) * eased - arc;
+        const alpha = Math.max(0, 1 - t * 0.16);
+        const radius = COIN_RADIUS * (1 - t * 0.38);
+
+        ctx.globalAlpha = alpha * 0.46;
+        const glow = ctx.createRadialGradient(x, y, 2, x, y, radius + 15);
+        glow.addColorStop(0, "rgba(255, 224, 92, 0.72)");
+        glow.addColorStop(1, "rgba(255, 224, 92, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#f0c247";
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff8df";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(2, radius - 3), 0, Math.PI * 2);
+        ctx.stroke();
       }
       ctx.restore();
     }
