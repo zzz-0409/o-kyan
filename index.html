@@ -4724,16 +4724,46 @@ function draw() {
       }
       drawRoad();
       drawRunMotion();
+      drawLaneFocus();
       drawSpeedPanels();
       drawCoins();
       drawObstacles();
       drawParticles();
       drawPlayer();
+      drawReadyPrompt();
       ctx.restore();
     }
 function drawRoad() {
       drawSeamlessCampusRoad();
       drawLoopVignette();
+    }
+
+    function drawLaneFocus() {
+      if (!running) return;
+      const laneX = player.x;
+      const focusY = PLAYER_Y - 98;
+      const pulse = 0.5 + Math.sin(roadScroll * 0.045) * 0.5;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const glow = ctx.createRadialGradient(laneX, focusY, 10, laneX, focusY, 82);
+      glow.addColorStop(0, `rgba(123, 238, 255, ${0.08 + pulse * 0.04})`);
+      glow.addColorStop(0.42, "rgba(123, 238, 255, 0.035)");
+      glow.addColorStop(1, "rgba(123, 238, 255, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.ellipse(laneX, focusY, 48, 170, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 248, 223, 0.12)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([18, 34]);
+      ctx.lineDashOffset = -roadScroll * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(laneX, PLAYER_Y - 265);
+      ctx.lineTo(laneX, PLAYER_Y - 40);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
     function drawRunMotion() {
@@ -4771,6 +4801,30 @@ function drawRoad() {
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
       }
+      ctx.restore();
+    }
+
+    function drawReadyPrompt() {
+      if (!running || readyTimer <= 0) return;
+      const progress = 1 - readyTimer / READY_GRACE_TIME;
+      const isGo = readyTimer < 0.62;
+      const text = isGo ? "GO!" : "READY";
+      const scale = isGo ? 1 + Math.sin(progress * Math.PI) * 0.12 : 1;
+      const alpha = isGo ? Math.min(1, readyTimer / 0.2) : Math.min(1, progress / 0.18, readyTimer / 0.22);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, alpha);
+      ctx.translate(W / 2, 126);
+      ctx.scale(scale, scale);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "950 40px Segoe UI, Yu Gothic UI, sans-serif";
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "rgba(2, 5, 10, 0.86)";
+      ctx.strokeText(text, 0, 0);
+      ctx.fillStyle = isGo ? "#7beeff" : "#fff3a2";
+      ctx.shadowColor = isGo ? "rgba(123, 238, 255, 0.52)" : "rgba(255, 198, 41, 0.46)";
+      ctx.shadowBlur = 18;
+      ctx.fillText(text, 0, 0);
       ctx.restore();
     }
 
