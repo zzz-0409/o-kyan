@@ -3493,6 +3493,7 @@
     const JUMP_DURATION = 0.66;
     const JUMP_BUFFER_TIME = 0.18;
     const JUMP_BUFFER_ARM_TIME = 0.24;
+    const JUMP_LANDING_GRACE_TIME = 0.12;
     const SLOW_DURATION = 3.7;
     const SLOW_FACTOR = 0.55;
     const BOOST_DURATION = 3.0;
@@ -3547,6 +3548,7 @@
     let readyTimer = 0;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
+    let jumpGraceTimer = 0;
     let inputFlashTimer = 0;
     let inputFlashDirection = 0;
     let dodgeFlashTimer = 0;
@@ -3624,6 +3626,7 @@
       readyTimer = READY_GRACE_TIME;
       jumpTimer = 0;
       jumpBufferTimer = 0;
+      jumpGraceTimer = 0;
       inputFlashTimer = 0;
       inputFlashDirection = 0;
       dodgeFlashTimer = 0;
@@ -4309,6 +4312,7 @@ function endGame() {
     function startJump() {
       jumpTimer = JUMP_DURATION;
       jumpBufferTimer = 0;
+      jumpGraceTimer = 0;
       player.holdTimer = 0.22;
       inputFlashTimer = INPUT_FLASH_TIME;
       inputFlashDirection = 0;
@@ -4609,8 +4613,10 @@ function spawnCoins() {
       jumpTimer = Math.max(0, jumpTimer - dt);
       if (jumpTimer <= 0 && bufferedJump) startJump();
       if (wasJumping && jumpTimer <= 0 && !bufferedJump) {
+        jumpGraceTimer = JUMP_LANDING_GRACE_TIME;
         burstGroundDust(player.x, PLAYER_Y + 8, 10, 0.9);
       }
+      jumpGraceTimer = Math.max(0, jumpGraceTimer - dt);
       distance += (speed * dt) / 12;
       checkDistanceMilestone();
       checkPlayTimeTarget();
@@ -4677,7 +4683,7 @@ function spawnCoins() {
         if (obstacle.scored || readyTimer > 0 || !laneObjectPassed(obstacle)) continue;
         obstacle.scored = true;
         if (obstacle.type === "hole") {
-          if (obstacle.lanes.includes(player.lane) && isJumping()) {
+          if (obstacle.lanes.includes(player.lane) && isHoleSafe()) {
             burstParticles(LANES[player.lane], PLAYER_Y - 42, "#7beeff", 10, 0.75);
           }
           continue;
@@ -4749,7 +4755,7 @@ function checkCollisions() {
           const obstacle = obstacles[obstacleIndex];
           if (laneObjectPassed(obstacle)) continue;
           if (obstacle.type === "hole") {
-            if (isJumping()) continue;
+            if (isHoleSafe()) continue;
             for (const lane of obstacle.lanes) {
               const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
               if (rectsOverlap(feet, o)) {
@@ -4880,6 +4886,11 @@ function playerRect() {
 function isJumping() {
       return jumpTimer > 0;
     }
+
+    function isHoleSafe() {
+      return jumpTimer > 0 || jumpGraceTimer > 0;
+    }
+
 function jumpLift() {
       if (!isJumping()) return 0;
       const t = 1 - jumpTimer / JUMP_DURATION;
