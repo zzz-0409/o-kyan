@@ -1674,6 +1674,7 @@
       padding: 20px 16px;
       border: 1px dashed rgba(255, 255, 255, 0.18);
       background:
+        linear-gradient(90deg, transparent 8%, rgba(59, 215, 255, 0.1), transparent 92%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%),
         radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.12), transparent 55%),
         rgba(7, 13, 25, 0.72);
@@ -1702,7 +1703,8 @@
       font-size: 22px;
       box-shadow:
         0 0 0 5px rgba(255, 198, 41, 0.06),
-        0 0 18px rgba(255, 198, 41, 0.18);
+        0 0 18px rgba(255, 198, 41, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
     .ranking li.empty-rank .rank-number::after {
