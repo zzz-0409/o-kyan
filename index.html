@@ -3403,23 +3403,8 @@
               <div class="convert-box" id="convertScoreBox"><span>SCORE</span><strong id="convertScore">0</strong></div>
             </div>
           </div>
-          <ol class="ranking" id="dailyRanking" aria-label="今日のランキング"></ol>
-          <div class="score-entry" id="scoreEntry" hidden aria-hidden="true">
-            <button class="entry-photo" id="photoPreview" type="button" aria-label="写真を撮る"><span>写真</span></button>
-            <div class="entry-fields">
-              <input id="playerName" type="text" maxlength="12" placeholder="名前" autocomplete="nickname" enterkeyhint="done" aria-label="ランキングに登録する名前">
-              <div class="entry-actions">
-                <button id="photoButton" type="button">写真</button>
-                <button id="saveEntryButton" type="button">登録</button>
-              </div>
-              <small id="photoStatus" role="status" aria-live="polite">登録を押した時だけ、名前とスコアを保存します</small>
-            </div>
-            <video id="photoVideo" playsinline muted hidden></video>
-            <canvas id="photoCanvas" width="96" height="96" hidden></canvas>
-          </div>
           <div class="menu-actions">
             <button id="startButton" type="button">スタート</button>
-            <button id="rankingButton" type="button" hidden aria-hidden="true">ランキング</button>
           </div>
         </div>
       </div>
@@ -3460,17 +3445,7 @@
     const convertLane = document.getElementById("convertLane");
     const convertScoreEl = document.getElementById("convertScore");
     const convertScoreBox = document.getElementById("convertScoreBox");
-    const dailyRankingEl = document.getElementById("dailyRanking");
     const startButton = document.getElementById("startButton");
-    const rankingButton = document.getElementById("rankingButton");
-    const scoreEntry = document.getElementById("scoreEntry");
-    const playerNameInput = document.getElementById("playerName");
-    const photoButton = document.getElementById("photoButton");
-    const saveEntryButton = document.getElementById("saveEntryButton");
-    const photoPreview = document.getElementById("photoPreview");
-    const photoStatus = document.getElementById("photoStatus");
-    const photoVideo = document.getElementById("photoVideo");
-    const photoCanvas = document.getElementById("photoCanvas");
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
@@ -3549,7 +3524,6 @@
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
     const TWO_MINUTE_TARGET = 120;
-    const REGISTER_SAVE_TOKEN = Symbol("register-save");
 
     let running = false;
     let gameOver = false;
@@ -3601,17 +3575,13 @@
     let coinPatternFlip = 1;
     let touchStart = null;
     let overlayMode = "title";
-    let cameraStream = null;
-    let capturedPhoto = "";
     let resultState = {
       active: false,
       phase: "none",
       baseScore: 0,
       coinCount: 0,
       finalScore: 0,
-      rank: 0,
-      isBest: false,
-      entryId: ""
+      isBest: false
     };
     let obstacles = [];
     let coinItems = [];
@@ -3645,7 +3615,6 @@
         return;
       }
       clearScoreConversion();
-      stopCamera();
       if (document.activeElement && typeof document.activeElement.blur === "function") {
         document.activeElement.blur();
       }
@@ -3708,8 +3677,6 @@
       eventToast.setAttribute("aria-hidden", "true");
       unlockAudio();
       playSound("start");
-      setElementHidden(scoreEntry, true);
-      setElementHidden(rankingButton, true);
       setOverlayOpen(false);
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
@@ -3732,7 +3699,6 @@ function endGame() {
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
       overlay.dataset.mode = "result";
-      setElementHidden(rankingButton, true);
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
@@ -3754,8 +3720,6 @@ function endGame() {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
       }
       setOverlayOpen(true);
-      dailyRankingEl.innerHTML = "";
-      setElementHidden(dailyRankingEl, true);
       setHint("障害物に当たった");
       resultState = {
         active: true,
@@ -3763,11 +3727,8 @@ function endGame() {
         baseScore: distanceScore,
         coinCount: collectedCoins,
         finalScore: score,
-        rank: 0,
-        isBest,
-        entryId: ""
+        isBest
       };
-      setElementHidden(scoreEntry, true);
       startScoreConversion(distanceScore, collectedCoins, score);
     }
 
@@ -3778,9 +3739,7 @@ function endGame() {
         baseScore: 0,
         coinCount: 0,
         finalScore: 0,
-        rank: 0,
-        isBest: false,
-        entryId: ""
+        isBest: false
       };
     }
 
@@ -3944,10 +3903,6 @@ function endGame() {
     }
 
     function handleMainButton() {
-      if (overlayMode === "ranking") {
-        showTitleScreen();
-        return;
-      }
       if (!resultState.active) {
         resetGame();
         return;
@@ -4115,45 +4070,6 @@ function endGame() {
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
     }
 
-    function todayKey() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, "0");
-      const d = String(now.getDate()).padStart(2, "0");
-      return `laneRunnerDailyScore:${y}-${m}-${d}`;
-    }
-
-    function readDailyScores() {
-      try {
-        const scores = JSON.parse(localStorage.getItem(todayKey()) || "[]");
-        return Array.isArray(scores) ? scores : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveDailyScore(score, name = "プレイヤー", photo = "", saveToken = null) {
-      if (saveToken !== REGISTER_SAVE_TOKEN) {
-        return null;
-      }
-      const entry = {
-        id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
-        score,
-        time: Date.now(),
-        name: name || "プレイヤー",
-        photo: photo || ""
-      };
-      const scores = readDailyScores();
-      scores.push(entry);
-      scores.sort((a, b) => b.score - a.score || a.time - b.time);
-      const trimmed = scores.slice(0, 50);
-      localStorage.setItem(todayKey(), JSON.stringify(trimmed));
-      return {
-        id: entry.id,
-        rank: trimmed.findIndex((item) => item.id === entry.id) + 1 || trimmed.length
-      };
-    }
-
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -4178,32 +4094,7 @@ function endGame() {
       return `${Math.floor(millions)}M`;
     }
 
-    function renderDailyRanking(currentRank = 0, limit = 5, currentEntryId = resultState.entryId) {
-      const allScores = readDailyScores();
-      const scores = allScores.slice(0, limit);
-      if (currentEntryId && !scores.some((item) => item.id === currentEntryId)) {
-        const current = allScores.find((item) => item.id === currentEntryId);
-        if (current) scores.push(current);
-      }
-      if (!scores.length) {
-        dailyRankingEl.innerHTML = "<li class=\"empty-rank\"><span class=\"rank-main\"><span class=\"rank-number\">★</span><span class=\"rank-name\"><span class=\"empty-title\">まだ記録がありません</span><span class=\"empty-sub\">STARTで最初のランを登録しよう</span></span></span></li>";
-        return;
-      }
-      dailyRankingEl.innerHTML = scores.map((item, index) => {
-        const rank = allScores.findIndex((score) => score.id === item.id) + 1 || index + 1;
-        const mark = [
-          `rank-${rank}`,
-          item.id === currentEntryId || rank === currentRank ? "current" : ""
-        ].filter(Boolean).join(" ");
-        const name = escapeHtml(item.name || "プレイヤー");
-        const photoStyle = item.photo ? ` style="background-image:url('${escapeHtml(item.photo)}')"` : "";
-        const avatar = item.photo ? "" : name.slice(0, 1);
-        return `<li class="${mark}"><span class="rank-main"><span class="rank-number">${rank}位</span><span class="rank-avatar"${photoStyle}>${escapeHtml(avatar)}</span><span class="rank-name">${name}</span></span><strong class="rank-score">${formatNumber(item.score)}点</strong></li>`;
-      }).join("");
-    }
-
     function showTitleScreen() {
-      stopCamera();
       clearScoreConversion();
       resetResultState();
       clearTimeout(eventToastTimer);
@@ -4218,137 +4109,12 @@ function endGame() {
       stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       overlay.querySelector(".dialog").classList.remove("new-best");
       setOverlayOpen(true);
-      setElementHidden(scoreEntry, true);
-      scoreEntry.classList.remove("saved");
-      dailyRankingEl.innerHTML = "";
-      setElementHidden(dailyRankingEl, true);
       hideResultStats();
       updateTitleMeta();
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       updateTitleStartButton();
-      setElementHidden(rankingButton, true);
       updateHud();
-    }
-
-    function showRankingScreen() {
-      stopCamera();
-      clearScoreConversion();
-      overlayMode = "ranking";
-      appEl.dataset.screen = "ranking";
-      overlay.dataset.mode = "ranking";
-      overlay.querySelector(".dialog").classList.remove("new-best");
-      setOverlayOpen(true);
-      setElementHidden(scoreEntry, true);
-      scoreEntry.classList.remove("saved");
-      hideResultStats();
-      hideTitleMeta();
-      overlayTitle.textContent = "ランキング";
-      overlayText.textContent = "今日の上位記録";
-      renderDailyRanking(0, 10);
-      setStartButtonLoading(false);
-      setActionButton(startButton, "もどる", "‹", "タイトル画面へ戻る");
-      setElementHidden(rankingButton, true);
-    }
-
-    function prepareScoreEntry() {
-      capturedPhoto = localStorage.getItem("laneRunnerLastPhoto") || "";
-      playerNameInput.value = localStorage.getItem("laneRunnerPlayerName") || "プレイヤー";
-      playerNameInput.disabled = false;
-      photoPreview.disabled = false;
-      photoButton.disabled = false;
-      saveEntryButton.disabled = false;
-      updatePhotoPreview(capturedPhoto);
-      photoStatus.textContent = "登録を押すまでランキングには残りません";
-      photoButton.textContent = capturedPhoto ? "撮り直し" : "写真";
-      saveEntryButton.textContent = "登録";
-      scoreEntry.classList.remove("saved");
-      setElementHidden(scoreEntry, false);
-    }
-
-    function updatePhotoPreview(photo) {
-      photoPreview.style.backgroundImage = photo ? `url("${photo}")` : "";
-      photoPreview.innerHTML = photo ? "" : "<span>写真</span>";
-      photoPreview.setAttribute("aria-label", photo ? "写真を撮り直す" : "写真を撮る");
-    }
-
-    function saveEntryProfile(event) {
-      if (!event || event.type !== "click" || event.currentTarget !== saveEntryButton) return;
-      if (!resultState.active) return;
-      if (resultState.entryId) {
-        photoStatus.textContent = `登録済み 本日 #${resultState.rank}`;
-        return;
-      }
-      const name = playerNameInput.value.trim() || "プレイヤー";
-      const savedScore = saveDailyScore(resultState.finalScore, name, capturedPhoto, REGISTER_SAVE_TOKEN);
-      if (!savedScore) return;
-      resultState.entryId = savedScore.id;
-      resultState.rank = savedScore.rank;
-      localStorage.setItem("laneRunnerPlayerName", name);
-      if (capturedPhoto) {
-        localStorage.setItem("laneRunnerLastPhoto", capturedPhoto);
-      }
-      stopCamera();
-      scoreEntry.classList.add("saved");
-      saveEntryButton.textContent = "登録済み";
-      saveEntryButton.disabled = true;
-      playerNameInput.disabled = true;
-      photoPreview.disabled = true;
-      photoButton.disabled = true;
-      photoStatus.textContent = resultState.rank > 0
-        ? `ランキングに登録しました 本日 #${resultState.rank}`
-        : "ランキングに登録しました";
-      if (resultState.phase === "result") {
-        overlayText.textContent = "ランキング登録済み";
-        showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, `本日 #${resultState.rank}`);
-      }
-      renderDailyRanking(resultState.rank, 5, resultState.entryId);
-    }
-
-    async function handlePhotoButton() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        photoStatus.textContent = "この表示方法ではカメラが使えません";
-        return;
-      }
-      if (!cameraStream) {
-        try {
-          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-          photoVideo.srcObject = cameraStream;
-          photoVideo.hidden = false;
-          await photoVideo.play();
-          photoButton.textContent = "撮影";
-          photoStatus.textContent = "もう一度押すと撮影します";
-        } catch {
-          photoStatus.textContent = "カメラ許可が必要です";
-        }
-        return;
-      }
-
-      const context = photoCanvas.getContext("2d");
-      const size = 96;
-      const videoW = photoVideo.videoWidth || size;
-      const videoH = photoVideo.videoHeight || size;
-      const sourceSize = Math.min(videoW, videoH);
-      const sx = (videoW - sourceSize) / 2;
-      const sy = (videoH - sourceSize) / 2;
-      context.drawImage(photoVideo, sx, sy, sourceSize, sourceSize, 0, 0, size, size);
-      capturedPhoto = photoCanvas.toDataURL("image/jpeg", 0.82);
-      updatePhotoPreview(capturedPhoto);
-      stopCamera();
-      photoButton.textContent = "撮り直し";
-      photoStatus.textContent = "写真を設定しました";
-    }
-
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach((track) => track.stop());
-        cameraStream = null;
-      }
-      if (photoVideo) {
-        photoVideo.pause();
-        photoVideo.srcObject = null;
-        photoVideo.hidden = true;
-      }
     }
 
     function moveSide(direction) {
