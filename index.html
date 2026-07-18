@@ -18,6 +18,11 @@
   <meta name="twitter:image" content="assets/ui/app-icon.svg">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="assets/ui/app-icon.svg">
+  <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/obstacles/hurdle.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/obstacles/hole.png?v=imagegen-9">
   <title>RUN DASH! オープンキャンパスラン</title>
   <style>
     :root {
@@ -704,16 +709,16 @@
         0 0 24px rgba(59, 215, 255, 0.1);
       text-align: center;
       transform-origin: center;
-      scrollbar-gutter: stable;
+      scrollbar-gutter: auto;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255, 198, 41, 0.72) rgba(4, 8, 15, 0.62);
+      scrollbar-color: rgba(255, 198, 41, 0.38) rgba(4, 8, 15, 0.22);
       -webkit-backdrop-filter: blur(10px);
       backdrop-filter: blur(10px);
     }
 
     .dialog::-webkit-scrollbar,
     .ranking::-webkit-scrollbar {
-      width: 8px;
+      width: 5px;
     }
 
     .dialog::-webkit-scrollbar-track,
@@ -724,11 +729,11 @@
 
     .dialog::-webkit-scrollbar-thumb,
     .ranking::-webkit-scrollbar-thumb {
-      border: 2px solid rgba(4, 8, 15, 0.62);
+      border: 1px solid rgba(4, 8, 15, 0.42);
       border-radius: 999px;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.38), transparent 42%),
-        linear-gradient(180deg, #fff077, #ffc629 55%, #d48a00);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 42%),
+        linear-gradient(180deg, rgba(255, 240, 119, 0.74), rgba(255, 198, 41, 0.62) 55%, rgba(212, 138, 0, 0.6));
       box-shadow: inset 0 -2px 0 rgba(102, 62, 0, 0.22);
     }
 
@@ -862,6 +867,8 @@
       align-self: end;
       position: relative;
       z-index: 1;
+      justify-self: center;
+      max-width: 100%;
       margin-bottom: 12px;
       background: linear-gradient(180deg, #fff36c 0%, #ffc629 48%, #ff9300 100%);
       -webkit-background-clip: text;
@@ -3093,7 +3100,7 @@
       }
 
       .overlay[data-mode="title"] .dialog h2 {
-        font-size: 52px;
+        font-size: 48px;
       }
 
       .overlay[data-mode="title"] .menu-actions {
@@ -4890,6 +4897,9 @@ function drawObstacles() {
         const spriteScaleX = jumping ? 1.05 : 1.22;
         const spriteScaleY = jumping ? 1.05 : 1;
         ctx.scale(spriteScaleX * pose.scale, spriteScaleY * pose.scale);
+        ctx.shadowColor = jumping ? "rgba(255, 248, 223, 0.28)" : "rgba(123, 238, 255, 0.22)";
+        ctx.shadowBlur = jumping ? 13 : 10;
+        ctx.shadowOffsetY = 1;
         ctx.drawImage(activePlayerSprite, -spriteW / 2, -spriteH, spriteW, spriteH);
         ctx.restore();
       } else {
