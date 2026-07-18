@@ -4356,6 +4356,7 @@ function endGame() {
       const fromX = LANES[player.lane];
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
+      pressMoveButton(direction);
       player.lane = nextLane;
       player.holdTimer = 0.18;
       inputFlashTimer = INPUT_FLASH_TIME;
@@ -4368,6 +4369,7 @@ function endGame() {
 
     function jump() {
       if (!running) return;
+      pressControlButton(jumpButton);
       if (jumpTimer > 0) {
         if (jumpTimer <= JUMP_BUFFER_ARM_TIME) {
           jumpBufferTimer = JUMP_BUFFER_TIME;
@@ -6027,8 +6029,11 @@ function onPointerDown(event) {
     function onControlButton(event, action) {
       event.preventDefault();
       event.stopPropagation();
-      pressControlButton(event.currentTarget);
       action();
+    }
+
+    function pressMoveButton(direction) {
+      pressControlButton(direction < 0 ? leftButton : rightButton);
     }
 
     function pressControlButton(button) {
