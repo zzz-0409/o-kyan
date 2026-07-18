@@ -3737,8 +3737,8 @@ function endGame() {
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "登録するとランキングに残せます";
-      showResultStats(score, distanceScore, collectedCoins, "未登録");
+      overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "ベスト更新を目指してもう一度";
+      showResultStats(score, distanceScore, collectedCoins, best);
       setStartButtonLoading(false);
       setActionButton(
         startButton,
@@ -3751,7 +3751,8 @@ function endGame() {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
       }
       setOverlayOpen(true);
-      renderDailyRanking(0);
+      dailyRankingEl.innerHTML = "";
+      setElementHidden(dailyRankingEl, true);
       setHint("障害物に当たった");
       resultState = {
         active: true,
@@ -3763,7 +3764,7 @@ function endGame() {
         isBest,
         entryId: ""
       };
-      prepareScoreEntry();
+      setElementHidden(scoreEntry, true);
       startScoreConversion(distanceScore, collectedCoins, score);
     }
 
@@ -3801,28 +3802,26 @@ function endGame() {
     }
 
     function updateTitleMeta() {
-      const scores = readDailyScores();
-      const todayBest = scores.length ? scores[0].score : 0;
       setElementHidden(titleMeta, false);
       titleMeta.innerHTML = [
-        ["BEST", todayBest ? `${formatNumber(todayBest)}点` : "まだなし", "★"],
+        ["BEST", best ? `${formatNumber(best)}点` : "まだなし", "★"],
         ["CONTROL", "左右 + JUMP", "↔"]
       ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
 
-    function showResultStats(score, meters, coinCount, rankLabel) {
+    function showResultStats(score, meters, coinCount, bestScore) {
       setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
         DISTANCE: "M",
         COINS: "C",
-        RANK: "#"
+        BEST: "B"
       };
       resultStats.innerHTML = [
         ["SCORE", formatNumber(score)],
         ["DISTANCE", `${formatNumber(meters)}m`],
         ["COINS", formatNumber(coinCount)],
-        ["RANK", rankLabel]
+        ["BEST", formatNumber(bestScore)]
       ].map(([label, value]) => {
         const icon = statIcons[label] || "";
         return `<div class="result-stat"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
@@ -3856,7 +3855,7 @@ function endGame() {
       if (assetsReady) {
         setStartButtonLoading(false);
         setActionButton(startButton, "START", "▶", "ゲームを開始");
-        setHint("STARTでラン、RANKINGで記録確認", false);
+        setHint("STARTでラン開始", false);
       } else {
         setStartButtonLoading(true);
         setHint("素材を読み込み中...", false);
@@ -3892,8 +3891,8 @@ function endGame() {
       convertCoinsEl.textContent = formatNumber(remainingCoins);
       convertScoreEl.textContent = formatNumber(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = "登録するとランキングに残せます";
-        showResultStats(finalScore, Math.floor(distance), 0, "未登録");
+        overlayText.textContent = "ベスト更新を目指してもう一度";
+        showResultStats(finalScore, Math.floor(distance), 0, best);
         setActionButton(startButton, "タイトルへ", "‹", "タイトル画面へ戻る");
         return;
       }
@@ -3911,7 +3910,7 @@ function endGame() {
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
         overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
-        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), "未登録");
+        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), best);
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -3929,9 +3928,8 @@ function endGame() {
       setHudNumber(todayRankEl, 0);
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
-      overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
-      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, rankLabel);
+      overlayText.textContent = "ベスト更新を目指してもう一度";
+      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, best);
       setStartButtonLoading(false);
       setActionButton(startButton, "タイトルへ", "‹", "タイトル画面へ戻る");
       resultState.phase = "result";
@@ -4220,13 +4218,13 @@ function endGame() {
       setElementHidden(scoreEntry, true);
       scoreEntry.classList.remove("saved");
       dailyRankingEl.innerHTML = "";
+      setElementHidden(dailyRankingEl, true);
       hideResultStats();
       updateTitleMeta();
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
       updateTitleStartButton();
-      setElementHidden(rankingButton, false);
-      setActionButton(rankingButton, "RANKING", "★", "ランキングを見る");
+      setElementHidden(rankingButton, true);
       updateHud();
     }
 
