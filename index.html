@@ -3482,6 +3482,7 @@
     const W = 390;
     const H = 720;
     const FRAME_MS = 1000 / 30;
+    const MAX_CANVAS_DPR = 2;
     const LANES = [98, 195, 292];
     const CENTER_LANE = 1;
     const PLAYER_Y = 590;
@@ -3592,9 +3593,14 @@
 
     function resizeCanvas() {
       const rect = stageEl.getBoundingClientRect();
-      canvas.width = Math.round(rect.width);
-      canvas.height = Math.round(rect.height);
+      const dpr = Math.max(1, Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1));
+      const nextWidth = Math.max(1, Math.round(rect.width * dpr));
+      const nextHeight = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width !== nextWidth) canvas.width = nextWidth;
+      if (canvas.height !== nextHeight) canvas.height = nextHeight;
       ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       draw();
     }
 
