@@ -1913,7 +1913,8 @@
     }
 
     .run-pill.boost::before,
-    .run-pill.slow::before {
+    .run-pill.slow::before,
+    .run-pill.progress::before {
       opacity: 1;
     }
 
@@ -1921,6 +1922,13 @@
       background:
         radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.48), transparent 18px),
         linear-gradient(90deg, rgba(255, 93, 77, 0.12), rgba(255, 93, 77, 0.58));
+    }
+
+    .run-pill.progress::before {
+      background:
+        radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.42), transparent 18px),
+        linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.5));
+      opacity: 0.52;
     }
 
     .run-pill span,
@@ -1998,6 +2006,11 @@
 
     .run-pill.slow span {
       background: rgba(255, 93, 77, 0.18);
+    }
+
+    .run-pill.progress span {
+      color: #fff3a2;
+      background: rgba(255, 198, 41, 0.16);
     }
 
     .footer {
@@ -2948,7 +2961,7 @@ function endGame() {
     }
 
     function updateRunStrip() {
-      timePill.classList.remove("boost", "slow", "active");
+      timePill.classList.remove("boost", "slow", "progress", "active");
       timePill.style.setProperty("--effect-progress", "0%");
       if (boostTimer > 0) {
         const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
@@ -2968,9 +2981,14 @@ function endGame() {
         timePill.style.setProperty("--effect-progress", `${progress}%`);
         return;
       }
-      timePill.querySelector("span").textContent = "TIME";
-      timeStatus.textContent = formatRunTime(runTime);
-      timePill.setAttribute("aria-label", `経過時間 ${formatRunTime(runTime)}`);
+      const milestoneStart = nextDistanceMilestone - DISTANCE_MILESTONE_STEP;
+      const milestoneProgress = Math.max(0, Math.min(100, ((distance - milestoneStart) / DISTANCE_MILESTONE_STEP) * 100));
+      const remainingMeters = Math.max(0, Math.ceil(nextDistanceMilestone - distance));
+      timePill.classList.add("progress");
+      timePill.querySelector("span").textContent = "NEXT";
+      timeStatus.textContent = `${remainingMeters}m`;
+      timePill.setAttribute("aria-label", `次の区切りまで ${remainingMeters}メートル`);
+      timePill.style.setProperty("--effect-progress", `${milestoneProgress}%`);
       timePill.classList.toggle("active", runTime >= TWO_MINUTE_TARGET);
 
     }
