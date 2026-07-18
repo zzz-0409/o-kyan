@@ -96,6 +96,10 @@
         0 0 44px rgba(0, 0, 0, 0.46);
     }
 
+    .app:not([data-screen="playing"]) {
+      gap: 0;
+    }
+
     .hud {
       position: relative;
       z-index: 2;
@@ -130,6 +134,7 @@
       overflow: hidden;
       padding-top: 0;
       padding-bottom: 0;
+      border-width: 0;
       border-color: transparent;
       opacity: 0;
       pointer-events: none;
@@ -2958,6 +2963,7 @@
       max-height: 0;
       padding-top: 0;
       padding-bottom: 0;
+      border-width: 0;
       border-color: transparent;
       opacity: 0;
       pointer-events: none;
