@@ -112,8 +112,33 @@
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 8px 16px rgba(0, 0, 0, 0.26);
+      max-height: 70px;
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
+      transition:
+        opacity 0.18s ease,
+        max-height 0.18s ease,
+        min-height 0.18s ease,
+        padding 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
+    }
+
+    .app:not([data-screen="playing"]) .hud {
+      min-height: 0;
+      max-height: 0;
+      overflow: hidden;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-color: transparent;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+    }
+
+    .app:not([data-screen="playing"]) .hud::before,
+    .app:not([data-screen="playing"]) .hud::after {
+      opacity: 0;
     }
 
     .hud::before {
@@ -3265,7 +3290,7 @@
   </style>
 </head>
 <body>
-  <main class="app">
+  <main class="app" id="app" data-screen="title">
     <header class="hud">
       <h1>RUN DASH!</h1>
       <div class="stat" role="group" aria-label="スコア 0点"><span id="scoreLabel" data-icon="S">SCORE</span><strong id="distance">0</strong></div>
@@ -3330,6 +3355,7 @@
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
+    const appEl = document.getElementById("app");
     const stageEl = document.getElementById("stage");
     const scoreLabel = document.getElementById("scoreLabel");
     const distanceEl = document.getElementById("distance");
@@ -3488,6 +3514,7 @@
         document.activeElement.blur();
       }
       overlayMode = "playing";
+      appEl.dataset.screen = "playing";
       scoreLabel.textContent = "SCORE";
       running = true;
       gameOver = false;
@@ -3536,6 +3563,7 @@ function endGame() {
       running = false;
       gameOver = true;
       overlayMode = "result";
+      appEl.dataset.screen = "result";
       scoreLabel.textContent = "SCORE";
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
@@ -3982,6 +4010,7 @@ function endGame() {
       eventToast.className = "event-toast";
       eventToast.setAttribute("aria-hidden", "true");
       overlayMode = "title";
+      appEl.dataset.screen = "title";
       overlay.dataset.mode = "title";
       stageEl.classList.remove("playing");
       stageEl.classList.add("title-screen");
@@ -4006,6 +4035,7 @@ function endGame() {
       stopCamera();
       clearScoreConversion();
       overlayMode = "ranking";
+      appEl.dataset.screen = "ranking";
       overlay.dataset.mode = "ranking";
       overlay.querySelector(".dialog").classList.remove("new-best");
       setOverlayOpen(true);
