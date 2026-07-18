@@ -3503,6 +3503,7 @@
 
     let running = false;
     let gameOver = false;
+    let autoPaused = false;
     let lastTime = 0;
     let frameCarry = 0;
     let loopActive = false;
@@ -3589,6 +3590,7 @@
       scoreLabel.textContent = "SCORE";
       running = true;
       gameOver = false;
+      autoPaused = false;
       runTime = 0;
       targetTimeAnnounced = false;
       distance = 0;
@@ -3653,6 +3655,7 @@
 function endGame() {
       running = false;
       gameOver = true;
+      autoPaused = false;
       overlayMode = "result";
       appEl.dataset.screen = "result";
       scoreLabel.textContent = "SCORE";
@@ -5804,6 +5807,36 @@ function onPointerDown(event) {
       }
     }
 
+    function pauseForHiddenPage() {
+      if (!running || gameOver || overlayMode !== "playing") return;
+      running = false;
+      autoPaused = true;
+      touchStart = null;
+      jumpBufferTimer = 0;
+      inputFlashTimer = 0;
+      setHint("PAUSED");
+      draw();
+    }
+
+    function resumeFromHiddenPage() {
+      if (!autoPaused || gameOver || overlayMode !== "playing") return;
+      autoPaused = false;
+      running = true;
+      readyTimer = Math.max(readyTimer, READY_GRACE_TIME);
+      lastTime = performance.now();
+      frameCarry = 0;
+      setHint("READY");
+      draw();
+    }
+
+    function onVisibilityChange() {
+      if (document.hidden) {
+        pauseForHiddenPage();
+      } else {
+        resumeFromHiddenPage();
+      }
+    }
+
     function startLoop() {
       if (loopActive) return;
       loopActive = true;
@@ -5825,7 +5858,7 @@ function onPointerDown(event) {
       }
       if (running) {
         update(dt);
-      } else {
+      } else if (!autoPaused) {
         roadScroll += BASE_SPEED * 0.42 * dt;
         updateParticles(dt);
       }
@@ -5849,6 +5882,7 @@ function onPointerDown(event) {
     jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     setHudNumber(bestEl, best);
     updateHud();
