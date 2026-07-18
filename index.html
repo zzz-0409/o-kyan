@@ -380,6 +380,94 @@
       transform: scale(1.015);
     }
 
+    .stage.fx-coin {
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.75),
+        0 0 0 2px rgba(255, 198, 41, 0.2),
+        0 0 0 3px rgba(255, 198, 41, 0.08),
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 0 34px rgba(255, 198, 41, 0.2);
+    }
+
+    .stage.fx-boost {
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.75),
+        0 0 0 2px rgba(59, 215, 255, 0.24),
+        0 0 0 3px rgba(59, 215, 255, 0.08),
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 0 36px rgba(59, 215, 255, 0.22);
+    }
+
+    .stage.fx-slow {
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.75),
+        0 0 0 2px rgba(255, 93, 77, 0.2),
+        0 0 0 3px rgba(255, 93, 77, 0.08),
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        0 0 34px rgba(255, 93, 77, 0.18);
+    }
+
+    .event-toast {
+      position: absolute;
+      left: 50%;
+      top: calc(env(safe-area-inset-top, 0px) + 62px);
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 116px;
+      min-height: 31px;
+      padding: 6px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 44%),
+        rgba(4, 8, 15, 0.84);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 8px 18px rgba(0, 0, 0, 0.26),
+        0 0 16px rgba(255, 198, 41, 0.12);
+      color: #fff8df;
+      font-size: 13px;
+      font-weight: 950;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.58);
+      transform: translate(-50%, -8px) scale(0.96);
+    }
+
+    .event-toast.show {
+      animation: eventToastPop 0.78s ease-out both;
+    }
+
+    .event-toast.coin {
+      border-color: rgba(255, 198, 41, 0.42);
+      color: #fff3a2;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 8px 18px rgba(0, 0, 0, 0.26),
+        0 0 20px rgba(255, 198, 41, 0.2);
+    }
+
+    .event-toast.boost {
+      border-color: rgba(59, 215, 255, 0.48);
+      color: #dffaff;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 8px 18px rgba(0, 0, 0, 0.26),
+        0 0 22px rgba(59, 215, 255, 0.22);
+    }
+
+    .event-toast.slow {
+      border-color: rgba(255, 93, 77, 0.42);
+      color: #ffe0dc;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 8px 18px rgba(0, 0, 0, 0.26),
+        0 0 20px rgba(255, 93, 77, 0.18);
+    }
+
     .move-controls {
       position: absolute;
       left: 14px;
@@ -738,6 +826,8 @@
       overflow: hidden;
       border: 0;
       background:
+        linear-gradient(180deg, rgba(4, 8, 18, 0.08), rgba(4, 8, 18, 0.5) 42%, rgba(3, 6, 13, 0.96)),
+        url("assets/ui/title-bg-campus.png?v=imagegen-9") center / cover no-repeat,
         radial-gradient(circle at 50% 26%, rgba(59, 215, 255, 0.2), transparent 28%),
         linear-gradient(180deg, rgba(8, 18, 43, 0.03), rgba(8, 13, 25, 0.62) 52%, rgba(5, 9, 17, 0.96));
       box-shadow: none;
@@ -993,7 +1083,17 @@
       grid-template-rows: auto auto minmax(0, 1fr) auto;
       width: min(100%, 378px);
       background:
+        linear-gradient(180deg, rgba(4, 8, 18, 0.18), rgba(4, 8, 18, 0.72)),
+        url("assets/ui/result-panel-campus.png?v=imagegen-9") center / cover no-repeat,
         linear-gradient(180deg, rgba(18, 33, 59, 0.98), rgba(5, 10, 22, 0.98));
+    }
+
+    .overlay[data-mode="result"] .dialog:not(.new-best) {
+      background:
+        linear-gradient(180deg, rgba(4, 8, 18, 0.2), rgba(4, 8, 18, 0.8)),
+        url("assets/ui/result-panel-campus.png?v=imagegen-9") center / cover no-repeat,
+        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 58%),
+        linear-gradient(180deg, rgba(17, 29, 48, 0.96), rgba(5, 9, 17, 0.97));
     }
 
     .overlay[data-mode="ranking"] .dialog h2 {
@@ -1439,6 +1539,25 @@
       }
       100% {
         transform: scale(1);
+      }
+    }
+
+    @keyframes eventToastPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -8px) scale(0.94);
+      }
+      16% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.04);
+      }
+      64% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -18px) scale(0.98);
       }
     }
 
@@ -2864,6 +2983,11 @@
       .conversion.show .convert-lane::before {
         animation: none !important;
       }
+
+      .event-toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
     }
 
     @media (max-width: 430px), (max-height: 700px) {
@@ -3134,6 +3258,7 @@
       <div class="stat" role="group" aria-label="ベスト 0点"><span data-icon="B">BEST</span><strong id="best">0</strong></div>
       <div class="stat" role="group" aria-label="コイン 0枚"><span data-icon="C">COINS</span><strong id="todayRank">0</strong></div>
     </header>
+    <div class="event-toast" id="eventToast" aria-live="polite" aria-hidden="true"></div>
 
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720" role="img" aria-label="3レーンのランゲーム画面">3レーンのランゲーム画面</canvas>
@@ -3200,6 +3325,7 @@
     const bestStat = bestEl.closest(".stat");
     const coinStat = todayRankEl.closest(".stat");
     const hintEl = document.getElementById("hint");
+    const eventToast = document.getElementById("eventToast");
     const timePill = document.getElementById("timePill");
     const timeStatus = document.getElementById("timeStatus");
     const overlay = document.getElementById("overlay");
@@ -3226,7 +3352,7 @@
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
-    const ASSET_VERSION = "imagegen-8";
+    const ASSET_VERSION = "imagegen-9";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -3259,7 +3385,7 @@
     };
     backgroundSprites.laneBg.src = assetUrl("assets/backgrounds/lane-background.png");
     backgroundSprites.laneRoad.src = assetUrl("assets/backgrounds/lane-road.png");
-    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/lane-loop-road.png");
+    backgroundSprites.laneLoop.src = assetUrl("assets/backgrounds/campus-road-loop.png");
     Object.values(backgroundSprites).forEach((image) => image.addEventListener("load", draw));
 
     const W = 390;
@@ -3304,6 +3430,8 @@
     let distance = 0;
     let coins = 0;
     let scoreConvertInterval = 0;
+    let eventToastTimer = 0;
+    let stageFxTimer = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
@@ -3386,6 +3514,9 @@
       resetResultState();
       stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
+      stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
+      eventToast.className = "event-toast";
+      eventToast.setAttribute("aria-hidden", "true");
       setElementHidden(scoreEntry, true);
       setElementHidden(rankingButton, true);
       setOverlayOpen(false);
@@ -3654,6 +3785,30 @@ function endGame() {
       }, { once: true });
     }
 
+    function flashStage(type) {
+      const classes = ["fx-coin", "fx-boost", "fx-slow"];
+      stageEl.classList.remove(...classes);
+      clearTimeout(stageFxTimer);
+      void stageEl.offsetWidth;
+      stageEl.classList.add(`fx-${type}`);
+      stageFxTimer = setTimeout(() => {
+        stageEl.classList.remove(...classes);
+      }, 180);
+    }
+
+    function showEventToast(message, type = "coin") {
+      clearTimeout(eventToastTimer);
+      eventToast.className = `event-toast ${type}`;
+      eventToast.textContent = message;
+      eventToast.setAttribute("aria-hidden", "false");
+      void eventToast.offsetWidth;
+      eventToast.classList.add("show");
+      eventToastTimer = setTimeout(() => {
+        eventToast.classList.remove("show");
+        eventToast.setAttribute("aria-hidden", "true");
+      }, 820);
+    }
+
     function setHint(message, animate = true) {
       hintEl.textContent = message;
       if (!animate) return;
@@ -3803,10 +3958,15 @@ function endGame() {
       stopCamera();
       clearScoreConversion();
       resetResultState();
+      clearTimeout(eventToastTimer);
+      clearTimeout(stageFxTimer);
+      eventToast.className = "event-toast";
+      eventToast.setAttribute("aria-hidden", "true");
       overlayMode = "title";
       overlay.dataset.mode = "title";
       stageEl.classList.remove("playing");
       stageEl.classList.add("title-screen");
+      stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       overlay.querySelector(".dialog").classList.remove("new-best");
       setOverlayOpen(true);
       setElementHidden(scoreEntry, true);
@@ -4249,6 +4409,8 @@ function checkCollisions() {
           coinItems.splice(i, 1);
           burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
           pulseStat(coinStat);
+          flashStage("coin");
+          showEventToast("+1 COIN", "coin");
           setHint(`コイン +1 / ${coins}`);
         }
       }
@@ -4262,11 +4424,15 @@ function checkCollisions() {
             boostTimer = BOOST_DURATION;
             slowTimer = 0;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
+            flashStage("boost");
+            showEventToast("BOOST", "boost");
             setHint("スピードアップ");
           } else {
             slowTimer = SLOW_DURATION;
             boostTimer = 0;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
+            flashStage("slow");
+            showEventToast("SLOW", "slow");
             setHint("スピードダウン");
           }
           if (panel.group === "tripleBoost") {
