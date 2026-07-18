@@ -3542,6 +3542,7 @@
     const READY_GRACE_TIME = 1.8;
     const INPUT_FLASH_TIME = 0.18;
     const DODGE_FLASH_TIME = 0.28;
+    const JUMP_CLEAR_FEEDBACK_TIME = 0.24;
     const HAZARD_WARNING_DISTANCE = 430;
     const HAZARD_WARNING_NEAR = 95;
     const BOOST_KICK_TIME = 0.24;
@@ -3591,6 +3592,7 @@
     let ambientPulseTimer = 0;
     let ambientPulseColor = "123, 238, 255";
     let nearMissCooldownTimer = 0;
+    let jumpClearFeedbackTimer = 0;
     let lastObstacleMask = 0;
     let lastObstacleType = "";
     let repeatedObstacleCount = 0;
@@ -3680,6 +3682,7 @@
       ambientPulseTimer = 0;
       ambientPulseColor = "123, 238, 255";
       nearMissCooldownTimer = 0;
+      jumpClearFeedbackTimer = 0;
       lastObstacleMask = 0;
       lastObstacleType = "";
       repeatedObstacleCount = 0;
@@ -4693,6 +4696,7 @@ function spawnCoins() {
       slowKickTimer = Math.max(0, slowKickTimer - dt);
       ambientPulseTimer = Math.max(0, ambientPulseTimer - dt);
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
+      jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -4774,7 +4778,7 @@ function spawnCoins() {
         obstacle.scored = true;
         if (obstacle.type === "hole") {
           if (obstacle.lanes.includes(player.lane) && isHoleSafe()) {
-            burstParticles(LANES[player.lane], PLAYER_Y - 42, "#7beeff", 10, 0.75);
+            triggerJumpClear(LANES[player.lane], PLAYER_Y - 42);
           }
           continue;
         }
@@ -4804,6 +4808,18 @@ function spawnCoins() {
       showEventToast("NICE!", "near");
       playSound("nice");
       vibrate(8);
+    }
+
+    function triggerJumpClear(x, y) {
+      if (jumpClearFeedbackTimer > 0) return;
+      jumpClearFeedbackTimer = JUMP_CLEAR_FEEDBACK_TIME;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.54);
+      ambientPulseColor = "255, 198, 41";
+      burstParticles(x, y, "#f0c247", 16, 0.82);
+      burstGroundDust(x, PLAYER_Y + 8, 8, 0.78);
+      showEventToast("JUMP!", "milestone");
+      playSound("nice");
+      vibrate(10);
     }
 
     function burstParticles(x, y, color, count = 8, spread = 1) {
