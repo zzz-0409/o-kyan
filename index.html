@@ -4628,6 +4628,7 @@ function draw() {
       ctx.fillRect(0, 0, W, H);
       ctx.save();
       drawRoad();
+      drawRunMotion();
       drawSpeedPanels();
       drawCoins();
       drawObstacles();
@@ -4638,6 +4639,44 @@ function draw() {
 function drawRoad() {
       drawSeamlessCampusRoad();
       drawLoopVignette();
+    }
+
+    function drawRunMotion() {
+      if (!running) return;
+      const speedRatio = Math.max(0, Math.min(1, (speed - BASE_SPEED) / (MAX_SPEED * BOOST_FACTOR - BASE_SPEED)));
+      const boostRatio = boostTimer > 0 ? Math.max(0, Math.min(1, boostTimer / BOOST_DURATION)) : 0;
+      const slowRatio = slowTimer > 0 ? Math.max(0, Math.min(1, slowTimer / SLOW_DURATION)) : 0;
+      const intensity = Math.max(0.18, speedRatio * 0.74 + boostRatio * 0.55 - slowRatio * 0.16);
+      const lineCount = boostTimer > 0 ? 18 : 10;
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.lineCap = "round";
+      for (let i = 0; i < lineCount; i += 1) {
+        const laneSide = i % 2 === 0 ? -1 : 1;
+        const laneIndex = i % 3;
+        const baseX = LANES[laneIndex] + laneSide * (34 + (i % 4) * 9);
+        const y = ((roadScroll * (1.26 + i * 0.025) + i * 83) % (H + 180)) - 150;
+        const length = 34 + intensity * 74 + (i % 3) * 10;
+        ctx.strokeStyle = boostTimer > 0
+          ? `rgba(123, 238, 255, ${0.08 + intensity * 0.18})`
+          : `rgba(255, 248, 223, ${0.045 + intensity * 0.09})`;
+        ctx.lineWidth = boostTimer > 0 ? 2.2 : 1.5;
+        ctx.beginPath();
+        ctx.moveTo(baseX, y);
+        ctx.lineTo(baseX, y + length);
+        ctx.stroke();
+      }
+
+      if (boostTimer > 0 || slowTimer > 0) {
+        const color = boostTimer > 0 ? "59, 215, 255" : "255, 93, 77";
+        const glow = ctx.createRadialGradient(W / 2, H * 0.9, 10, W / 2, H * 0.9, H * 0.86);
+        glow.addColorStop(0, `rgba(${color}, ${boostTimer > 0 ? 0.14 : 0.1})`);
+        glow.addColorStop(1, `rgba(${color}, 0)`);
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
+      }
+      ctx.restore();
     }
 
     function drawSeamlessCampusRoad() {
@@ -4987,6 +5026,21 @@ function drawObstacles() {
         ? (playerJumpSprite.complete && playerJumpSprite.naturalWidth > 0 ? playerJumpSprite : playerSprite)
         : runFrame;
       if (activePlayerSprite && activePlayerSprite.complete && activePlayerSprite.naturalWidth > 0) {
+        if (running && !jumping && (boostTimer > 0 || Math.abs(LANES[player.lane] - player.x) > 3)) {
+          ctx.save();
+          ctx.translate(pose.x, pose.y - lift + bob);
+          ctx.rotate(lean);
+          const trailScaleX = 1.22 * pose.scale;
+          const trailScaleY = pose.scale;
+          ctx.scale(trailScaleX, trailScaleY);
+          ctx.globalCompositeOperation = "screen";
+          ctx.globalAlpha = boostTimer > 0 ? 0.14 : 0.08;
+          ctx.filter = "blur(1px)";
+          ctx.drawImage(activePlayerSprite, -spriteW / 2, -spriteH + 8, spriteW, spriteH);
+          ctx.globalAlpha *= 0.72;
+          ctx.drawImage(activePlayerSprite, -spriteW / 2, -spriteH + 15, spriteW, spriteH);
+          ctx.restore();
+        }
         ctx.save();
         ctx.translate(pose.x, pose.y - lift + bob);
         ctx.rotate(lean);
