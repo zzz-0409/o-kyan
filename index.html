@@ -21,8 +21,9 @@
   <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-9">
   <link rel="preload" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-9">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/obstacles/hurdle.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/obstacles/hole.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/obstacles/imagegen-car.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/obstacles/imagegen-hole.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/gimmicks/imagegen-boost-pad.png?v=imagegen-9">
   <title>RUN DASH! オープンキャンパスラン</title>
   <style>
     :root {
@@ -293,6 +294,10 @@
         0 2px 0 rgba(0, 0, 0, 0.7),
         0 0 10px rgba(255, 255, 255, 0.08);
       white-space: nowrap;
+    }
+
+    .stat strong[data-compact="true"] {
+      font-size: 19px;
     }
 
     .stat strong::after {
@@ -3669,9 +3674,9 @@ function endGame() {
       scoreLabel.textContent = "SCORE";
       let remainingCoins = coinCount;
       let shownScore = baseScore;
-      distanceEl.textContent = formatNumber(shownScore);
-      todayRankEl.textContent = formatNumber(remainingCoins);
-      bestEl.textContent = formatNumber(best);
+      setHudNumber(distanceEl, shownScore);
+      setHudNumber(todayRankEl, remainingCoins);
+      setHudNumber(bestEl, best);
       updateHudLabels(shownScore, best, remainingCoins);
       setScoreConversionOpen(true);
       convertCoinsEl.textContent = formatNumber(remainingCoins);
@@ -3687,8 +3692,8 @@ function endGame() {
         flyResultCoin();
         remainingCoins -= 1;
         shownScore += COIN_VALUE;
-        distanceEl.textContent = formatNumber(shownScore);
-        todayRankEl.textContent = formatNumber(Math.max(0, remainingCoins));
+        setHudNumber(distanceEl, shownScore);
+        setHudNumber(todayRankEl, Math.max(0, remainingCoins));
         convertCoinsEl.textContent = formatNumber(Math.max(0, remainingCoins));
         convertScoreEl.textContent = formatNumber(shownScore);
         updateHudLabels(shownScore, best, Math.max(0, remainingCoins));
@@ -3710,8 +3715,8 @@ function endGame() {
       setScoreConversionOpen(true);
       convertCoinsEl.textContent = "0";
       convertScoreEl.textContent = formatNumber(resultState.finalScore);
-      distanceEl.textContent = formatNumber(resultState.finalScore);
-      todayRankEl.textContent = "0";
+      setHudNumber(distanceEl, resultState.finalScore);
+      setHudNumber(todayRankEl, 0);
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
@@ -3761,12 +3766,20 @@ function endGame() {
       coinStat.setAttribute("aria-label", `コイン ${formatNumber(coinValue)}枚`);
     }
 
+    function setHudNumber(element, value) {
+      const full = formatNumber(value);
+      const compact = formatHudNumber(value);
+      element.textContent = compact;
+      element.title = full;
+      element.dataset.compact = compact === full ? "false" : "true";
+    }
+
     function updateHud() {
       const runScore = computeScore();
       scoreLabel.textContent = "SCORE";
-      distanceEl.textContent = formatNumber(runScore);
-      bestEl.textContent = formatNumber(best);
-      todayRankEl.textContent = formatNumber(coins);
+      setHudNumber(distanceEl, runScore);
+      setHudNumber(bestEl, best);
+      setHudNumber(todayRankEl, coins);
       updateHudLabels(runScore, best, coins);
       checkBestPace(runScore);
       updateRunStrip();
@@ -3925,6 +3938,15 @@ function endGame() {
     function formatNumber(value) {
       const number = Number(value) || 0;
       return Math.floor(number).toLocaleString("ja-JP");
+    }
+
+    function formatHudNumber(value) {
+      const number = Math.max(0, Math.floor(Number(value) || 0));
+      if (number < 100000) return formatNumber(number);
+      if (number < 1000000) return `${Math.floor(number / 1000)}K`;
+      const millions = number / 1000000;
+      if (millions < 10) return `${millions.toFixed(1).replace(".0", "")}M`;
+      return `${Math.floor(millions)}M`;
     }
 
     function renderDailyRanking(currentRank = 0, limit = 5, currentEntryId = resultState.entryId) {
@@ -5067,7 +5089,7 @@ function onPointerDown(event) {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
 
-    bestEl.textContent = formatNumber(best);
+    setHudNumber(bestEl, best);
     updateHud();
     resizeCanvas();
     showTitleScreen();
