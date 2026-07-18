@@ -3742,9 +3742,9 @@ function endGame() {
       setStartButtonLoading(false);
       setActionButton(
         startButton,
-        collectedCoins > 0 ? "スキップ" : "タイトルへ",
-        collectedCoins > 0 ? "»" : "‹",
-        collectedCoins > 0 ? "コイン換算をスキップ" : "タイトル画面へ戻る"
+        collectedCoins > 0 ? "スキップ" : "もう一度",
+        collectedCoins > 0 ? "»" : "↻",
+        collectedCoins > 0 ? "コイン換算をスキップ" : "もう一度遊ぶ"
       );
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
@@ -3893,7 +3893,7 @@ function endGame() {
       if (remainingCoins <= 0) {
         overlayText.textContent = "ベスト更新を目指してもう一度";
         showResultStats(finalScore, Math.floor(distance), 0, best);
-        setActionButton(startButton, "タイトルへ", "‹", "タイトル画面へ戻る");
+        setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         return;
       }
 
@@ -3931,13 +3931,13 @@ function endGame() {
       overlayText.textContent = "ベスト更新を目指してもう一度";
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, best);
       setStartButtonLoading(false);
-      setActionButton(startButton, "タイトルへ", "‹", "タイトル画面へ戻る");
+      setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
       resultState.phase = "result";
     }
 
     function skipResultDetails() {
       if (!resultState.active) return;
-      showTitleScreen();
+      resetGame();
     }
 
     function handleMainButton() {
