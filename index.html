@@ -3035,9 +3035,16 @@ function endGame() {
     function checkBestPace(runScore) {
       if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
       bestPaceAnnounced = true;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 1.15);
+      ambientPulseColor = "255, 198, 41";
       burstParticles(player.x, PLAYER_Y - 78, "#f0c247", 20, 1.15);
+      burstParticles(48, PLAYER_Y - 76, "rgba(255, 198, 41, 0.78)", 8, 0.75);
+      burstParticles(W - 48, PLAYER_Y - 76, "rgba(255, 198, 41, 0.78)", 8, 0.75);
       pulseStat(bestStat, "stat-best");
       pulseStat(scoreStat, "stat-best");
+      showEventToast("NEW BEST!", "milestone");
+      playSound("best");
+      vibrate([12, 8, 18]);
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
     }
 
@@ -3157,6 +3164,7 @@ function endGame() {
         jump: { wave: "sine", from: 360, to: 680, duration: 0.13, volume: 0.032 },
         coin: { wave: "triangle", from: 780, to: 1180, duration: 0.11, volume: 0.038 },
         nice: { wave: "sine", from: 620, to: 960, duration: 0.09, volume: 0.026 },
+        best: { wave: "triangle", from: 520, to: 1320, duration: 0.18, volume: 0.036 },
         boost: { wave: "sawtooth", from: 260, to: 720, duration: 0.2, volume: 0.032 },
         slow: { wave: "sine", from: 260, to: 120, duration: 0.2, volume: 0.03 },
         crash: { wave: "square", from: 130, to: 46, duration: 0.24, volume: 0.045 }
