@@ -2253,6 +2253,13 @@
         linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
     }
 
+    .overlay[data-mode="title"] .menu-actions button:first-child:disabled {
+      animation: none;
+      background:
+        linear-gradient(90deg, transparent 0 20%, rgba(255, 255, 255, 0.26) 20% 50%, transparent 50%) center calc(100% - 9px) / 180% 3px no-repeat,
+        linear-gradient(180deg, #dce6eb, #aab8c1 52%, #71808a);
+    }
+
     .overlay[data-mode="title"] .menu-actions button:first-child::after {
       content: "";
       position: absolute;
@@ -3469,6 +3476,8 @@
     const jumpButton = document.getElementById("jumpButton");
     const ASSET_VERSION = "imagegen-9";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
+    let assetsReady = false;
+    let assetsReadyNotified = false;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
       image.src = assetUrl(`assets/character/imagegen-runner-${frame}.png`);
@@ -3493,6 +3502,12 @@
     gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
     gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
     Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
+    const essentialSprites = [
+      ...playerRunSprites,
+      playerJumpSprite,
+      ...Object.values(obstacleSprites),
+      ...Object.values(gimmickSprites)
+    ];
     const W = 390;
     const H = 720;
     const FRAME_MS = 1000 / 30;
@@ -3621,6 +3636,10 @@
     }
 
     function resetGame() {
+      if (!assetsReady) {
+        updateTitleStartButton();
+        return;
+      }
       clearScoreConversion();
       stopCamera();
       if (document.activeElement && typeof document.activeElement.blur === "function") {
@@ -3718,6 +3737,7 @@ function endGame() {
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "登録するとランキングに残せます";
       showResultStats(score, distanceScore, collectedCoins, "未登録");
+      setStartButtonLoading(false);
       setActionButton(
         startButton,
         collectedCoins > 0 ? "スキップ" : "タイトルへ",
@@ -3821,6 +3841,26 @@ function endGame() {
       button.setAttribute("aria-label", label);
     }
 
+    function setStartButtonLoading(isLoading) {
+      startButton.disabled = isLoading;
+      startButton.setAttribute("aria-busy", isLoading ? "true" : "false");
+      if (isLoading) {
+        setActionButton(startButton, "LOADING", "...", "素材を読み込み中");
+      }
+    }
+
+    function updateTitleStartButton() {
+      if (overlayMode !== "title") return;
+      if (assetsReady) {
+        setStartButtonLoading(false);
+        setActionButton(startButton, "START", "▶", "ゲームを開始");
+        setHint("STARTでラン、RANKINGで記録確認", false);
+      } else {
+        setStartButtonLoading(true);
+        setHint("素材を読み込み中...", false);
+      }
+    }
+
     function setOverlayOpen(isOpen) {
       overlay.classList.toggle("show", isOpen);
       overlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
@@ -3890,6 +3930,7 @@ function endGame() {
       const rankLabel = resultState.rank > 0 ? `本日 #${resultState.rank}` : "未登録";
       overlayText.textContent = resultState.rank > 0 ? "ランキング登録済み" : "登録するとランキングに残せます";
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, rankLabel);
+      setStartButtonLoading(false);
       setActionButton(startButton, "タイトルへ", "‹", "タイトル画面へ戻る");
       resultState.phase = "result";
     }
@@ -4181,10 +4222,9 @@ function endGame() {
       updateTitleMeta();
       overlayTitle.textContent = "RUN DASH!";
       overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
-      setActionButton(startButton, "START", "▶", "ゲームを開始");
+      updateTitleStartButton();
       setElementHidden(rankingButton, false);
       setActionButton(rankingButton, "RANKING", "★", "ランキングを見る");
-      setHint("STARTでラン、RANKINGで記録確認", false);
       updateHud();
     }
 
@@ -4203,6 +4243,7 @@ function endGame() {
       overlayTitle.textContent = "ランキング";
       overlayText.textContent = "今日の上位記録";
       renderDailyRanking(0, 10);
+      setStartButtonLoading(false);
       setActionButton(startButton, "もどる", "‹", "タイトル画面へ戻る");
       setElementHidden(rankingButton, true);
     }
@@ -4407,6 +4448,27 @@ function endGame() {
         navigator.serviceWorker.register("./sw.js").catch(() => {
           // Offline support is optional; keep the game playable if registration fails.
         });
+      });
+    }
+
+    function waitForEssentialAssets() {
+      const timeout = new Promise((resolve) => {
+        window.setTimeout(resolve, 2200);
+      });
+      const loading = Promise.allSettled(essentialSprites.map((image) => {
+        if (imageReady(image)) return Promise.resolve();
+        return new Promise((resolve) => {
+          image.addEventListener("load", resolve, { once: true });
+          image.addEventListener("error", resolve, { once: true });
+        });
+      }));
+      Promise.race([loading, timeout]).then(() => {
+        assetsReady = true;
+        if (!assetsReadyNotified) {
+          assetsReadyNotified = true;
+          updateTitleStartButton();
+          draw();
+        }
       });
     }
 function spawnObstacle() {
@@ -6053,6 +6115,7 @@ function onPointerDown(event) {
     updateHud();
     resizeCanvas();
     registerServiceWorker();
+    waitForEssentialAssets();
     showTitleScreen();
     draw();
     lastTime = performance.now();
