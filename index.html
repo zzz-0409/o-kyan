@@ -4727,7 +4727,21 @@ function drawObstacles() {
     function drawObstacleSprite(type, rect) {
       const image = obstacleSprites[type];
       if (image && image.complete && image.naturalWidth > 0) {
+        ctx.save();
+        ctx.shadowColor = type === "hole" ? "rgba(0, 0, 0, 0.72)" : "rgba(0, 0, 0, 0.58)";
+        ctx.shadowBlur = type === "hole" ? 16 : 10;
+        ctx.shadowOffsetY = type === "hole" ? 4 : 6;
         ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = type === "hole" ? 0.16 : 0.1;
+        ctx.strokeStyle = type === "hole" ? "rgba(255, 198, 41, 0.72)" : "rgba(255, 248, 223, 0.66)";
+        ctx.lineWidth = type === "hole" ? 3 : 2;
+        roundedRectPath(rect.x + 3, rect.y + 3, rect.w - 6, rect.h - 6, type === "hole" ? 18 : 8);
+        ctx.stroke();
+        ctx.restore();
         return;
       }
       if (type === "hole") {
@@ -4753,8 +4767,20 @@ function drawObstacles() {
       for (const panel of speedPanels) {
         const r = panelRect(panel);
         const image = panel.kind === "up" ? gimmickSprites.boost : gimmickSprites.slow;
+        ctx.save();
+        ctx.globalAlpha = 0.24;
+        ctx.fillStyle = panel.kind === "up" ? "#ffc629" : "#3bd7ff";
+        ctx.beginPath();
+        ctx.ellipse(r.x + r.w / 2, r.y + r.h / 2 + 8, r.w * 0.52, r.h * 0.36, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
         if (imageReady(image)) {
+          ctx.save();
+          ctx.shadowColor = panel.kind === "up" ? "rgba(255, 198, 41, 0.34)" : "rgba(59, 215, 255, 0.32)";
+          ctx.shadowBlur = 12;
+          ctx.shadowOffsetY = 3;
           ctx.drawImage(image, r.x, r.y, r.w, r.h);
+          ctx.restore();
           continue;
         }
         ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
@@ -4770,7 +4796,18 @@ function drawObstacles() {
       for (const coin of coinItems) {
         const x = LANES[coin.lane];
         const y = coin.y;
-        ctx.fillStyle = "rgba(0,0,0,0.22)";
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const glow = ctx.createRadialGradient(x, y, 2, x, y, COIN_RADIUS + 16);
+        glow.addColorStop(0, "rgba(255, 224, 92, 0.34)");
+        glow.addColorStop(1, "rgba(255, 224, 92, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, COIN_RADIUS + 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
         ctx.beginPath();
         ctx.ellipse(x + 2, y + 4, COIN_RADIUS, COIN_RADIUS * 0.55, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -4817,12 +4854,11 @@ function drawObstacles() {
       const lean = pose.angle + (isJumping() ? 0 : Math.sin(runPhase) * 0.07);
       const spriteW = 64;
       const spriteH = 84;
-      ctx.fillStyle = "rgba(0,0,0,0.28)";
       ctx.save();
-      ctx.translate(pose.x, pose.y - lift + bob);
-      ctx.rotate(pose.angle);
-      ctx.scale(pose.scale, pose.scale);
-      ctx.fillRect(-PLAYER_W / 2 + 5, -5, PLAYER_W - 10, isJumping() ? 5 : 8);
+      ctx.fillStyle = isJumping() ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.3)";
+      ctx.beginPath();
+      ctx.ellipse(pose.x + 2, pose.y + 3, PLAYER_W * 0.5, isJumping() ? 5 : 8, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
       if (player.holdTimer > 0) {
         const ratio = Math.max(0, Math.min(1, player.holdTimer / 0.22));
