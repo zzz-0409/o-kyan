@@ -2466,6 +2466,7 @@
     const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
+    const COIN_OBSTACLE_CLEARANCE = 118;
     const SWIPE_MIN = 36;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
@@ -3211,8 +3212,7 @@ function endGame() {
     }
 function spawnObstacle() {
       if (!hasObstacleClearance()) {
-        spawnTimer = 0.35;
-        return;
+        return false;
       }
       const difficulty = difficultyRatio();
       const canSpawnHole = runTime >= FIRST_HOLE_TIME;
@@ -3221,18 +3221,28 @@ function spawnObstacle() {
         : 0.2 + difficulty * 0.14;
       const type = canSpawnHole && Math.random() < holeChance ? "hole" : "car";
       if (type === "hole") {
-        addObstacle({ type, lanes: [0, 1, 2], y: -118, h: 52, group: "solo" });
-        return;
+        const obstacle = { type, lanes: [0, 1, 2], y: -118, h: 52, group: "solo" };
+        if (!isObstacleSafeFromCoins(obstacle)) {
+          return false;
+        }
+        addObstacle(obstacle);
+        return true;
       }
 
       const wide = runTime > WARMUP_DURATION && Math.random() < 0.1 + difficulty * 0.16;
+      let obstacle;
       if (wide) {
         const left = chooseWideBlockLeft();
-        addObstacle({ type, lanes: [left, left + 1], y: -132, h: 82, group: "solo" });
+        obstacle = { type, lanes: [left, left + 1], y: -132, h: 82, group: "solo" };
       } else {
         const lane = chooseSingleBlockLane();
-        addObstacle({ type, lanes: [lane], y: -132, h: 82, group: "solo" });
+        obstacle = { type, lanes: [lane], y: -132, h: 82, group: "solo" };
       }
+      if (!isObstacleSafeFromCoins(obstacle)) {
+        return false;
+      }
+      addObstacle(obstacle);
+      return true;
     }
 
     function addObstacle(obstacle) {
@@ -3307,14 +3317,23 @@ function spawnCoins() {
       const count = 3 + Math.floor(Math.random() * 3);
       const pattern = Math.random();
       const patternDirection = coinPatternFlip;
+      const spawnedCoins = [];
       for (let i = 0; i < count; i += 1) {
         const nextLane = coinLaneForPattern(lane, i, pattern, patternDirection);
-        coinItems.push({ lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false });
+        const coin = { lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false };
+        if (isCoinSafeFromObstacles(coin)) {
+          spawnedCoins.push(coin);
+        }
       }
+      if (!spawnedCoins.length) {
+        coinTimer = 0.45;
+        return;
+      }
+      coinItems.push(...spawnedCoins);
       if (pattern >= 0.5) {
         coinPatternFlip *= -1;
       }
-      lastCoinLane = coinItems[coinItems.length - 1]?.lane ?? lane;
+      lastCoinLane = spawnedCoins[spawnedCoins.length - 1]?.lane ?? lane;
     }
 
     function chooseCoinStartLane() {
@@ -3337,10 +3356,15 @@ function spawnCoins() {
     function hasCoinClearance() {
       const coinTop = -250;
       const coinBottom = -105;
+      const blockedLanes = new Set();
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
         const obstacleBottom = obstacle.y + obstacle.h;
-        if (rangesTooClose(coinTop, coinBottom, obstacleTop, obstacleBottom, 80)) {
+        if (!rangesTooClose(coinTop, coinBottom, obstacleTop, obstacleBottom, COIN_OBSTACLE_CLEARANCE)) {
+          continue;
+        }
+        obstacle.lanes.forEach((lane) => blockedLanes.add(lane));
+        if (blockedLanes.size >= 3) {
           return false;
         }
       }
@@ -3393,6 +3417,24 @@ function spawnCoins() {
         }
       }
       return true;
+    }
+
+    function isCoinSafeFromObstacles(coin) {
+      const coinTop = coin.y - coin.r;
+      const coinBottom = coin.y + coin.r;
+      return obstacles.every((obstacle) => {
+        if (!obstacle.lanes.includes(coin.lane)) return true;
+        return !rangesTooClose(coinTop, coinBottom, obstacle.y, obstacle.y + obstacle.h, COIN_OBSTACLE_CLEARANCE);
+      });
+    }
+
+    function isObstacleSafeFromCoins(obstacle) {
+      return coinItems.every((coin) => {
+        if (!obstacle.lanes.includes(coin.lane)) return true;
+        const coinTop = coin.y - coin.r;
+        const coinBottom = coin.y + coin.r;
+        return !rangesTooClose(obstacle.y, obstacle.y + obstacle.h, coinTop, coinBottom, COIN_OBSTACLE_CLEARANCE);
+      });
     }
 
     function rangesTooClose(aTop, aBottom, bTop, bBottom, clearance) {
@@ -3455,12 +3497,15 @@ function spawnCoins() {
       {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
-          spawnObstacle();
-          const rate = speed / BASE_SPEED;
-          const difficulty = difficultyRatio();
-          const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
-          spawnTimer = Math.max(0.86, 1.36 + warmupSpace + obstacleSpacingBonus - difficulty * 0.2 - rate * 0.04 + Math.random() * 0.5);
-          obstacleSpacingBonus = 0;
+          if (spawnObstacle()) {
+            const rate = speed / BASE_SPEED;
+            const difficulty = difficultyRatio();
+            const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
+            spawnTimer = Math.max(0.86, 1.36 + warmupSpace + obstacleSpacingBonus - difficulty * 0.2 - rate * 0.04 + Math.random() * 0.5);
+            obstacleSpacingBonus = 0;
+          } else {
+            spawnTimer = 0.35;
+          }
         }
 
         coinTimer -= dt;
