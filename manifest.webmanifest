@@ -1,7 +1,7 @@
 {
-  "name": "RUN DASH! オープンキャンパスラン",
+  "name": "RUN DASH! Open Campus Run",
   "short_name": "RUN DASH!",
-  "description": "オープンキャンパスで気軽に遊べる3レーン・スワイプランゲーム",
+  "description": "A quick three-lane swipe runner for open campus visitors.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

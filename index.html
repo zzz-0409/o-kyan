@@ -631,7 +631,8 @@
       pointer-events: none;
     }
 
-    .control-button:active {
+    .control-button:active,
+    .control-button.is-pressed {
       transform: translateY(4px) scale(0.94);
       filter: brightness(1.06);
       box-shadow:
@@ -672,7 +673,8 @@
       letter-spacing: 0;
     }
 
-    .jump-control .control-button:active {
+    .jump-control .control-button:active,
+    .jump-control .control-button.is-pressed {
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.35),
         inset 0 -2px 0 rgba(101, 63, 0, 0.3),
@@ -3479,7 +3481,7 @@
     const SLOW_DURATION = 3.7;
     const SLOW_FACTOR = 0.55;
     const BOOST_DURATION = 3.0;
-    const BOOST_FACTOR = 1.55;
+    const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
     const SWIPE_MIN = 36;
@@ -3491,6 +3493,9 @@
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
     const READY_GRACE_TIME = 1.8;
+    const INPUT_FLASH_TIME = 0.18;
+    const DODGE_FLASH_TIME = 0.28;
+    const BOOST_KICK_TIME = 0.24;
     const TWO_MINUTE_TARGET = 120;
     const REGISTER_SAVE_TOKEN = Symbol("register-save");
 
@@ -3522,6 +3527,12 @@
     let readyTimer = 0;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
+    let inputFlashTimer = 0;
+    let inputFlashDirection = 0;
+    let dodgeFlashTimer = 0;
+    let dodgeFlashX = LANES[CENTER_LANE];
+    let boostKickTimer = 0;
+    let slowKickTimer = 0;
     let touchStart = null;
     let overlayMode = "title";
     let cameraStream = null;
@@ -3581,6 +3592,12 @@
       readyTimer = READY_GRACE_TIME;
       jumpTimer = 0;
       jumpBufferTimer = 0;
+      inputFlashTimer = 0;
+      inputFlashDirection = 0;
+      dodgeFlashTimer = 0;
+      dodgeFlashX = LANES[CENTER_LANE];
+      boostKickTimer = 0;
+      slowKickTimer = 0;
       obstacles = [];
       coinItems = [];
       speedPanels = [];
@@ -4209,6 +4226,8 @@ function endGame() {
       if (nextLane === player.lane) return;
       player.lane = nextLane;
       player.holdTimer = 0.18;
+      inputFlashTimer = INPUT_FLASH_TIME;
+      inputFlashDirection = direction;
       burstGroundDust(fromX, PLAYER_Y + 8, 7, 0.72);
       playSound("move");
       vibrate(10);
@@ -4231,6 +4250,8 @@ function endGame() {
       jumpTimer = JUMP_DURATION;
       jumpBufferTimer = 0;
       player.holdTimer = 0.22;
+      inputFlashTimer = INPUT_FLASH_TIME;
+      inputFlashDirection = 0;
       burstGroundDust(player.x, PLAYER_Y + 8, 9, 0.82);
       playSound("jump");
       vibrate(14);
@@ -4290,6 +4311,15 @@ function endGame() {
         // Vibration is optional feedback; ignore unsupported browser cases.
       }
     }
+
+    function registerServiceWorker() {
+      if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {
+          // Offline support is optional; keep the game playable if registration fails.
+        });
+      });
+    }
 function spawnObstacle() {
       if (!hasObstacleClearance()) {
         spawnTimer = 0.35;
@@ -4299,7 +4329,7 @@ function spawnObstacle() {
       const canSpawnHole = runTime >= FIRST_HOLE_TIME;
       const type = canSpawnHole && Math.random() < 0.2 + difficulty * 0.16 ? "hole" : "car";
       if (type === "hole") {
-        obstacles.push({ type, lanes: [0, 1, 2], y: -62, h: 52, group: "solo" });
+        obstacles.push({ type, lanes: [0, 1, 2], y: -118, h: 52, group: "solo" });
         return;
       }
 
@@ -4309,9 +4339,9 @@ function spawnObstacle() {
       const wide = runTime > WARMUP_DURATION && Math.random() < 0.1 + difficulty * 0.16;
       if (wide) {
         const left = chooseWideBlockLeft();
-        obstacles.push({ type, lanes: [left, left + 1], y: -92, h: 82, group: "solo" });
+        obstacles.push({ type, lanes: [left, left + 1], y: -132, h: 82, group: "solo" });
       } else {
-        obstacles.push({ type, lanes: [lane], y: -92, h: 82, group: "solo" });
+        obstacles.push({ type, lanes: [lane], y: -132, h: 82, group: "solo" });
       }
     }
 
@@ -4324,8 +4354,8 @@ function spawnObstacle() {
     }
 
     function hasObstacleClearance() {
-      const obstacleTop = -80;
-      const obstacleBottom = -18;
+      const obstacleTop = -132;
+      const obstacleBottom = -38;
       for (const obstacle of obstacles) {
         const currentTop = obstacle.y;
         const currentBottom = obstacle.y + obstacle.h;
@@ -4354,13 +4384,13 @@ function spawnCoins() {
       const stagger = Math.random() < 0.35;
       for (let i = 0; i < count; i += 1) {
         const nextLane = stagger ? Math.max(0, Math.min(2, lane + (i % 2 === 0 ? 0 : (lane === 2 ? -1 : 1)))) : lane;
-        coinItems.push({ lane: nextLane, y: -42 - i * 34, r: COIN_RADIUS, collected: false });
+        coinItems.push({ lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false });
       }
     }
 
     function hasCoinClearance() {
-      const coinTop = -150;
-      const coinBottom = -22;
+      const coinTop = -250;
+      const coinBottom = -105;
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
         const obstacleBottom = obstacle.y + obstacle.h;
@@ -4377,7 +4407,7 @@ function spawnCoins() {
         return;
       }
       if (Math.random() < 0.28) {
-        const y = -72;
+        const y = -124;
         const groupId = `boost-${Date.now()}-${Math.random()}`;
         for (let lane = 0; lane < 3; lane += 1) {
           speedPanels.push({ lane, kind: "up", y, h: 58, used: false, group: "tripleBoost", groupId });
@@ -4386,11 +4416,11 @@ function spawnCoins() {
       }
       const lane = Math.floor(Math.random() * 3);
       const kind = Math.random() < 0.46 ? "up" : "down";
-      speedPanels.push({ lane, kind, y: -72, h: 58, used: false, group: "solo", groupId: "" });
+      speedPanels.push({ lane, kind, y: -124, h: 58, used: false, group: "solo", groupId: "" });
     }
 
     function hasPanelClearance() {
-      const panelTop = -72;
+      const panelTop = -124;
       const panelBottom = panelTop + 58;
       for (const obstacle of obstacles) {
         const obstacleTop = obstacle.y;
@@ -4417,6 +4447,10 @@ function spawnCoins() {
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
       readyTimer = Math.max(0, readyTimer - dt);
+      inputFlashTimer = Math.max(0, inputFlashTimer - dt);
+      dodgeFlashTimer = Math.max(0, dodgeFlashTimer - dt);
+      boostKickTimer = Math.max(0, boostKickTimer - dt);
+      slowKickTimer = Math.max(0, slowKickTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -4492,6 +4526,8 @@ function spawnCoins() {
         if (!obstacle.lanes.includes(player.lane)) {
           const clearX = LANES[player.lane];
           const clearY = PLAYER_Y - 34;
+          dodgeFlashTimer = DODGE_FLASH_TIME;
+          dodgeFlashX = clearX;
           burstParticles(clearX, clearY, obstacle.lanes.length > 1 ? "#f0c247" : "#7beeff", 8, 0.65);
         }
       }
@@ -4597,6 +4633,9 @@ function checkCollisions() {
           if (panel.kind === "up") {
             boostTimer = BOOST_DURATION;
             slowTimer = 0;
+            boostKickTimer = BOOST_KICK_TIME;
+            screenShakeTimer = Math.max(screenShakeTimer, 0.1);
+            screenShakePower = Math.max(screenShakePower, 2.6);
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
             flashStage("boost");
             playSound("boost");
@@ -4605,6 +4644,7 @@ function checkCollisions() {
           } else {
             slowTimer = SLOW_DURATION;
             boostTimer = 0;
+            slowKickTimer = BOOST_KICK_TIME;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
             flashStage("slow");
             playSound("slow");
@@ -4725,6 +4765,7 @@ function draw() {
       drawRoad();
       drawRunMotion();
       drawLaneFocus();
+      drawRunFeedback();
       drawSpeedPanels();
       drawCoins();
       drawObstacles();
@@ -4766,13 +4807,75 @@ function drawRoad() {
       ctx.restore();
     }
 
+    function drawRunFeedback() {
+      if (!running) return;
+      if (boostKickTimer > 0 || slowKickTimer > 0) {
+        const boostRatio = Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME));
+        const slowRatio = Math.max(0, Math.min(1, slowKickTimer / BOOST_KICK_TIME));
+        const ratio = Math.max(boostRatio, slowRatio);
+        const color = boostRatio >= slowRatio ? "123, 238, 255" : "255, 93, 77";
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.18 * ratio;
+        ctx.fillStyle = `rgba(${color}, 1)`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 0.28 * ratio;
+        ctx.fillStyle = `rgba(${color}, 1)`;
+        ctx.fillRect(0, 0, 10 + 14 * ratio, H);
+        ctx.fillRect(W - (10 + 14 * ratio), 0, 10 + 14 * ratio, H);
+        ctx.restore();
+      }
+
+      if (inputFlashTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, inputFlashTimer / INPUT_FLASH_TIME));
+        const x = player.x;
+        const y = PLAYER_Y - 24;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.24 + ratio * 0.32;
+        ctx.strokeStyle = "rgba(123, 238, 255, 0.95)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        if (inputFlashDirection === 0) {
+          ctx.ellipse(x, y + 8, 34 + (1 - ratio) * 24, 10 + (1 - ratio) * 5, 0, 0, Math.PI * 2);
+        } else {
+          const side = inputFlashDirection;
+          ctx.moveTo(x - side * (58 - ratio * 20), y + 16);
+          ctx.quadraticCurveTo(x - side * 24, y - 8, x + side * 8, y - 2);
+          ctx.moveTo(x - side * (46 - ratio * 18), y + 32);
+          ctx.quadraticCurveTo(x - side * 16, y + 16, x + side * 20, y + 18);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (dodgeFlashTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, dodgeFlashTimer / DODGE_FLASH_TIME));
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.18 + ratio * 0.36;
+        ctx.strokeStyle = "rgba(255, 198, 41, 0.95)";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        for (let i = -1; i <= 1; i += 1) {
+          const offset = i * 13;
+          ctx.beginPath();
+          ctx.moveTo(dodgeFlashX + offset, PLAYER_Y - 90 - (1 - ratio) * 34);
+          ctx.lineTo(dodgeFlashX + offset * 0.3, PLAYER_Y - 36);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
     function drawRunMotion() {
       if (!running) return;
       const speedRatio = Math.max(0, Math.min(1, (speed - BASE_SPEED) / (MAX_SPEED * BOOST_FACTOR - BASE_SPEED)));
       const boostRatio = boostTimer > 0 ? Math.max(0, Math.min(1, boostTimer / BOOST_DURATION)) : 0;
       const slowRatio = slowTimer > 0 ? Math.max(0, Math.min(1, slowTimer / SLOW_DURATION)) : 0;
-      const intensity = Math.max(0.18, speedRatio * 0.74 + boostRatio * 0.55 - slowRatio * 0.16);
-      const lineCount = boostTimer > 0 ? 18 : 10;
+      const kickRatio = boostKickTimer > 0 ? Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME)) : 0;
+      const intensity = Math.max(0.18, speedRatio * 0.74 + boostRatio * 0.55 + kickRatio * 0.38 - slowRatio * 0.16);
+      const lineCount = boostTimer > 0 ? 20 : 10;
 
       ctx.save();
       ctx.globalCompositeOperation = "screen";
@@ -4782,7 +4885,7 @@ function drawRoad() {
         const laneIndex = i % 3;
         const baseX = LANES[laneIndex] + laneSide * (34 + (i % 4) * 9);
         const y = ((roadScroll * (1.26 + i * 0.025) + i * 83) % (H + 180)) - 150;
-        const length = 34 + intensity * 74 + (i % 3) * 10;
+        const length = 34 + intensity * 84 + kickRatio * 26 + (i % 3) * 10;
         ctx.strokeStyle = boostTimer > 0
           ? `rgba(123, 238, 255, ${0.08 + intensity * 0.18})`
           : `rgba(255, 248, 223, ${0.045 + intensity * 0.09})`;
@@ -5019,19 +5122,11 @@ function drawObstacles() {
       const image = obstacleSprites[type];
       if (image && image.complete && image.naturalWidth > 0) {
         ctx.save();
+        drawHazardAura(type, rect);
         ctx.shadowColor = type === "hole" ? "rgba(0, 0, 0, 0.72)" : "rgba(0, 0, 0, 0.58)";
         ctx.shadowBlur = type === "hole" ? 16 : 10;
         ctx.shadowOffsetY = type === "hole" ? 4 : 6;
         ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        ctx.globalAlpha = type === "hole" ? 0.16 : 0.1;
-        ctx.strokeStyle = type === "hole" ? "rgba(255, 198, 41, 0.72)" : "rgba(255, 248, 223, 0.66)";
-        ctx.lineWidth = type === "hole" ? 3 : 2;
-        roundedRectPath(rect.x + 3, rect.y + 3, rect.w - 6, rect.h - 6, type === "hole" ? 18 : 8);
-        ctx.stroke();
         ctx.restore();
         return;
       }
@@ -5054,6 +5149,35 @@ function drawObstacles() {
       }
     }
 
+    function drawHazardAura(type, rect) {
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h * 0.78;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const aura = ctx.createRadialGradient(cx, cy, 3, cx, cy, rect.w * 0.76);
+      if (type === "hole") {
+        aura.addColorStop(0, "rgba(255, 198, 41, 0.22)");
+        aura.addColorStop(0.48, "rgba(255, 93, 77, 0.16)");
+      } else {
+        aura.addColorStop(0, "rgba(255, 93, 77, 0.18)");
+        aura.addColorStop(0.52, "rgba(255, 198, 41, 0.1)");
+      }
+      aura.addColorStop(1, "rgba(255, 198, 41, 0)");
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rect.w * 0.7, rect.h * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (type === "hole") {
+        ctx.globalAlpha = 0.3 + Math.sin(roadScroll * 0.07 + rect.y * 0.03) * 0.1;
+        ctx.strokeStyle = "rgba(255, 198, 41, 0.72)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(cx, rect.y + rect.h / 2, rect.w * 0.46, rect.h * 0.33, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     function drawSpeedPanels() {
       for (const panel of speedPanels) {
         const r = panelRect(panel);
@@ -5072,6 +5196,7 @@ function drawObstacles() {
           ctx.shadowOffsetY = 3;
           ctx.drawImage(image, r.x, r.y, r.w, r.h);
           ctx.restore();
+          drawSpeedPanelShimmer(panel, r);
           continue;
         }
         ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
@@ -5080,7 +5205,34 @@ function drawObstacles() {
         ctx.font = "800 18px Segoe UI, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(panel.kind === "up" ? ">>" : "<<", r.x + r.w / 2, r.y + 35);
+        drawSpeedPanelShimmer(panel, r);
       }
+    }
+
+    function drawSpeedPanelShimmer(panel, rect) {
+      const pulse = 0.5 + Math.sin(roadScroll * 0.06 + rect.y * 0.05) * 0.5;
+      const color = panel.kind === "up" ? "255, 229, 120" : "123, 238, 255";
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = 0.16 + pulse * 0.22;
+      ctx.strokeStyle = `rgba(${color}, 0.9)`;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      const centerY = rect.y + rect.h * 0.5;
+      for (let i = -1; i <= 1; i += 1) {
+        const y = centerY + i * 12 + (pulse - 0.5) * 5;
+        ctx.beginPath();
+        if (panel.kind === "up") {
+          ctx.moveTo(rect.x + 15, y + 8);
+          ctx.lineTo(rect.x + rect.w / 2, y - 7);
+          ctx.lineTo(rect.x + rect.w - 15, y + 8);
+        } else {
+          ctx.moveTo(rect.x + 16, y - 6);
+          ctx.lineTo(rect.x + rect.w - 16, y - 6);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     function drawCoins() {
@@ -5272,7 +5424,18 @@ function onPointerDown(event) {
     function onControlButton(event, action) {
       event.preventDefault();
       event.stopPropagation();
+      pressControlButton(event.currentTarget);
       action();
+    }
+
+    function pressControlButton(button) {
+      if (!button || !button.classList) return;
+      button.classList.remove("is-pressed");
+      void button.offsetWidth;
+      button.classList.add("is-pressed");
+      window.setTimeout(() => {
+        button.classList.remove("is-pressed");
+      }, 120);
     }
 
     function handleScreenDirection(dx, dy) {
@@ -5372,6 +5535,7 @@ function onPointerDown(event) {
     setHudNumber(bestEl, best);
     updateHud();
     resizeCanvas();
+    registerServiceWorker();
     showTitleScreen();
     draw();
     lastTime = performance.now();
