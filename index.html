@@ -3508,6 +3508,8 @@
     let stageFxTimer = 0;
     let screenShakeTimer = 0;
     let screenShakePower = 0;
+    let audioContext = null;
+    let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
@@ -3594,6 +3596,8 @@
       stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       eventToast.className = "event-toast";
       eventToast.setAttribute("aria-hidden", "true");
+      unlockAudio();
+      playSound("start");
       setElementHidden(scoreEntry, true);
       setElementHidden(rankingButton, true);
       setOverlayOpen(false);
@@ -4206,6 +4210,7 @@ function endGame() {
       player.lane = nextLane;
       player.holdTimer = 0.18;
       burstGroundDust(fromX, PLAYER_Y + 8, 7, 0.72);
+      playSound("move");
       vibrate(10);
       setHint(direction < 0 ? "左へ移動" : "右へ移動");
     }
@@ -4227,8 +4232,54 @@ function endGame() {
       jumpBufferTimer = 0;
       player.holdTimer = 0.22;
       burstGroundDust(player.x, PLAYER_Y + 8, 9, 0.82);
+      playSound("jump");
       vibrate(14);
       setHint("ジャンプ");
+    }
+
+    function unlockAudio() {
+      if (typeof window === "undefined") return null;
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return null;
+      if (!audioContext) {
+        audioContext = new AudioCtor();
+      }
+      if (audioContext.state === "suspended") {
+        audioContext.resume().catch(() => {});
+      }
+      return audioContext;
+    }
+
+    function playSound(type) {
+      const audio = unlockAudio();
+      if (!audio) return;
+      const now = audio.currentTime;
+      const minGap = type === "coin" ? 0.035 : 0.055;
+      if (lastSoundAt[type] && now - lastSoundAt[type] < minGap) return;
+      lastSoundAt[type] = now;
+
+      const presets = {
+        start: { wave: "triangle", from: 220, to: 520, duration: 0.16, volume: 0.035 },
+        move: { wave: "triangle", from: 260, to: 190, duration: 0.07, volume: 0.024 },
+        jump: { wave: "sine", from: 360, to: 680, duration: 0.13, volume: 0.032 },
+        coin: { wave: "triangle", from: 780, to: 1180, duration: 0.11, volume: 0.038 },
+        boost: { wave: "sawtooth", from: 260, to: 720, duration: 0.2, volume: 0.032 },
+        slow: { wave: "sine", from: 260, to: 120, duration: 0.2, volume: 0.03 },
+        crash: { wave: "square", from: 130, to: 46, duration: 0.24, volume: 0.045 }
+      };
+      const preset = presets[type] || presets.move;
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = preset.wave;
+      osc.frequency.setValueAtTime(preset.from, now);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, preset.to), now + preset.duration);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(preset.volume, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + preset.duration);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(now);
+      osc.stop(now + preset.duration + 0.02);
     }
 
     function vibrate(pattern) {
@@ -4532,6 +4583,7 @@ function checkCollisions() {
           burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
           pulseStat(coinStat);
           flashStage("coin");
+          playSound("coin");
           showEventToast("+1 COIN", "coin");
           setHint(`コイン +1 / ${coins}`);
         }
@@ -4547,6 +4599,7 @@ function checkCollisions() {
             slowTimer = 0;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
             flashStage("boost");
+            playSound("boost");
             showEventToast("BOOST", "boost");
             setHint("スピードアップ");
           } else {
@@ -4554,6 +4607,7 @@ function checkCollisions() {
             boostTimer = 0;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
             flashStage("slow");
+            playSound("slow");
             showEventToast("SLOW", "slow");
             setHint("スピードダウン");
           }
@@ -4574,6 +4628,7 @@ function checkCollisions() {
       flashStage("slow");
       burstParticles(player.x, PLAYER_Y - 30, "#ff5d4d", 24, 1.25);
       burstGroundDust(player.x, PLAYER_Y + 8, 14, 1.2);
+      playSound("crash");
       vibrate([28, 18, 36]);
       endGame();
     }
