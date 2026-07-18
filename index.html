@@ -510,6 +510,21 @@
         0 0 20px rgba(255, 93, 77, 0.18);
     }
 
+    .event-toast.milestone {
+      min-width: 118px;
+      border-color: rgba(255, 198, 41, 0.56);
+      color: #fff8df;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 46%),
+        linear-gradient(135deg, rgba(255, 198, 41, 0.28), rgba(59, 215, 255, 0.18)),
+        rgba(4, 8, 15, 0.9);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 8px 18px rgba(0, 0, 0, 0.28),
+        0 0 24px rgba(255, 198, 41, 0.22),
+        0 0 20px rgba(59, 215, 255, 0.12);
+    }
+
     .move-controls {
       position: absolute;
       left: 12px;
@@ -3498,6 +3513,7 @@
     const DODGE_FLASH_TIME = 0.28;
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
+    const DISTANCE_MILESTONE_STEP = 500;
     const TWO_MINUTE_TARGET = 120;
     const REGISTER_SAVE_TOKEN = Symbol("register-save");
 
@@ -3509,6 +3525,7 @@
     let loopActive = false;
     let runTime = 0;
     let targetTimeAnnounced = false;
+    let nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
     let distance = 0;
     let coins = 0;
     let scoreConvertInterval = 0;
@@ -3593,6 +3610,7 @@
       autoPaused = false;
       runTime = 0;
       targetTimeAnnounced = false;
+      nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
       distance = 0;
       coins = 0;
       bestPaceAnnounced = false;
@@ -3997,6 +4015,23 @@ function endGame() {
       if (targetTimeAnnounced || runTime < TWO_MINUTE_TARGET) return;
       targetTimeAnnounced = true;
       setHint("2分突破！ そのまま記録更新へ");
+    }
+
+    function checkDistanceMilestone() {
+      if (distance < nextDistanceMilestone) return;
+      const milestone = nextDistanceMilestone;
+      nextDistanceMilestone += DISTANCE_MILESTONE_STEP;
+      const isBigMilestone = milestone % 1000 === 0;
+      ambientPulseTimer = AMBIENT_PULSE_TIME;
+      ambientPulseColor = isBigMilestone ? "255, 198, 41" : "123, 238, 255";
+      burstParticles(W / 2, PLAYER_Y - 120, isBigMilestone ? "#f0c247" : "#7beeff", isBigMilestone ? 18 : 12, 1.1);
+      burstParticles(48, PLAYER_Y - 76, `rgba(${ambientPulseColor}, 0.76)`, isBigMilestone ? 8 : 5, 0.7);
+      burstParticles(W - 48, PLAYER_Y - 76, `rgba(${ambientPulseColor}, 0.76)`, isBigMilestone ? 8 : 5, 0.7);
+      pulseStat(scoreStat, isBigMilestone ? "stat-best" : "stat-pop");
+      showEventToast(`${formatNumber(milestone)}m!`, "milestone");
+      playSound(isBigMilestone ? "boost" : "coin");
+      vibrate(isBigMilestone ? [18, 12, 18] : 10);
+      setHint(`${formatNumber(milestone)}m RUN`);
     }
 
     function checkBestPace(runScore) {
@@ -4577,6 +4612,7 @@ function spawnCoins() {
         burstGroundDust(player.x, PLAYER_Y + 8, 10, 0.9);
       }
       distance += (speed * dt) / 12;
+      checkDistanceMilestone();
       checkPlayTimeTarget();
       roadScroll += speed * dt;
       const targetX = LANES[player.lane];
