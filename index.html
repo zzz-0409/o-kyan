@@ -412,25 +412,25 @@
     .event-toast {
       position: absolute;
       left: 50%;
-      top: calc(env(safe-area-inset-top, 0px) + 62px);
+      top: calc(env(safe-area-inset-top, 0px) + 58px);
       z-index: 5;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 116px;
-      min-height: 31px;
-      padding: 6px 14px;
+      min-width: 102px;
+      min-height: 28px;
+      padding: 5px 12px;
       border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 999px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 44%),
-        rgba(4, 8, 15, 0.84);
+        rgba(4, 8, 15, 0.88);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        0 8px 18px rgba(0, 0, 0, 0.26),
+        0 7px 15px rgba(0, 0, 0, 0.24),
         0 0 16px rgba(255, 198, 41, 0.12);
       color: #fff8df;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 950;
       line-height: 1;
       opacity: 0;
@@ -440,7 +440,7 @@
     }
 
     .event-toast.show {
-      animation: eventToastPop 0.78s ease-out both;
+      animation: eventToastPop 0.68s ease-out both;
     }
 
     .event-toast.coin {
@@ -472,14 +472,14 @@
 
     .move-controls {
       position: absolute;
-      left: 14px;
-      bottom: 14px;
+      left: 12px;
+      bottom: 12px;
       z-index: 2;
       display: grid;
-      grid-template-columns: repeat(2, 50px);
-      grid-template-rows: 50px;
-      gap: 10px;
-      padding: 8px;
+      grid-template-columns: repeat(2, 48px);
+      grid-template-rows: 48px;
+      gap: 8px;
+      padding: 6px;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
@@ -495,14 +495,13 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 999px;
       background:
-        linear-gradient(90deg, transparent 8%, rgba(59, 215, 255, 0.12), rgba(255, 198, 41, 0.1), transparent 92%),
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 58%),
-        rgba(2, 5, 10, 0.32);
+        linear-gradient(90deg, transparent 8%, rgba(59, 215, 255, 0.08), rgba(255, 198, 41, 0.08), transparent 92%),
+        rgba(2, 5, 10, 0.18);
       box-shadow:
         0 0 0 1px rgba(59, 215, 255, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
         inset 0 -1px 0 rgba(0, 0, 0, 0.28),
-        0 10px 20px rgba(0, 0, 0, 0.24),
+        0 8px 16px rgba(0, 0, 0, 0.18),
         0 0 20px rgba(59, 215, 255, 0.06);
       -webkit-backdrop-filter: blur(6px);
       backdrop-filter: blur(6px);
@@ -526,10 +525,10 @@
 
     .jump-control {
       position: absolute;
-      right: 14px;
-      bottom: 14px;
+      right: 12px;
+      bottom: 12px;
       z-index: 2;
-      padding: 8px;
+      padding: 6px;
       opacity: 0;
       pointer-events: none;
       touch-action: none;
@@ -539,7 +538,7 @@
 
     .stage.playing .move-controls,
     .stage.playing .jump-control {
-      opacity: 0.86;
+      opacity: 0.82;
       pointer-events: auto;
       transform: translateY(0);
     }
@@ -547,14 +546,14 @@
     .control-button {
       position: relative;
       z-index: 1;
-      width: 50px;
-      height: 50px;
-      min-height: 50px;
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
       display: grid;
       place-items: center;
       overflow: hidden;
       padding: 0;
-      border: 2px solid rgba(255, 255, 255, 0.68);
+      border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 50%;
       background:
         radial-gradient(circle at 50% 106%, rgba(111, 70, 0, 0.46), transparent 48%),
@@ -563,7 +562,7 @@
         inset 0 2px 0 rgba(255, 255, 255, 0.42),
         inset 0 -4px 0 rgba(101, 63, 0, 0.3),
         0 5px 0 rgba(75, 48, 0, 0.9),
-        0 10px 16px rgba(0, 0, 0, 0.3);
+        0 8px 14px rgba(0, 0, 0, 0.26);
       color: #1a1405;
       font-size: 25px;
       font-weight: 950;
@@ -613,9 +612,9 @@
     }
 
     .jump-control .control-button {
-      width: 72px;
-      height: 72px;
-      min-height: 72px;
+      width: 68px;
+      height: 68px;
+      min-height: 68px;
       border-color: rgba(255, 255, 255, 0.78);
       background:
         radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.34), transparent 34%),
@@ -625,10 +624,10 @@
         inset 0 2px 0 rgba(255, 255, 255, 0.46),
         inset 0 -5px 0 rgba(101, 63, 0, 0.34),
         0 6px 0 rgba(75, 48, 0, 0.94),
-        0 0 0 4px rgba(59, 215, 255, 0.1),
-        0 0 18px rgba(59, 215, 255, 0.16),
+        0 0 0 3px rgba(59, 215, 255, 0.09),
+        0 0 16px rgba(59, 215, 255, 0.14),
         0 0 16px rgba(255, 198, 41, 0.16),
-        0 12px 18px rgba(0, 0, 0, 0.32);
+        0 10px 16px rgba(0, 0, 0, 0.28);
       font-size: 16px;
       letter-spacing: 0;
     }
@@ -2869,7 +2868,7 @@
 
     .footer {
       position: relative;
-      min-height: 30px;
+      min-height: 28px;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
@@ -2929,11 +2928,11 @@
       position: relative;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       gap: 6px;
       min-width: 0;
       min-height: 18px;
-      padding: 2px 8px 2px 7px;
+      padding: 2px 8px;
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 999px;
       background:
@@ -2946,7 +2945,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      text-align: left;
+      text-align: center;
       text-shadow: 0 1px 0 rgba(0, 0, 0, 0.48);
     }
 
@@ -3058,30 +3057,30 @@
       }
 
       .move-controls {
-        left: 10px;
-        bottom: 10px;
-        grid-template-columns: repeat(2, 44px);
-        grid-template-rows: 44px;
-        gap: 8px;
-        padding: 7px;
+        left: 8px;
+        bottom: 8px;
+        grid-template-columns: repeat(2, 42px);
+        grid-template-rows: 42px;
+        gap: 7px;
+        padding: 6px;
       }
 
       .jump-control {
-        right: 10px;
-        bottom: 10px;
-        padding: 7px;
+        right: 8px;
+        bottom: 8px;
+        padding: 6px;
       }
 
       .control-button {
-        width: 44px;
-        height: 44px;
-        min-height: 44px;
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
       }
 
       .jump-control .control-button {
-        width: 64px;
-        height: 64px;
-        min-height: 64px;
+        width: 62px;
+        height: 62px;
+        min-height: 62px;
       }
 
       .overlay[data-mode="title"],
