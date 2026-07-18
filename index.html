@@ -3366,9 +3366,10 @@ function spawnCoins() {
         return;
       }
 
-      const lane = chooseCoinStartLane();
-      const count = 3 + Math.floor(Math.random() * 3);
-      const pattern = Math.random();
+      const routeLane = chooseCoinRouteLane();
+      const lane = routeLane ?? chooseCoinStartLane();
+      const count = routeLane === null ? 3 + Math.floor(Math.random() * 3) : 4 + Math.floor(Math.random() * 3);
+      const pattern = routeLane === null ? Math.random() : (Math.random() < 0.78 ? 0.18 : 0.62);
       const patternDirection = coinPatternFlip;
       const spawnedCoins = [];
       for (let i = 0; i < count; i += 1) {
@@ -3387,6 +3388,35 @@ function spawnCoins() {
         coinPatternFlip *= -1;
       }
       lastCoinLane = spawnedCoins[spawnedCoins.length - 1]?.lane ?? lane;
+    }
+
+    function chooseCoinRouteLane() {
+      if (runTime < FIRST_HOLE_TIME || Math.random() > 0.62) return null;
+      const obstacle = nearestRouteObstacle();
+      if (!obstacle) return null;
+      if (obstacle.type === "hole") {
+        return Math.random() < 0.72 ? player.lane : null;
+      }
+      const openLanes = [0, 1, 2].filter((lane) => !obstacle.lanes.includes(lane));
+      if (!openLanes.length) return null;
+      if (openLanes.includes(player.lane)) return player.lane;
+      return openLanes.reduce((bestLane, lane) => (
+        Math.abs(lane - player.lane) < Math.abs(bestLane - player.lane) ? lane : bestLane
+      ), openLanes[0]);
+    }
+
+    function nearestRouteObstacle() {
+      let candidate = null;
+      let bestY = -Infinity;
+      for (const obstacle of obstacles) {
+        if (laneObjectPassed(obstacle)) continue;
+        if (obstacle.y < -220 || obstacle.y > PLAYER_Y - 120) continue;
+        if (obstacle.y > bestY) {
+          bestY = obstacle.y;
+          candidate = obstacle;
+        }
+      }
+      return candidate;
     }
 
     function chooseCoinStartLane() {
