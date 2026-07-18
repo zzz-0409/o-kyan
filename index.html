@@ -2482,6 +2482,8 @@
     const FIRST_CENTER_BLOCK_TIME = 8;
     const READY_GRACE_TIME = 1.8;
     const INPUT_FLASH_TIME = 0.18;
+    const LANE_TRAIL_TIME = 0.22;
+    const LANDING_KICK_TIME = 0.16;
     const DODGE_FLASH_TIME = 0.28;
     const JUMP_CLEAR_FEEDBACK_TIME = 0.24;
     const HAZARD_WARNING_DISTANCE = 430;
@@ -2524,6 +2526,10 @@
     let jumpGraceTimer = 0;
     let inputFlashTimer = 0;
     let inputFlashDirection = 0;
+    let laneTrailTimer = 0;
+    let laneTrailFromX = LANES[CENTER_LANE];
+    let laneTrailToX = LANES[CENTER_LANE];
+    let landingKickTimer = 0;
     let dodgeFlashTimer = 0;
     let dodgeFlashX = LANES[CENTER_LANE];
     let boostKickTimer = 0;
@@ -2609,6 +2615,10 @@
       jumpGraceTimer = 0;
       inputFlashTimer = 0;
       inputFlashDirection = 0;
+      laneTrailTimer = 0;
+      laneTrailFromX = LANES[CENTER_LANE];
+      laneTrailToX = LANES[CENTER_LANE];
+      landingKickTimer = 0;
       dodgeFlashTimer = 0;
       dodgeFlashX = LANES[CENTER_LANE];
       boostKickTimer = 0;
@@ -3105,6 +3115,9 @@ function endGame() {
       player.holdTimer = 0.18;
       inputFlashTimer = INPUT_FLASH_TIME;
       inputFlashDirection = direction;
+      laneTrailTimer = LANE_TRAIL_TIME;
+      laneTrailFromX = fromX;
+      laneTrailToX = LANES[nextLane];
       burstGroundDust(fromX, PLAYER_Y + 8, 7, 0.72);
       playSound("move");
       vibrate(10);
@@ -3498,6 +3511,8 @@ function spawnCoins() {
       boostTimer = Math.max(0, boostTimer - dt);
       readyTimer = Math.max(0, readyTimer - dt);
       inputFlashTimer = Math.max(0, inputFlashTimer - dt);
+      laneTrailTimer = Math.max(0, laneTrailTimer - dt);
+      landingKickTimer = Math.max(0, landingKickTimer - dt);
       dodgeFlashTimer = Math.max(0, dodgeFlashTimer - dt);
       boostKickTimer = Math.max(0, boostKickTimer - dt);
       slowKickTimer = Math.max(0, slowKickTimer - dt);
@@ -3512,6 +3527,9 @@ function spawnCoins() {
       if (jumpTimer <= 0 && bufferedJump) startJump();
       if (wasJumping && jumpTimer <= 0 && !bufferedJump) {
         jumpGraceTimer = JUMP_LANDING_GRACE_TIME;
+        landingKickTimer = LANDING_KICK_TIME;
+        screenShakeTimer = Math.max(screenShakeTimer, 0.09);
+        screenShakePower = Math.max(screenShakePower, 2.8);
         burstGroundDust(player.x, PLAYER_Y + 8, 10, 0.9);
       }
       jumpGraceTimer = Math.max(0, jumpGraceTimer - dt);
@@ -4004,6 +4022,50 @@ function drawRoad() {
           ctx.quadraticCurveTo(x - side * 16, y + 16, x + side * 20, y + 18);
         }
         ctx.stroke();
+        ctx.restore();
+      }
+
+      if (laneTrailTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, laneTrailTimer / LANE_TRAIL_TIME));
+        const progress = 1 - ratio;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const x = laneTrailFromX + (laneTrailToX - laneTrailFromX) * eased;
+        const direction = Math.sign(laneTrailToX - laneTrailFromX) || 1;
+        const y = PLAYER_Y - 18;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.lineCap = "round";
+        ctx.strokeStyle = `rgba(123, 238, 255, ${0.16 + ratio * 0.36})`;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(laneTrailFromX - direction * 8, y + 18);
+        ctx.quadraticCurveTo((laneTrailFromX + laneTrailToX) / 2, y - 18, x, y + 7);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255, 248, 223, ${0.08 + ratio * 0.18})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(laneTrailFromX - direction * 18, y + 35);
+        ctx.quadraticCurveTo((laneTrailFromX + laneTrailToX) / 2, y + 5, x - direction * 8, y + 25);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (landingKickTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, landingKickTimer / LANDING_KICK_TIME));
+        const spread = 1 - ratio;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.18 + ratio * 0.34;
+        ctx.strokeStyle = "rgba(255, 248, 223, 0.9)";
+        ctx.lineWidth = 2 + ratio * 2;
+        ctx.beginPath();
+        ctx.ellipse(player.x, PLAYER_Y + 8, 24 + spread * 42, 6 + spread * 8, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.08 + ratio * 0.18;
+        ctx.fillStyle = "#f0c247";
+        ctx.beginPath();
+        ctx.ellipse(player.x, PLAYER_Y + 9, 30 + spread * 36, 5 + spread * 7, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
 
@@ -4706,6 +4768,7 @@ function drawObstacles() {
       const runPhase = roadScroll * 0.16;
       const bob = isJumping() ? 0 : Math.sin(runPhase) * 3;
       const lean = pose.angle + (isJumping() ? 0 : Math.sin(runPhase) * 0.07);
+      const landingRatio = Math.max(0, Math.min(1, landingKickTimer / LANDING_KICK_TIME));
       const spriteW = 64;
       const spriteH = 84;
       ctx.save();
@@ -4754,10 +4817,10 @@ function drawObstacles() {
           ctx.restore();
         }
         ctx.save();
-        ctx.translate(pose.x, pose.y - lift + bob);
+        ctx.translate(pose.x, pose.y - lift + bob + landingRatio * 3);
         ctx.rotate(lean);
-        const spriteScaleX = jumping ? 1.05 : 1.22;
-        const spriteScaleY = jumping ? 1.05 : 1;
+        const spriteScaleX = jumping ? 1.05 : 1.22 + landingRatio * 0.08;
+        const spriteScaleY = jumping ? 1.05 : 1 - landingRatio * 0.05;
         ctx.scale(spriteScaleX * pose.scale, spriteScaleY * pose.scale);
         ctx.shadowColor = jumping ? "rgba(255, 248, 223, 0.28)" : "rgba(123, 238, 255, 0.22)";
         ctx.shadowBlur = jumping ? 13 : 10;
