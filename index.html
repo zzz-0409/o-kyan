@@ -5231,10 +5231,117 @@ function drawRoad() {
         ctx.fillStyle = "rgba(20, 38, 54, 0.92)";
       }
 
+      drawCampusScenery(x, w, offset, side);
+
       ctx.globalAlpha = 0.78;
       for (let y = -offset - 40; y < H + 170; y += 170) {
         drawLampGlow(side > 0 ? x + 12 : x + w - 12, y + 52);
         drawLeafCluster(side > 0 ? x + w - 18 : x + 18, y + 116, side);
+      }
+      ctx.restore();
+    }
+
+    function drawCampusScenery(x, w, offset, side) {
+      const cycle = 360;
+      for (let y = -offset - cycle; y < H + cycle; y += cycle) {
+        const index = Math.floor((y + offset + cycle) / cycle);
+        const variant = Math.abs(index + (side > 0 ? 2 : 0)) % 4;
+        if (variant === 0) {
+          drawSideBanner(x, w, y + 34, side, "OPEN");
+          drawNeonWindowStack(x, w, y + 126, side);
+          continue;
+        }
+        if (variant === 1) {
+          drawCampusGatePost(x, w, y + 48, side);
+          drawSideMarquee(x, w, y + 166, side);
+          continue;
+        }
+        if (variant === 2) {
+          drawNeonWindowStack(x, w, y + 28, side);
+          drawSideBanner(x, w, y + 170, side, "RUN");
+          continue;
+        }
+        drawSideMarquee(x, w, y + 38, side);
+        drawCampusGatePost(x, w, y + 154, side);
+      }
+    }
+
+    function drawSideBanner(x, w, y, side, label) {
+      const bannerW = Math.min(39, Math.max(24, w - 10));
+      const bannerH = 58;
+      const bx = side > 0 ? x + 7 : x + w - bannerW - 7;
+      ctx.save();
+      ctx.shadowColor = "rgba(59, 215, 255, 0.32)";
+      ctx.shadowBlur = 10;
+      const bg = ctx.createLinearGradient(bx, y, bx + bannerW, y + bannerH);
+      bg.addColorStop(0, "rgba(17, 45, 74, 0.92)");
+      bg.addColorStop(0.55, "rgba(19, 83, 112, 0.88)");
+      bg.addColorStop(1, "rgba(8, 22, 40, 0.92)");
+      ctx.fillStyle = bg;
+      roundedRectPath(bx, y, bannerW, bannerH, 6);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(123, 238, 255, 0.38)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255, 198, 41, 0.92)";
+      ctx.font = "800 10px Segoe UI, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.save();
+      ctx.translate(bx + bannerW / 2, y + bannerH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+      ctx.restore();
+    }
+
+    function drawNeonWindowStack(x, w, y, side) {
+      const stackW = Math.min(31, Math.max(18, w - 18));
+      const bx = side > 0 ? x + w - stackW - 8 : x + 8;
+      ctx.save();
+      ctx.fillStyle = "rgba(5, 13, 25, 0.8)";
+      roundedRectPath(bx, y, stackW, 88, 5);
+      ctx.fill();
+      ctx.globalCompositeOperation = "screen";
+      for (let i = 0; i < 5; i += 1) {
+        const wy = y + 11 + i * 15;
+        const glow = i % 2 === 0 ? "123, 238, 255" : "255, 198, 41";
+        ctx.fillStyle = `rgba(${glow}, ${0.2 + (i % 3) * 0.06})`;
+        ctx.fillRect(bx + 6, wy, stackW - 12, 5);
+      }
+      ctx.restore();
+    }
+
+    function drawCampusGatePost(x, w, y, side) {
+      const postW = 8;
+      const baseX = side > 0 ? x + 9 : x + w - 17;
+      ctx.save();
+      ctx.fillStyle = "rgba(235, 238, 226, 0.55)";
+      roundedRectPath(baseX, y, postW, 82, 3);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255, 198, 41, 0.72)";
+      ctx.fillRect(baseX - 5, y + 8, postW + 10, 5);
+      ctx.fillRect(baseX - 5, y + 58, postW + 10, 5);
+      ctx.globalCompositeOperation = "screen";
+      drawLampGlow(baseX + postW / 2, y + 24);
+      ctx.restore();
+    }
+
+    function drawSideMarquee(x, w, y, side) {
+      const bx = side > 0 ? x + 5 : x + w - 39;
+      ctx.save();
+      ctx.fillStyle = "rgba(6, 16, 30, 0.82)";
+      roundedRectPath(bx, y, 34, 24, 5);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 198, 41, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = "rgba(255, 198, 41, 0.6)";
+      for (let i = 0; i < 3; i += 1) {
+        ctx.beginPath();
+        ctx.arc(bx + 8 + i * 9, y + 12, 2.4, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
     }
