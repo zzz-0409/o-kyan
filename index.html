@@ -3496,6 +3496,7 @@
     const INPUT_FLASH_TIME = 0.18;
     const DODGE_FLASH_TIME = 0.28;
     const BOOST_KICK_TIME = 0.24;
+    const AMBIENT_PULSE_TIME = 0.34;
     const TWO_MINUTE_TARGET = 120;
     const REGISTER_SAVE_TOKEN = Symbol("register-save");
 
@@ -3533,6 +3534,9 @@
     let dodgeFlashX = LANES[CENTER_LANE];
     let boostKickTimer = 0;
     let slowKickTimer = 0;
+    let ambientTimer = 0;
+    let ambientPulseTimer = 0;
+    let ambientPulseColor = "123, 238, 255";
     let touchStart = null;
     let overlayMode = "title";
     let cameraStream = null;
@@ -3550,6 +3554,7 @@
     let obstacles = [];
     let coinItems = [];
     let speedPanels = [];
+    let ambientItems = [];
     let particles = [];
 
     const player = {
@@ -3598,9 +3603,13 @@
       dodgeFlashX = LANES[CENTER_LANE];
       boostKickTimer = 0;
       slowKickTimer = 0;
+      ambientTimer = 2.4;
+      ambientPulseTimer = 0;
+      ambientPulseColor = "123, 238, 255";
       obstacles = [];
       coinItems = [];
       speedPanels = [];
+      ambientItems = [];
       particles = [];
       screenShakeTimer = 0;
       screenShakePower = 0;
@@ -4419,6 +4428,20 @@ function spawnCoins() {
       speedPanels.push({ lane, kind, y: -124, h: 58, used: false, group: "solo", groupId: "" });
     }
 
+    function spawnAmbientGate() {
+      const theme = Math.random() < 0.55 ? "blue" : "gold";
+      ambientItems.push({
+        y: -170,
+        h: 62 + Math.random() * 18,
+        theme,
+        passed: false,
+        phase: Math.random() * Math.PI * 2
+      });
+      if (ambientItems.length > 5) {
+        ambientItems.splice(0, ambientItems.length - 5);
+      }
+    }
+
     function hasPanelClearance() {
       const panelTop = -124;
       const panelBottom = panelTop + 58;
@@ -4436,6 +4459,20 @@ function spawnCoins() {
       return aTop < bBottom + clearance && aBottom + clearance > bTop;
     }
 
+    function updateAmbientItems(dt) {
+      for (const item of ambientItems) {
+        item.y += speed * dt;
+        if (!item.passed && item.y > PLAYER_Y - 36) {
+          item.passed = true;
+          ambientPulseTimer = AMBIENT_PULSE_TIME;
+          ambientPulseColor = item.theme === "blue" ? "123, 238, 255" : "255, 198, 41";
+          burstParticles(48, PLAYER_Y - 62, `rgba(${ambientPulseColor}, 0.78)`, 5, 0.62);
+          burstParticles(W - 48, PLAYER_Y - 62, `rgba(${ambientPulseColor}, 0.78)`, 5, 0.62);
+        }
+      }
+      ambientItems = ambientItems.filter((item) => item.y < H + 150);
+    }
+
     function difficultyRatio() {
       return Math.max(0, Math.min(1, (runTime - WARMUP_DURATION) / (FULL_DIFFICULTY_TIME - WARMUP_DURATION)));
     }
@@ -4451,6 +4488,7 @@ function spawnCoins() {
       dodgeFlashTimer = Math.max(0, dodgeFlashTimer - dt);
       boostKickTimer = Math.max(0, boostKickTimer - dt);
       slowKickTimer = Math.max(0, slowKickTimer - dt);
+      ambientPulseTimer = Math.max(0, ambientPulseTimer - dt);
       speed = rawSpeed;
       if (boostTimer > 0) speed *= BOOST_FACTOR;
       if (slowTimer > 0) speed *= SLOW_FACTOR;
@@ -4490,6 +4528,12 @@ function spawnCoins() {
           spawnSpeedPanel();
           panelTimer = 3.2 + Math.random() * 2.4;
         }
+
+        ambientTimer -= dt;
+        if (ambientTimer <= 0) {
+          spawnAmbientGate();
+          ambientTimer = 4.8 + Math.random() * 3.8;
+        }
       }
 
       for (const obstacle of obstacles) {
@@ -4507,6 +4551,8 @@ function spawnCoins() {
         panel.y += speed * dt;
       }
       speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
+
+      updateAmbientItems(dt);
 
       updateParticles(dt);
       checkCollisions();
@@ -4763,6 +4809,7 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
       }
       drawRoad();
+      drawAmbientGates();
       drawRunMotion();
       drawLaneFocus();
       drawRunFeedback();
@@ -4809,6 +4856,23 @@ function drawRoad() {
 
     function drawRunFeedback() {
       if (!running) return;
+      if (ambientPulseTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, ambientPulseTimer / AMBIENT_PULSE_TIME));
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.14 + ratio * 0.18;
+        const glow = ctx.createRadialGradient(W / 2, PLAYER_Y - 80, 10, W / 2, PLAYER_Y - 80, 230);
+        glow.addColorStop(0, `rgba(${ambientPulseColor}, 0.32)`);
+        glow.addColorStop(0.56, `rgba(${ambientPulseColor}, 0.12)`);
+        glow.addColorStop(1, `rgba(${ambientPulseColor}, 0)`);
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, PLAYER_Y - 260, W, 320);
+        ctx.fillStyle = `rgba(${ambientPulseColor}, 0.9)`;
+        ctx.fillRect(44, 0, 3 + ratio * 5, H);
+        ctx.fillRect(W - 47 - ratio * 5, 0, 3 + ratio * 5, H);
+        ctx.restore();
+      }
+
       if (boostKickTimer > 0 || slowKickTimer > 0) {
         const boostRatio = Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME));
         const slowRatio = Math.max(0, Math.min(1, slowKickTimer / BOOST_KICK_TIME));
@@ -4928,6 +4992,56 @@ function drawRoad() {
       ctx.shadowColor = isGo ? "rgba(123, 238, 255, 0.52)" : "rgba(255, 198, 41, 0.46)";
       ctx.shadowBlur = 18;
       ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawAmbientGates() {
+      if (!running || !ambientItems.length) return;
+      const roadX = 48;
+      const roadRight = W - 48;
+      const roadW = roadRight - roadX;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const item of ambientItems) {
+        const y = item.y;
+        const alphaIn = Math.max(0, Math.min(1, (y + 170) / 110));
+        const alphaOut = Math.max(0, Math.min(1, (H + 120 - y) / 170));
+        const alpha = Math.min(alphaIn, alphaOut) * 0.9;
+        if (alpha <= 0) continue;
+        const pulse = 0.5 + Math.sin(roadScroll * 0.035 + item.phase) * 0.5;
+        const color = item.theme === "blue" ? "123, 238, 255" : "255, 198, 41";
+        const barY = y + item.h * 0.3;
+
+        ctx.globalAlpha = alpha * (0.18 + pulse * 0.08);
+        const wash = ctx.createLinearGradient(roadX, 0, roadRight, 0);
+        wash.addColorStop(0, `rgba(${color}, 0.08)`);
+        wash.addColorStop(0.5, `rgba(${color}, 0.32)`);
+        wash.addColorStop(1, `rgba(${color}, 0.08)`);
+        ctx.fillStyle = wash;
+        ctx.fillRect(roadX + 3, y, roadW - 6, item.h);
+
+        ctx.globalAlpha = alpha * (0.42 + pulse * 0.22);
+        ctx.strokeStyle = `rgba(${color}, 0.95)`;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(roadX + 12, barY);
+        ctx.lineTo(roadRight - 12, barY);
+        ctx.stroke();
+
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(roadX + 10, y + item.h);
+        ctx.lineTo(roadX + 22, barY);
+        ctx.moveTo(roadRight - 10, y + item.h);
+        ctx.lineTo(roadRight - 22, barY);
+        ctx.stroke();
+
+        ctx.globalAlpha = alpha * 0.16;
+        ctx.fillStyle = `rgba(${color}, 1)`;
+        ctx.fillRect(roadX - 4, y + 8, 8, item.h - 4);
+        ctx.fillRect(roadRight - 4, y + 8, 8, item.h - 4);
+      }
       ctx.restore();
     }
 
@@ -5120,8 +5234,10 @@ function drawObstacles() {
 
     function drawObstacleSprite(type, rect) {
       const image = obstacleSprites[type];
+      const entranceAlpha = objectEntranceAlpha(rect.y);
       if (image && image.complete && image.naturalWidth > 0) {
         ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         drawHazardAura(type, rect);
         ctx.shadowColor = type === "hole" ? "rgba(0, 0, 0, 0.72)" : "rgba(0, 0, 0, 0.58)";
         ctx.shadowBlur = type === "hole" ? 16 : 10;
@@ -5131,6 +5247,8 @@ function drawObstacles() {
         return;
       }
       if (type === "hole") {
+        ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         ctx.fillStyle = "#090c0f";
         ctx.beginPath();
         ctx.ellipse(rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w * 0.42, rect.h * 0.4, 0, 0, Math.PI * 2);
@@ -5141,12 +5259,20 @@ function drawObstacles() {
         ctx.stroke();
         ctx.fillStyle = "rgba(246,239,217,0.18)";
         ctx.fillRect(rect.x + 21, rect.y + 8, rect.w - 42, 3);
+        ctx.restore();
       } else {
+        ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         ctx.fillStyle = "#dd6655";
         ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         ctx.fillStyle = "rgba(20,22,22,0.32)";
         ctx.fillRect(rect.x + 8, rect.y + 8, rect.w - 16, 8);
+        ctx.restore();
       }
+    }
+
+    function objectEntranceAlpha(y) {
+      return Math.max(0.32, Math.min(1, (y + 140) / 100));
     }
 
     function drawHazardAura(type, rect) {
@@ -5182,8 +5308,9 @@ function drawObstacles() {
       for (const panel of speedPanels) {
         const r = panelRect(panel);
         const image = panel.kind === "up" ? gimmickSprites.boost : gimmickSprites.slow;
+        const entranceAlpha = objectEntranceAlpha(r.y);
         ctx.save();
-        ctx.globalAlpha = 0.24;
+        ctx.globalAlpha = 0.24 * entranceAlpha;
         ctx.fillStyle = panel.kind === "up" ? "#ffc629" : "#3bd7ff";
         ctx.beginPath();
         ctx.ellipse(r.x + r.w / 2, r.y + r.h / 2 + 8, r.w * 0.52, r.h * 0.36, 0, 0, Math.PI * 2);
@@ -5191,6 +5318,7 @@ function drawObstacles() {
         ctx.restore();
         if (imageReady(image)) {
           ctx.save();
+          ctx.globalAlpha *= entranceAlpha;
           ctx.shadowColor = panel.kind === "up" ? "rgba(255, 198, 41, 0.34)" : "rgba(59, 215, 255, 0.32)";
           ctx.shadowBlur = 12;
           ctx.shadowOffsetY = 3;
@@ -5199,12 +5327,15 @@ function drawObstacles() {
           drawSpeedPanelShimmer(panel, r);
           continue;
         }
+        ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
         ctx.fillStyle = panel.kind === "up" ? "#f6efd9" : "#e8f8ff";
         ctx.font = "800 18px Segoe UI, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(panel.kind === "up" ? ">>" : "<<", r.x + r.w / 2, r.y + 35);
+        ctx.restore();
         drawSpeedPanelShimmer(panel, r);
       }
     }
@@ -5212,9 +5343,10 @@ function drawObstacles() {
     function drawSpeedPanelShimmer(panel, rect) {
       const pulse = 0.5 + Math.sin(roadScroll * 0.06 + rect.y * 0.05) * 0.5;
       const color = panel.kind === "up" ? "255, 229, 120" : "123, 238, 255";
+      const entranceAlpha = objectEntranceAlpha(rect.y);
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      ctx.globalAlpha = 0.16 + pulse * 0.22;
+      ctx.globalAlpha = (0.16 + pulse * 0.22) * entranceAlpha;
       ctx.strokeStyle = `rgba(${color}, 0.9)`;
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
@@ -5239,7 +5371,9 @@ function drawObstacles() {
       for (const coin of coinItems) {
         const x = LANES[coin.lane];
         const y = coin.y;
+        const entranceAlpha = objectEntranceAlpha(y);
         ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         ctx.globalCompositeOperation = "screen";
         const glow = ctx.createRadialGradient(x, y, 2, x, y, COIN_RADIUS + 16);
         glow.addColorStop(0, "rgba(255, 224, 92, 0.34)");
@@ -5250,6 +5384,8 @@ function drawObstacles() {
         ctx.fill();
         ctx.restore();
 
+        ctx.save();
+        ctx.globalAlpha *= entranceAlpha;
         ctx.fillStyle = "rgba(0,0,0,0.3)";
         ctx.beginPath();
         ctx.ellipse(x + 2, y + 4, COIN_RADIUS, COIN_RADIUS * 0.55, 0, 0, Math.PI * 2);
@@ -5270,6 +5406,7 @@ function drawObstacles() {
         ctx.beginPath();
         ctx.arc(x, y, COIN_RADIUS - 3, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.restore();
       }
     }
 
