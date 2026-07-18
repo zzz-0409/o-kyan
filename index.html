@@ -3506,6 +3506,8 @@
     let scoreConvertInterval = 0;
     let eventToastTimer = 0;
     let stageFxTimer = 0;
+    let screenShakeTimer = 0;
+    let screenShakePower = 0;
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
@@ -3581,6 +3583,8 @@
       coinItems = [];
       speedPanels = [];
       particles = [];
+      screenShakeTimer = 0;
+      screenShakePower = 0;
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -4196,10 +4200,12 @@ function endGame() {
 
     function moveSide(direction) {
       if (!running) return;
+      const fromX = LANES[player.lane];
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
       player.lane = nextLane;
       player.holdTimer = 0.18;
+      burstGroundDust(fromX, PLAYER_Y + 8, 7, 0.72);
       vibrate(10);
       setHint(direction < 0 ? "左へ移動" : "右へ移動");
     }
@@ -4220,6 +4226,7 @@ function endGame() {
       jumpTimer = JUMP_DURATION;
       jumpBufferTimer = 0;
       player.holdTimer = 0.22;
+      burstGroundDust(player.x, PLAYER_Y + 8, 9, 0.82);
       vibrate(14);
       setHint("ジャンプ");
     }
@@ -4364,8 +4371,12 @@ function spawnCoins() {
       if (slowTimer > 0) speed *= SLOW_FACTOR;
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
+      const wasJumping = jumpTimer > 0;
       jumpTimer = Math.max(0, jumpTimer - dt);
       if (jumpTimer <= 0 && bufferedJump) startJump();
+      if (wasJumping && jumpTimer <= 0 && !bufferedJump) {
+        burstGroundDust(player.x, PLAYER_Y + 8, 10, 0.9);
+      }
       distance += (speed * dt) / 12;
       checkPlayTimeTarget();
       roadScroll += speed * dt;
@@ -4448,6 +4459,25 @@ function spawnCoins() {
           life: 0.42 + Math.random() * 0.22,
           maxLife: 0.64,
           color
+        });
+      }
+      if (particles.length > 90) {
+        particles.splice(0, particles.length - 90);
+      }
+    }
+
+    function burstGroundDust(x, y, count = 8, spread = 1) {
+      for (let i = 0; i < count; i += 1) {
+        const side = i % 2 === 0 ? -1 : 1;
+        particles.push({
+          x: x + (Math.random() - 0.5) * 18,
+          y: y + Math.random() * 4,
+          vx: side * (28 + Math.random() * 68) * spread,
+          vy: -18 - Math.random() * 34,
+          r: 2.6 + Math.random() * 3.2,
+          life: 0.34 + Math.random() * 0.16,
+          maxLife: 0.5,
+          color: "rgba(255, 248, 223, 0.88)"
         });
       }
       if (particles.length > 90) {
@@ -4539,6 +4569,12 @@ function checkCollisions() {
     }
 
     function crash() {
+      screenShakeTimer = 0.22;
+      screenShakePower = 8;
+      flashStage("slow");
+      burstParticles(player.x, PLAYER_Y - 30, "#ff5d4d", 24, 1.25);
+      burstGroundDust(player.x, PLAYER_Y + 8, 14, 1.2);
+      vibrate([28, 18, 36]);
       endGame();
     }
 function playerRect() {
@@ -4627,6 +4663,10 @@ function draw() {
       ctx.fillStyle = "#1f2b31";
       ctx.fillRect(0, 0, W, H);
       ctx.save();
+      if (screenShakeTimer > 0) {
+        const shake = screenShakePower * (screenShakeTimer / 0.22);
+        ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+      }
       drawRoad();
       drawRunMotion();
       drawSpeedPanels();
@@ -5190,6 +5230,9 @@ function onPointerDown(event) {
       const dt = Math.min(0.05, elapsed / 1000 || 0);
       frameCarry = elapsed % FRAME_MS;
       lastTime = now;
+      if (screenShakeTimer > 0) {
+        screenShakeTimer = Math.max(0, screenShakeTimer - dt);
+      }
       if (running) {
         update(dt);
       } else {
