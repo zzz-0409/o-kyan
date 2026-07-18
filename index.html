@@ -2456,6 +2456,10 @@
     const BASE_SPEED = 220;
     const MAX_SPEED = 540;
     const SPEED_GAIN = 0.0017;
+    const SPEED_ACCEL_RATE = 10;
+    const SPEED_BOOST_ACCEL_RATE = 18;
+    const SPEED_DECEL_RATE = 5.5;
+    const SPEED_SLOW_DECEL_RATE = 12;
     const JUMP_DURATION = 0.66;
     const JUMP_BUFFER_TIME = 0.18;
     const JUMP_BUFFER_ARM_TIME = 0.24;
@@ -3459,6 +3463,25 @@ function spawnCoins() {
       return Math.max(0, Math.min(1, (runTime - WARMUP_DURATION) / (FULL_DIFFICULTY_TIME - WARMUP_DURATION)));
     }
 
+    function targetRunSpeed(rawSpeed) {
+      let target = rawSpeed;
+      if (boostTimer > 0) target *= BOOST_FACTOR;
+      if (slowTimer > 0) target *= SLOW_FACTOR;
+      return target;
+    }
+
+    function updateSpeed(rawSpeed, dt) {
+      const targetSpeed = targetRunSpeed(rawSpeed);
+      const isAccelerating = targetSpeed > speed;
+      const followRate = isAccelerating
+        ? (boostTimer > 0 ? SPEED_BOOST_ACCEL_RATE : SPEED_ACCEL_RATE)
+        : (slowTimer > 0 ? SPEED_SLOW_DECEL_RATE : SPEED_DECEL_RATE);
+      speed += (targetSpeed - speed) * Math.min(1, dt * followRate);
+      if (Math.abs(targetSpeed - speed) < 0.4) {
+        speed = targetSpeed;
+      }
+    }
+
     function update(dt) {
       if (!running) return;
       runTime += dt;
@@ -3473,9 +3496,7 @@ function spawnCoins() {
       ambientPulseTimer = Math.max(0, ambientPulseTimer - dt);
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
       jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
-      speed = rawSpeed;
-      if (boostTimer > 0) speed *= BOOST_FACTOR;
-      if (slowTimer > 0) speed *= SLOW_FACTOR;
+      updateSpeed(rawSpeed, dt);
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
       const wasJumping = jumpTimer > 0;
