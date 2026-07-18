@@ -946,8 +946,8 @@
       z-index: 1;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin: 0 0 16px;
+      gap: 7px;
+      margin: 0 0 14px;
     }
 
     .title-meta[hidden],
@@ -959,12 +959,12 @@
       position: relative;
       min-width: 0;
       overflow: hidden;
-      padding: 8px 7px 9px;
+      padding: 7px 7px 8px;
       border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 12px;
+      border-radius: 10px;
       background:
-        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.1), transparent 52%),
-        linear-gradient(180deg, rgba(22, 35, 58, 0.82), rgba(4, 8, 16, 0.82));
+        linear-gradient(90deg, rgba(59, 215, 255, 0.1), transparent 44%),
+        linear-gradient(180deg, rgba(14, 24, 40, 0.82), rgba(4, 8, 16, 0.84));
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
         inset 0 -1px 0 rgba(0, 0, 0, 0.22),
@@ -976,8 +976,8 @@
     .title-chip:first-child {
       border-color: rgba(255, 198, 41, 0.26);
       background:
-        radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.16), transparent 54%),
-        linear-gradient(180deg, rgba(35, 32, 24, 0.88), rgba(8, 8, 12, 0.84));
+        linear-gradient(90deg, rgba(255, 198, 41, 0.14), transparent 44%),
+        linear-gradient(180deg, rgba(35, 31, 20, 0.86), rgba(8, 8, 12, 0.84));
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
         inset 0 -1px 0 rgba(0, 0, 0, 0.24),
@@ -1029,7 +1029,7 @@
       z-index: 1;
       display: block;
       color: var(--accent);
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 950;
       line-height: 1;
     }
@@ -1062,7 +1062,7 @@
       margin-top: 5px;
       overflow: hidden;
       color: #ffffff;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 950;
       line-height: 1;
       text-overflow: ellipsis;
@@ -2120,7 +2120,7 @@
 
     .menu-actions {
       display: grid;
-      gap: 12px;
+      gap: 10px;
     }
 
     .overlay[data-mode="title"] .menu-actions {
@@ -2155,14 +2155,14 @@
       min-height: 62px;
       overflow: hidden;
       border: 2px solid rgba(255, 255, 255, 0.78);
-      border-radius: 14px;
+      border-radius: 13px;
       background:
         linear-gradient(180deg, #fff077, #ffc629 52%, #d48a00);
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.45),
-        inset 0 -5px 0 rgba(102, 62, 0, 0.3),
-        0 7px 0 rgba(76, 48, 0, 0.96),
-        0 16px 26px rgba(0, 0, 0, 0.42);
+        inset 0 -4px 0 rgba(102, 62, 0, 0.28),
+        0 6px 0 rgba(76, 48, 0, 0.92),
+        0 13px 22px rgba(0, 0, 0, 0.36);
       color: #151007;
       font-size: 25px;
       font-weight: 950;
@@ -2234,7 +2234,7 @@
     }
 
     .menu-actions button + button {
-      min-height: 54px;
+      min-height: 50px;
       border-color: rgba(255, 255, 255, 0.42);
       background:
         linear-gradient(90deg, transparent 10%, rgba(59, 215, 255, 0.26), transparent 90%) center calc(100% - 8px) / 86% 2px no-repeat,
@@ -2243,9 +2243,9 @@
         linear-gradient(180deg, #2b3b51, #111926);
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.12),
-        inset 0 -4px 0 rgba(0, 0, 0, 0.34),
-        0 6px 0 rgba(0, 0, 0, 0.86),
-        0 13px 22px rgba(0, 0, 0, 0.36),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.32),
+        0 5px 0 rgba(0, 0, 0, 0.82),
+        0 11px 18px rgba(0, 0, 0, 0.32),
         0 0 16px rgba(59, 215, 255, 0.08);
       color: var(--ink);
       font-size: 18px;
@@ -3094,21 +3094,21 @@
       }
 
       .overlay[data-mode="title"] .dialog h2 {
-        font-size: 56px;
+        font-size: 52px;
       }
 
       .overlay[data-mode="title"] .menu-actions {
-        gap: 9px;
+        gap: 8px;
       }
 
       .overlay[data-mode="title"] .menu-actions button {
-        min-height: 56px;
-        font-size: 22px;
+        min-height: 54px;
+        font-size: 21px;
       }
 
       .overlay[data-mode="title"] .menu-actions button + button {
-        min-height: 50px;
-        font-size: 16px;
+        min-height: 46px;
+        font-size: 15px;
       }
 
       .overlay[data-mode="ranking"] .dialog h2 {
@@ -3127,7 +3127,7 @@
       }
 
       .title-chip {
-        padding: 7px 5px 8px;
+        padding: 6px 5px 7px;
       }
 
       .title-chip span {
@@ -3142,7 +3142,7 @@
       }
 
       .title-chip strong {
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .ranking li {
@@ -3604,8 +3604,8 @@ function endGame() {
       const todayBest = scores.length ? scores[0].score : 0;
       setElementHidden(titleMeta, false);
       titleMeta.innerHTML = [
-        ["BEST", todayBest ? `${formatNumber(todayBest)}点` : "未登録", "★"],
-        ["PLAYS", `${scores.length}回`, "▶"]
+        ["BEST", todayBest ? `${formatNumber(todayBest)}点` : "まだなし", "★"],
+        ["CONTROL", "左右 + JUMP", "↔"]
       ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
     }
 
