@@ -1192,8 +1192,8 @@
 
     .result-stats {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
       margin: 0 0 14px;
     }
 
@@ -1207,9 +1207,9 @@
       position: relative;
       min-width: 0;
       overflow: hidden;
-      padding: 9px 8px;
+      padding: 8px 6px;
       border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 11px;
+      border-radius: 10px;
       background:
         radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.08), transparent 58%),
         linear-gradient(180deg, rgba(21, 32, 51, 0.92), rgba(4, 8, 15, 0.92));
@@ -1250,7 +1250,7 @@
 
     .result-stat:first-child {
       grid-column: 1 / -1;
-      padding: 13px 10px 14px;
+      padding: 14px 10px 15px;
       border-color: rgba(255, 198, 41, 0.62);
       background:
         radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.22), transparent 58%),
@@ -1315,7 +1315,7 @@
       margin-top: 5px;
       overflow: hidden;
       color: #ffffff;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 950;
       line-height: 1;
       text-overflow: ellipsis;
@@ -1324,7 +1324,7 @@
 
     .result-stat:first-child strong {
       color: #fff8d2;
-      font-size: 28px;
+      font-size: 34px;
       text-shadow:
         0 2px 0 rgba(0, 0, 0, 0.7),
         0 0 18px rgba(255, 198, 41, 0.34);
@@ -1697,16 +1697,16 @@
       position: relative;
       min-height: 0;
       margin: 0 0 14px;
-      padding: 8px;
+      padding: 7px;
       overflow: auto;
       overscroll-behavior: contain;
       scrollbar-gutter: stable;
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 198, 41, 0.72) rgba(4, 8, 15, 0.62);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 13px;
+      border-radius: 12px;
       background:
-        linear-gradient(180deg, rgba(14, 24, 42, 0.52), rgba(2, 5, 10, 0.28));
+        linear-gradient(180deg, rgba(10, 18, 32, 0.68), rgba(2, 5, 10, 0.36));
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         inset 0 18px 18px -22px rgba(255, 255, 255, 0.34),
@@ -1754,9 +1754,9 @@
       justify-content: space-between;
       gap: 10px;
       margin: 0 0 7px;
-      padding: 9px 10px;
+      padding: 8px 9px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 11px;
+      border-radius: 10px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 44%),
         linear-gradient(90deg, rgba(59, 215, 255, 0.1), transparent 24%),
@@ -1905,10 +1905,11 @@
       position: relative;
       z-index: 1;
       min-width: 0;
+      flex: 1 1 auto;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding-right: 8px;
+      padding-right: 6px;
     }
 
     .ranking .rank-avatar {
@@ -1953,7 +1954,7 @@
 
     .ranking .rank-number {
       min-width: 34px;
-      padding: 3px 6px;
+      padding: 3px 5px;
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.16);
       color: inherit;
@@ -1965,7 +1966,7 @@
     .ranking .rank-score {
       position: relative;
       z-index: 1;
-      flex: 0 0 auto;
+      flex: 0 0 86px;
       padding: 4px 7px;
       border: 1px solid rgba(255, 198, 41, 0.12);
       border-radius: 999px;
@@ -1974,6 +1975,7 @@
       color: #fff3a2;
       font-size: 15px;
       font-weight: 950;
+      text-align: right;
       white-space: nowrap;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
@@ -2265,16 +2267,15 @@
     .score-entry {
       position: relative;
       display: grid;
-      grid-template-columns: 68px 1fr;
-      gap: 10px;
+      grid-template-columns: 62px 1fr;
+      gap: 9px;
       margin: 0 0 14px;
-      padding: 31px 11px 11px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 30px 10px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 12px;
       background:
-        radial-gradient(circle at 15% 0%, rgba(255, 198, 41, 0.12), transparent 38%),
-        radial-gradient(circle at 100% 0%, rgba(59, 215, 255, 0.1), transparent 42%),
-        linear-gradient(180deg, rgba(18, 30, 50, 0.48), rgba(0, 0, 0, 0.26));
+        linear-gradient(90deg, rgba(255, 198, 41, 0.1), transparent 28%, transparent 72%, rgba(59, 215, 255, 0.08)),
+        linear-gradient(180deg, rgba(12, 22, 38, 0.72), rgba(0, 0, 0, 0.34));
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
         inset 0 -1px 0 rgba(0, 0, 0, 0.32),
@@ -2284,7 +2285,7 @@
     }
 
     .score-entry::before {
-      content: "スコア登録";
+      content: "ランキング登録";
       position: absolute;
       left: 11px;
       top: 9px;
@@ -2343,9 +2344,9 @@
 
     .entry-photo {
       position: relative;
-      width: 62px;
-      height: 62px;
-      min-height: 62px;
+      width: 56px;
+      height: 56px;
+      min-height: 56px;
       display: grid;
       place-items: center;
       overflow: visible;
@@ -2445,13 +2446,13 @@
     .entry-fields {
       min-width: 0;
       display: grid;
-      gap: 8px;
+      gap: 7px;
     }
 
     .entry-fields input {
       width: 100%;
-      min-height: 42px;
-      padding: 9px 11px;
+      min-height: 40px;
+      padding: 8px 10px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
       background:
@@ -2513,7 +2514,7 @@
 
     .entry-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 0.82fr 1.18fr;
       gap: 7px;
     }
 
@@ -2524,7 +2525,7 @@
       justify-content: center;
       gap: 6px;
       overflow: hidden;
-      min-height: 38px;
+      min-height: 40px;
       padding: 7px 8px;
       border-radius: 10px;
       font-size: 13px;
@@ -3029,11 +3030,11 @@
       }
 
       .result-stat:first-child strong {
-        font-size: 25px;
+        font-size: 30px;
       }
 
       .dialog.new-best .result-stat:first-child strong {
-        font-size: 27px;
+        font-size: 31px;
       }
 
       .conversion {
@@ -3160,6 +3161,7 @@
 
       .ranking .rank-score {
         padding: 4px 6px;
+        flex-basis: 78px;
         font-size: 13px;
       }
 
@@ -3170,15 +3172,15 @@
       }
 
       .score-entry {
-        grid-template-columns: 58px 1fr;
+        grid-template-columns: 54px 1fr;
         gap: 8px;
         padding: 29px 9px 9px;
       }
 
       .entry-photo {
-        width: 54px;
-        height: 54px;
-        min-height: 54px;
+        width: 52px;
+        height: 52px;
+        min-height: 52px;
       }
 
       .entry-photo::before {
