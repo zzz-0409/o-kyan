@@ -4422,7 +4422,8 @@ function drawRoad() {
       const roadX = 48;
       const roadW = W - roadX * 2;
       const roadRight = roadX + roadW;
-      const tileOffset = ((roadScroll * 0.34) % 96 + 96) % 96;
+      const sideScroll = roadScroll * 0.34;
+      const tileOffset = ((sideScroll % 96) + 96) % 96;
       const roadOffset = ((roadScroll * 0.92) % 92 + 92) % 92;
       const lightOffset = ((roadScroll * 1.06) % 128 + 128) % 128;
 
@@ -4433,8 +4434,8 @@ function drawRoad() {
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, W, H);
 
-      drawCampusSideBand(0, roadX, tileOffset, -1);
-      drawCampusSideBand(roadRight, W - roadRight, tileOffset + 48, 1);
+      drawCampusSideBand(0, roadX, sideScroll, -1);
+      drawCampusSideBand(roadRight, W - roadRight, sideScroll + 360, 1);
 
       const asphalt = ctx.createLinearGradient(roadX, 0, roadRight, 0);
       asphalt.addColorStop(0, "#1c252c");
@@ -4531,17 +4532,18 @@ function drawRoad() {
         return;
       }
 
+      const patternOffset = ((offset % 96) + 96) % 96;
       ctx.fillStyle = "#102837";
       ctx.fillRect(x, 0, w, H);
 
       ctx.fillStyle = "rgba(159, 190, 194, 0.22)";
-      for (let y = -offset - 70; y < H + 96; y += 96) {
+      for (let y = -patternOffset - 70; y < H + 96; y += 96) {
         ctx.fillRect(x + 4, y, Math.max(0, w - 8), 2);
         ctx.fillRect(x + (side > 0 ? 11 : w - 17), y + 18, 2, 58);
       }
 
       ctx.fillStyle = "rgba(20, 38, 54, 0.92)";
-      for (let y = -offset - 120; y < H + 160; y += 160) {
+      for (let y = -patternOffset - 120; y < H + 160; y += 160) {
         const buildingW = Math.min(28, Math.max(14, w - 18));
         const bx = side > 0 ? x + w - buildingW - 6 : x + 6;
         ctx.fillRect(bx, y + 18, buildingW, 76);
@@ -4551,10 +4553,10 @@ function drawRoad() {
         ctx.fillStyle = "rgba(20, 38, 54, 0.92)";
       }
 
-      drawCampusScenery(x, w, offset, side);
+      drawCampusScenery(x, w, patternOffset, side);
 
       ctx.globalAlpha = 0.78;
-      for (let y = -offset - 40; y < H + 170; y += 170) {
+      for (let y = -patternOffset - 40; y < H + 170; y += 170) {
         drawLampGlow(side > 0 ? x + 12 : x + w - 12, y + 52);
         drawLeafCluster(side > 0 ? x + w - 18 : x + 18, y + 116, side);
       }
@@ -4567,10 +4569,26 @@ function drawRoad() {
       const sourceH = image.naturalHeight;
       const cropW = Math.floor(sourceW * 0.36);
       const cropX = side > 0 ? sourceW - cropW : 0;
-      const tileH = H * 1.34;
-      const loopOffset = ((offset * 1.06) % tileH + tileH) % tileH;
-      for (let y = -loopOffset - tileH; y < H + tileH; y += tileH) {
-        ctx.drawImage(image, cropX, 0, cropW, sourceH, x, y, w, tileH);
+      const sourcePerPixel = 1.24;
+      const sliceH = 6;
+      const seamBlend = sourceH * 0.12;
+      const scrollY = offset * 1.42 + (side > 0 ? sourceH * 0.37 : 0);
+
+      for (let y = -sliceH; y < H + sliceH; y += sliceH) {
+        const sourceY = positiveModulo(scrollY + y * sourcePerPixel, sourceH);
+        const sourceSliceH = sliceH * sourcePerPixel;
+        drawCitySideSlice(image, cropX, cropW, sourceY, sourceSliceH, x, y, w, sliceH);
+
+        const seamAlpha = citySeamBlendAlpha(sourceY, sourceH, seamBlend);
+        if (seamAlpha > 0) {
+          const seamY = sourceY < seamBlend
+            ? sourceH - seamBlend + sourceY
+            : sourceY - (sourceH - seamBlend);
+          ctx.save();
+          ctx.globalAlpha = seamAlpha;
+          drawCitySideSlice(image, cropX, cropW, seamY, sourceSliceH, x, y, w, sliceH);
+          ctx.restore();
+        }
       }
 
       const edge = ctx.createLinearGradient(x, 0, x + w, 0);
@@ -4585,6 +4603,36 @@ function drawRoad() {
       }
       ctx.fillStyle = edge;
       ctx.fillRect(x, 0, w, H);
+    }
+
+    function positiveModulo(value, size) {
+      return ((value % size) + size) % size;
+    }
+
+    function citySeamBlendAlpha(sourceY, sourceH, seamBlend) {
+      if (sourceY < seamBlend) {
+        return (1 - sourceY / seamBlend) * 0.72;
+      }
+      if (sourceY > sourceH - seamBlend) {
+        return ((sourceY - (sourceH - seamBlend)) / seamBlend) * 0.72;
+      }
+      return 0;
+    }
+
+    function drawCitySideSlice(image, cropX, cropW, sourceY, sourceSliceH, destX, destY, destW, destH) {
+      let remainingSource = sourceSliceH;
+      let currentSourceY = sourceY;
+      let currentDestY = destY;
+      let remainingDest = destH;
+      while (remainingSource > 0.01 && remainingDest > 0.01) {
+        const takeSource = Math.min(remainingSource, image.naturalHeight - currentSourceY);
+        const takeDest = remainingDest * (takeSource / remainingSource);
+        ctx.drawImage(image, cropX, currentSourceY, cropW, takeSource, destX, currentDestY, destW, takeDest);
+        remainingSource -= takeSource;
+        remainingDest -= takeDest;
+        currentDestY += takeDest;
+        currentSourceY = 0;
+      }
     }
 
     function drawCampusScenery(x, w, offset, side) {
