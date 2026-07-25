@@ -2501,6 +2501,9 @@
     const citySideLoopSprite = new Image();
     citySideLoopSprite.src = assetUrl("assets/backgrounds/imagegen-city-side-loop.png");
     citySideLoopSprite.addEventListener("load", draw);
+    const fullRoadCityLoopSprite = new Image();
+    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop.png");
+    fullRoadCityLoopSprite.addEventListener("load", draw);
     const essentialSprites = [
       ...playerRunSprites,
       playerJumpSprite,
@@ -4419,6 +4422,11 @@ function drawRoad() {
     }
 
     function drawSeamlessCampusRoad() {
+      if (imageReady(fullRoadCityLoopSprite)) {
+        drawLoopingFullRoadCity();
+        return;
+      }
+
       const roadX = 48;
       const roadW = W - roadX * 2;
       const roadRight = roadX + roadW;
@@ -4605,6 +4613,43 @@ function drawRoad() {
       ctx.fillRect(x, 0, w, H);
     }
 
+    function drawLoopingFullRoadCity() {
+      const image = fullRoadCityLoopSprite;
+      const sourceW = image.naturalWidth;
+      const sourceH = image.naturalHeight;
+      const sourcePerPixel = 1.42;
+      const sliceH = 5;
+      const seamBlend = sourceH * 0.11;
+      const scrollY = roadScroll * 1.08;
+
+      ctx.fillStyle = "#07111c";
+      ctx.fillRect(0, 0, W, H);
+      for (let y = -sliceH; y < H + sliceH; y += sliceH) {
+        const sourceY = positiveModulo(scrollY + y * sourcePerPixel, sourceH);
+        const sourceSliceH = sliceH * sourcePerPixel;
+        drawImageWrappedSlice(image, 0, sourceW, sourceY, sourceSliceH, 0, y, W, sliceH);
+
+        const seamAlpha = citySeamBlendAlpha(sourceY, sourceH, seamBlend);
+        if (seamAlpha > 0) {
+          const seamY = sourceY < seamBlend
+            ? sourceH - seamBlend + sourceY
+            : sourceY - (sourceH - seamBlend);
+          ctx.save();
+          ctx.globalAlpha = seamAlpha;
+          drawImageWrappedSlice(image, 0, sourceW, seamY, sourceSliceH, 0, y, W, sliceH);
+          ctx.restore();
+        }
+      }
+
+      const roadShade = ctx.createLinearGradient(0, 0, W, 0);
+      roadShade.addColorStop(0, "rgba(0,0,0,0.22)");
+      roadShade.addColorStop(0.14, "rgba(0,0,0,0)");
+      roadShade.addColorStop(0.86, "rgba(0,0,0,0)");
+      roadShade.addColorStop(1, "rgba(0,0,0,0.22)");
+      ctx.fillStyle = roadShade;
+      ctx.fillRect(0, 0, W, H);
+    }
+
     function positiveModulo(value, size) {
       return ((value % size) + size) % size;
     }
@@ -4620,6 +4665,10 @@ function drawRoad() {
     }
 
     function drawCitySideSlice(image, cropX, cropW, sourceY, sourceSliceH, destX, destY, destW, destH) {
+      drawImageWrappedSlice(image, cropX, cropW, sourceY, sourceSliceH, destX, destY, destW, destH);
+    }
+
+    function drawImageWrappedSlice(image, cropX, cropW, sourceY, sourceSliceH, destX, destY, destW, destH) {
       let remainingSource = sourceSliceH;
       let currentSourceY = sourceY;
       let currentDestY = destY;
