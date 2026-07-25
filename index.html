@@ -1021,6 +1021,64 @@
       display: none;
     }
 
+    .title-ranking {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      padding: 10px 12px 11px;
+      border: 1px solid rgba(255, 198, 41, 0.24);
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(255, 198, 41, 0.14), transparent 48%),
+        linear-gradient(180deg, rgba(14, 24, 40, 0.88), rgba(4, 8, 16, 0.86));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 18px rgba(255, 198, 41, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.22);
+      animation: cardIn 0.2s ease-out both;
+    }
+
+    .title-ranking h3 {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0;
+      line-height: 1;
+      text-align: left;
+    }
+
+    .title-rank-row,
+    .title-rank-empty {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 24px;
+      padding: 4px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff8df;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .title-rank-row span {
+      color: rgba(255, 248, 223, 0.68);
+      font-size: 11px;
+    }
+
+    .title-rank-row strong {
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 950;
+      text-shadow: 0 0 12px rgba(255, 198, 41, 0.18);
+    }
+
+    .title-rank-empty {
+      justify-content: center;
+      color: rgba(255, 248, 223, 0.66);
+      font-size: 12px;
+    }
+
     .title-chip {
       position: relative;
       min-width: 0;
@@ -2366,6 +2424,7 @@
           </div>
           <div class="menu-actions">
             <button id="startButton" type="button">スタート</button>
+            <button id="titleButton" type="button" hidden>TITLE</button>
           </div>
         </div>
       </div>
@@ -2407,6 +2466,7 @@
     const convertScoreEl = document.getElementById("convertScore");
     const convertScoreBox = document.getElementById("convertScoreBox");
     const startButton = document.getElementById("startButton");
+    const titleButton = document.getElementById("titleButton");
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
@@ -2438,6 +2498,9 @@
     gimmickSprites.boost.src = assetUrl("assets/gimmicks/imagegen-boost-pad.png");
     gimmickSprites.slow.src = assetUrl("assets/gimmicks/imagegen-slow-pad.png");
     Object.values(gimmickSprites).forEach((image) => image.addEventListener("load", draw));
+    const citySideLoopSprite = new Image();
+    citySideLoopSprite.src = assetUrl("assets/backgrounds/imagegen-city-side-loop.png");
+    citySideLoopSprite.addEventListener("load", draw);
     const essentialSprites = [
       ...playerRunSprites,
       playerJumpSprite,
@@ -2481,6 +2544,8 @@
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
     const READY_GRACE_TIME = 1.8;
+    const READY_GO_THRESHOLD = 0.62;
+    const GO_CUE_TIME = 0.24;
     const INPUT_FLASH_TIME = 0.18;
     const LANE_TRAIL_TIME = 0.22;
     const LANDING_KICK_TIME = 0.16;
@@ -2492,6 +2557,8 @@
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
     const TWO_MINUTE_TARGET = 120;
+    const SCORE_RANKING_KEY = "laneRunnerScoreRanking";
+    const SCORE_RANKING_LIMIT = 5;
 
     let running = false;
     let gameOver = false;
@@ -2512,6 +2579,7 @@
     let audioContext = null;
     let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
+    let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
     let roadScroll = 0;
@@ -2521,6 +2589,8 @@
     let slowTimer = 0;
     let boostTimer = 0;
     let readyTimer = 0;
+    let goCueTimer = 0;
+    let goCuePlayed = false;
     let jumpTimer = 0;
     let jumpBufferTimer = 0;
     let jumpGraceTimer = 0;
@@ -2612,6 +2682,8 @@
       slowTimer = 0;
       boostTimer = 0;
       readyTimer = READY_GRACE_TIME;
+      goCueTimer = 0;
+      goCuePlayed = false;
       jumpTimer = 0;
       jumpBufferTimer = 0;
       jumpGraceTimer = 0;
@@ -2660,6 +2732,7 @@
       setOverlayOpen(false);
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
+      setTitleReturnButtonVisible(false);
       hideResultStats();
       hideTitleMeta();
       setHint("準備OK、2分目安で遊べます");
@@ -2685,6 +2758,7 @@ function endGame() {
       const isBest = score > best;
       best = Math.max(best, score);
       localStorage.setItem("laneRunnerBestScore", String(best));
+      recordScore(score);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "ベスト更新を目指してもう一度";
       showResultStats(score, distanceScore, collectedCoins, best);
@@ -2695,6 +2769,7 @@ function endGame() {
         collectedCoins > 0 ? "»" : "↻",
         collectedCoins > 0 ? "コイン換算をスキップ" : "もう一度遊ぶ"
       );
+      setTitleReturnButtonVisible(true);
       overlay.querySelector(".dialog").classList.toggle("new-best", isBest);
       if (isBest) {
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
@@ -2745,10 +2820,16 @@ function endGame() {
 
     function updateTitleMeta() {
       setElementHidden(titleMeta, false);
-      titleMeta.innerHTML = [
-        ["BEST", best ? `${formatNumber(best)}点` : "まだなし", "★"],
-        ["CONTROL", "左右 + JUMP", "↔"]
+      const rankingRows = scoreRanking.length
+        ? scoreRanking.map((score, index) => (
+          `<div class="title-rank-row"><span>#${index + 1}</span><strong>${formatNumber(score)}</strong></div>`
+        )).join("")
+        : `<div class="title-rank-empty">NO SCORE</div>`;
+      const chips = [
+        ["BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
+        ["CONTROL", "LEFT / RIGHT / JUMP", "↔"]
       ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+      titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
 
     function showResultStats(score, meters, coinCount, bestScore) {
@@ -2782,6 +2863,14 @@ function endGame() {
       button.textContent = text;
       setButtonIcon(button, icon);
       button.setAttribute("aria-label", label);
+    }
+
+    function setTitleReturnButtonVisible(isVisible) {
+      titleButton.hidden = !isVisible;
+      titleButton.disabled = !isVisible;
+      if (isVisible) {
+        setActionButton(titleButton, "TITLE", "⌂", "タイトルへ戻る");
+      }
     }
 
     function setStartButtonLoading(isLoading) {
@@ -2874,6 +2963,7 @@ function endGame() {
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, best);
       setStartButtonLoading(false);
       setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
+      setTitleReturnButtonVisible(true);
       resultState.phase = "result";
     }
 
@@ -2896,6 +2986,14 @@ function endGame() {
         return;
       }
       resetGame();
+    }
+
+    function handleTitleButton() {
+      if (overlayMode !== "result") return;
+      if (resultState.active && resultState.phase === "converting") {
+        finishScoreConversion();
+      }
+      showTitleScreen();
     }
 
     function flyResultCoin() {
@@ -3086,6 +3184,31 @@ function endGame() {
       return `${Math.floor(millions)}M`;
     }
 
+    function loadScoreRanking() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SCORE_RANKING_KEY) || "[]");
+        const scores = Array.isArray(saved) ? saved : [];
+        const normalized = scores
+          .map((score) => Math.floor(Number(score) || 0))
+          .filter((score) => score > 0)
+          .sort((a, b) => b - a)
+          .slice(0, SCORE_RANKING_LIMIT);
+        if (normalized.length) return normalized;
+      } catch (error) {
+        localStorage.removeItem(SCORE_RANKING_KEY);
+      }
+      return best > 0 ? [Math.floor(best)] : [];
+    }
+
+    function recordScore(score) {
+      const normalized = Math.floor(Number(score) || 0);
+      if (normalized <= 0) return;
+      scoreRanking = [...scoreRanking, normalized]
+        .sort((a, b) => b - a)
+        .slice(0, SCORE_RANKING_LIMIT);
+      localStorage.setItem(SCORE_RANKING_KEY, JSON.stringify(scoreRanking));
+    }
+
     function showTitleScreen() {
       clearScoreConversion();
       resetResultState();
@@ -3100,6 +3223,7 @@ function endGame() {
       stageEl.classList.add("title-screen");
       stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       overlay.querySelector(".dialog").classList.remove("new-best");
+      setTitleReturnButtonVisible(false);
       setOverlayOpen(true);
       hideResultStats();
       updateTitleMeta();
@@ -3152,6 +3276,16 @@ function endGame() {
       playSound("jump");
       vibrate(14);
       setHint("ジャンプ");
+    }
+
+    function triggerGoCue() {
+      goCueTimer = GO_CUE_TIME;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.74);
+      ambientPulseColor = "123, 238, 255";
+      burstParticles(W / 2, PLAYER_Y - 126, "#7beeff", 16, 0.85);
+      burstGroundDust(player.x, PLAYER_Y + 8, 12, 1.05);
+      playSound("start");
+      vibrate(12);
     }
 
     function unlockAudio() {
@@ -3567,7 +3701,13 @@ function spawnCoins() {
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
+      const previousReadyTimer = readyTimer;
       readyTimer = Math.max(0, readyTimer - dt);
+      if (!goCuePlayed && previousReadyTimer > READY_GO_THRESHOLD && readyTimer <= READY_GO_THRESHOLD) {
+        goCuePlayed = true;
+        triggerGoCue();
+      }
+      goCueTimer = Math.max(0, goCueTimer - dt);
       inputFlashTimer = Math.max(0, inputFlashTimer - dt);
       laneTrailTimer = Math.max(0, laneTrailTimer - dt);
       landingKickTimer = Math.max(0, landingKickTimer - dt);
@@ -3625,11 +3765,6 @@ function spawnCoins() {
           panelTimer = 3.2 + Math.random() * 2.4;
         }
 
-        ambientTimer -= dt;
-        if (ambientTimer <= 0) {
-          spawnAmbientGate();
-          ambientTimer = 4.8 + Math.random() * 3.8;
-        }
       }
 
       for (const obstacle of obstacles) {
@@ -3977,7 +4112,6 @@ function draw() {
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
       }
       drawRoad();
-      drawAmbientGates();
       drawRunMotion();
       drawLaneFocus();
       drawRunFeedback();
@@ -4057,6 +4191,31 @@ function drawRoad() {
         ctx.fillStyle = `rgba(${color}, 1)`;
         ctx.fillRect(0, 0, 10 + 14 * ratio, H);
         ctx.fillRect(W - (10 + 14 * ratio), 0, 10 + 14 * ratio, H);
+        ctx.restore();
+      }
+
+      if (goCueTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, goCueTimer / GO_CUE_TIME));
+        const spread = 1 - ratio;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.12 + ratio * 0.34;
+        const glow = ctx.createLinearGradient(0, PLAYER_Y - 260, 0, PLAYER_Y + 60);
+        glow.addColorStop(0, "rgba(123, 238, 255, 0)");
+        glow.addColorStop(0.58, "rgba(123, 238, 255, 0.26)");
+        glow.addColorStop(1, "rgba(255, 248, 223, 0.06)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(48, PLAYER_Y - 300, W - 96, 370);
+        ctx.strokeStyle = `rgba(123, 238, 255, ${0.2 + ratio * 0.42})`;
+        ctx.lineWidth = 2 + ratio * 3;
+        ctx.lineCap = "round";
+        for (let lane = 0; lane < 3; lane += 1) {
+          const x = LANES[lane];
+          ctx.beginPath();
+          ctx.moveTo(x, PLAYER_Y + 34);
+          ctx.lineTo(x, PLAYER_Y - 180 - spread * 90);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
@@ -4188,7 +4347,7 @@ function drawRoad() {
     function drawReadyPrompt() {
       if (!running || readyTimer <= 0) return;
       const progress = 1 - readyTimer / READY_GRACE_TIME;
-      const isGo = readyTimer < 0.62;
+      const isGo = readyTimer < READY_GO_THRESHOLD;
       const text = isGo ? "GO!" : "READY";
       const scale = isGo ? 1 + Math.sin(progress * Math.PI) * 0.12 : 1;
       const alpha = isGo ? Math.min(1, readyTimer / 0.2) : Math.min(1, progress / 0.18, readyTimer / 0.22);
@@ -4366,6 +4525,12 @@ function drawRoad() {
       ctx.rect(x, 0, w, H);
       ctx.clip();
 
+      if (imageReady(citySideLoopSprite)) {
+        drawLoopingCitySideBand(x, w, offset, side);
+        ctx.restore();
+        return;
+      }
+
       ctx.fillStyle = "#102837";
       ctx.fillRect(x, 0, w, H);
 
@@ -4394,6 +4559,32 @@ function drawRoad() {
         drawLeafCluster(side > 0 ? x + w - 18 : x + 18, y + 116, side);
       }
       ctx.restore();
+    }
+
+    function drawLoopingCitySideBand(x, w, offset, side) {
+      const image = citySideLoopSprite;
+      const sourceW = image.naturalWidth;
+      const sourceH = image.naturalHeight;
+      const cropW = Math.floor(sourceW * 0.36);
+      const cropX = side > 0 ? sourceW - cropW : 0;
+      const tileH = H * 1.34;
+      const loopOffset = ((offset * 1.06) % tileH + tileH) % tileH;
+      for (let y = -loopOffset - tileH; y < H + tileH; y += tileH) {
+        ctx.drawImage(image, cropX, 0, cropW, sourceH, x, y, w, tileH);
+      }
+
+      const edge = ctx.createLinearGradient(x, 0, x + w, 0);
+      if (side < 0) {
+        edge.addColorStop(0, "rgba(0, 0, 0, 0.28)");
+        edge.addColorStop(0.72, "rgba(0, 0, 0, 0)");
+        edge.addColorStop(1, "rgba(123, 238, 255, 0.16)");
+      } else {
+        edge.addColorStop(0, "rgba(123, 238, 255, 0.16)");
+        edge.addColorStop(0.28, "rgba(0, 0, 0, 0)");
+        edge.addColorStop(1, "rgba(0, 0, 0, 0.28)");
+      }
+      ctx.fillStyle = edge;
+      ctx.fillRect(x, 0, w, H);
     }
 
     function drawCampusScenery(x, w, offset, side) {
@@ -5081,6 +5272,7 @@ function onPointerDown(event) {
     }
 
     startButton.addEventListener("click", handleMainButton);
+    titleButton.addEventListener("click", handleTitleButton);
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
