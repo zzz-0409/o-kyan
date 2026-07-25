@@ -4617,6 +4617,8 @@ function drawRoad() {
       const image = fullRoadCityLoopSprite;
       const sourceW = image.naturalWidth;
       const sourceH = image.naturalHeight;
+      const cropW = sourceW * 0.78;
+      const cropX = (sourceW - cropW) / 2;
       const sourcePerPixel = 1.42;
       const sliceH = 5;
       const seamBlend = sourceH * 0.11;
@@ -4627,7 +4629,7 @@ function drawRoad() {
       for (let y = -sliceH; y < H + sliceH; y += sliceH) {
         const sourceY = positiveModulo(scrollY + y * sourcePerPixel, sourceH);
         const sourceSliceH = sliceH * sourcePerPixel;
-        drawImageWrappedSlice(image, 0, sourceW, sourceY, sourceSliceH, 0, y, W, sliceH);
+        drawImageWrappedSlice(image, cropX, cropW, sourceY, sourceSliceH, 0, y, W, sliceH);
 
         const seamAlpha = citySeamBlendAlpha(sourceY, sourceH, seamBlend);
         if (seamAlpha > 0) {
@@ -4636,7 +4638,7 @@ function drawRoad() {
             : sourceY - (sourceH - seamBlend);
           ctx.save();
           ctx.globalAlpha = seamAlpha;
-          drawImageWrappedSlice(image, 0, sourceW, seamY, sourceSliceH, 0, y, W, sliceH);
+          drawImageWrappedSlice(image, cropX, cropW, seamY, sourceSliceH, 0, y, W, sliceH);
           ctx.restore();
         }
       }
