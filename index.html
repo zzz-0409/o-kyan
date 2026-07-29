@@ -47,6 +47,7 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
     }
 
     html {
@@ -72,6 +73,7 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: geometricPrecision;
       user-select: none;
+      -webkit-user-select: none;
     }
 
     .app {
@@ -416,6 +418,8 @@
       height: 100%;
       transition: filter 0.22s ease, transform 0.22s ease;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
     }
 
     .stage.title-screen canvas {
@@ -639,6 +643,9 @@
       line-height: 1;
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.34);
       transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
     }
 
     .control-button::before {
@@ -5366,6 +5373,10 @@ function onPointerDown(event) {
       action();
     }
 
+    function suppressGameContextMenu(event) {
+      event.preventDefault();
+    }
+
     function pressMoveButton(direction) {
       pressControlButton(direction < 0 ? leftButton : rightButton);
     }
@@ -5501,9 +5512,13 @@ function onPointerDown(event) {
     canvas.addEventListener("pointercancel", () => {
       touchStart = null;
     });
+    canvas.addEventListener("contextmenu", suppressGameContextMenu);
     leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(-1, 0)));
     rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(1, 0)));
     jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
+    leftButton.addEventListener("contextmenu", suppressGameContextMenu);
+    rightButton.addEventListener("contextmenu", suppressGameContextMenu);
+    jumpButton.addEventListener("contextmenu", suppressGameContextMenu);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
     document.addEventListener("visibilitychange", onVisibilityChange);
