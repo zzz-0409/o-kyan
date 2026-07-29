@@ -3385,12 +3385,17 @@ function endGame() {
       try {
         const saved = JSON.parse(localStorage.getItem(SCORE_RANKING_KEY) || "[]");
         const scores = Array.isArray(saved) ? saved : [];
-        const normalized = scores
+        const normalized = [...new Set(scores
           .map((score) => Math.floor(Number(score) || 0))
-          .filter((score) => score > 0)
+          .filter((score) => score > 0))]
           .sort((a, b) => b - a)
           .slice(0, SCORE_RANKING_LIMIT);
-        if (normalized.length) return normalized;
+        if (normalized.length) {
+          if (normalized.length !== scores.length || normalized.some((score, index) => score !== Math.floor(Number(scores[index]) || 0))) {
+            localStorage.setItem(SCORE_RANKING_KEY, JSON.stringify(normalized));
+          }
+          return normalized;
+        }
       } catch (error) {
         localStorage.removeItem(SCORE_RANKING_KEY);
       }
@@ -3400,7 +3405,7 @@ function endGame() {
     function recordScore(score) {
       const normalized = Math.floor(Number(score) || 0);
       if (normalized <= 0) return;
-      scoreRanking = [...scoreRanking, normalized]
+      scoreRanking = [...new Set([...scoreRanking, normalized])]
         .sort((a, b) => b - a)
         .slice(0, SCORE_RANKING_LIMIT);
       localStorage.setItem(SCORE_RANKING_KEY, JSON.stringify(scoreRanking));
