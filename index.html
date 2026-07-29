@@ -1213,6 +1213,53 @@
         0 0 14px rgba(255, 198, 41, 0.22);
     }
 
+    .title-chip-last {
+      border-color: rgba(59, 215, 255, 0.22);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        0 0 18px rgba(59, 215, 255, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    .title-chip-last::before {
+      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.58), transparent);
+      box-shadow: 0 0 10px rgba(59, 215, 255, 0.16);
+    }
+
+    .title-chip-best {
+      border-color: rgba(255, 198, 41, 0.26);
+      background:
+        linear-gradient(90deg, rgba(255, 198, 41, 0.14), transparent 44%),
+        linear-gradient(180deg, rgba(35, 31, 20, 0.86), rgba(8, 8, 12, 0.84));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+        0 0 18px rgba(255, 198, 41, 0.12),
+        0 8px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    .title-chip-best span::before {
+      background: rgba(255, 198, 41, 0.28);
+      color: #fff8df;
+    }
+
+    .title-chip-best strong {
+      color: #fff8d2;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.72),
+        0 0 14px rgba(255, 198, 41, 0.22);
+    }
+
+    .title-chip-control {
+      grid-column: 1 / -1;
+      animation-delay: 0.08s;
+    }
+
+    .title-chip-control strong {
+      font-size: 14px;
+    }
+
     .overlay[data-mode="result"] .dialog:not(.new-best) {
       background:
         linear-gradient(180deg, rgba(4, 8, 18, 0.2), rgba(4, 8, 18, 0.8)),
@@ -2588,6 +2635,7 @@
     const DISTANCE_MILESTONE_STEP = 500;
     const SPEED_TIER_THRESHOLDS = [0.32, 0.64, 0.92];
     const TWO_MINUTE_TARGET = 120;
+    const LAST_SCORE_KEY = "laneRunnerLastScore";
     const SCORE_RANKING_KEY = "laneRunnerScoreRanking";
     const SCORE_RANKING_LIMIT = 5;
 
@@ -2611,6 +2659,7 @@
     let audioContext = null;
     let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
+    let lastScore = Number(localStorage.getItem(LAST_SCORE_KEY) || 0);
     let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
     let speed = BASE_SPEED;
@@ -2801,8 +2850,10 @@ function endGame() {
       const previousBest = best;
       const isBest = score > previousBest;
       best = Math.max(previousBest, score);
+      lastScore = score;
       const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest);
       localStorage.setItem("laneRunnerBestScore", String(best));
+      localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
@@ -2875,9 +2926,10 @@ function endGame() {
         )).join("")
         : `<div class="title-rank-empty">NO SCORE</div>`;
       const chips = [
-        ["BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
-        ["CONTROL", "LEFT / RIGHT / JUMP", "↔"]
-      ].map(([label, value, icon]) => `<div class="title-chip"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+        ["last", "LAST", lastScore ? `${formatNumber(lastScore)}` : "NO SCORE", "●"],
+        ["best", "BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
+        ["control", "CONTROL", "LEFT / RIGHT / JUMP", "↔"]
+      ].map(([key, label, value, icon]) => `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
 
