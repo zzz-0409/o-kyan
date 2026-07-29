@@ -2643,7 +2643,8 @@
       baseScore: 0,
       coinCount: 0,
       finalScore: 0,
-      isBest: false
+      isBest: false,
+      message: ""
     };
     let obstacles = [];
     let coinItems = [];
@@ -2778,12 +2779,14 @@ function endGame() {
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
-      const isBest = score > best;
-      best = Math.max(best, score);
+      const previousBest = best;
+      const isBest = score > previousBest;
+      best = Math.max(previousBest, score);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest);
       localStorage.setItem("laneRunnerBestScore", String(best));
       recordScore(score);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : "ベスト更新を目指してもう一度";
+      overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, best);
       setStartButtonLoading(false);
       setActionButton(
@@ -2805,7 +2808,8 @@ function endGame() {
         baseScore: distanceScore,
         coinCount: collectedCoins,
         finalScore: score,
-        isBest
+        isBest,
+        message: resultMessage
       };
       startScoreConversion(distanceScore, collectedCoins, score);
     }
@@ -2817,7 +2821,8 @@ function endGame() {
         baseScore: 0,
         coinCount: 0,
         finalScore: 0,
-        isBest: false
+        isBest: false,
+        message: ""
       };
     }
 
@@ -2872,6 +2877,28 @@ function endGame() {
         const icon = statIcons[label] || "";
         return `<div class="result-stat"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
       }).join("");
+    }
+
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest) {
+      if (isBest) {
+        return `新記録！${formatNumber(score)}点まで伸びた`;
+      }
+      if (previousBest > 0) {
+        const gap = Math.max(0, previousBest - score);
+        if (gap > 0 && gap <= 300) {
+          return `あと${formatNumber(gap)}点でベスト更新`;
+        }
+      }
+      if (meters >= 1800) {
+        return "いい走り。後半のペースにもついていけてる";
+      }
+      if (coinCount >= 18) {
+        return "コイン回収がうまい。次は距離を伸ばそう";
+      }
+      if (meters < 350) {
+        return "序盤は早めの左右移動がコツ";
+      }
+      return "ベスト更新を目指してもう一度";
     }
 
     function setButtonIcon(button, icon) {
@@ -2945,7 +2972,7 @@ function endGame() {
       convertCoinsEl.textContent = formatNumber(remainingCoins);
       convertScoreEl.textContent = formatNumber(shownScore);
       if (remainingCoins <= 0) {
-        overlayText.textContent = "ベスト更新を目指してもう一度";
+        overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
         showResultStats(finalScore, Math.floor(distance), 0, best);
         setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         return;
@@ -2982,7 +3009,7 @@ function endGame() {
       setHudNumber(todayRankEl, 0);
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
-      overlayText.textContent = "ベスト更新を目指してもう一度";
+      overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
       showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, best);
       setStartButtonLoading(false);
       setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
