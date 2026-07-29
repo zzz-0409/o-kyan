@@ -964,7 +964,7 @@
       border: 0;
       background:
         linear-gradient(180deg, rgba(4, 8, 18, 0.08), rgba(4, 8, 18, 0.5) 42%, rgba(3, 6, 13, 0.96)),
-        url("assets/ui/title-bg-campus.png?v=imagegen-9") center / cover no-repeat,
+        url("assets/ui/title-bg-campus.png?v=imagegen-10") center / cover no-repeat,
         radial-gradient(circle at 50% 26%, rgba(59, 215, 255, 0.2), transparent 28%),
         linear-gradient(180deg, rgba(8, 18, 43, 0.03), rgba(8, 13, 25, 0.62) 52%, rgba(5, 9, 17, 0.96));
       box-shadow: none;
@@ -1302,19 +1302,31 @@
         0 0 14px rgba(255, 198, 41, 0.22);
     }
 
-    .title-chip-control {
+    .title-chip-today {
       grid-column: 1 / -1;
+      border-color: rgba(123, 238, 255, 0.24);
+      background:
+        linear-gradient(90deg, rgba(59, 215, 255, 0.14), transparent 44%),
+        linear-gradient(180deg, rgba(13, 31, 42, 0.86), rgba(4, 8, 16, 0.84));
       animation-delay: 0.08s;
     }
 
-    .title-chip-control strong {
-      font-size: 14px;
+    .title-chip-today span::before {
+      background: rgba(59, 215, 255, 0.2);
+      color: #dffaff;
+    }
+
+    .title-chip-today strong {
+      color: #dffaff;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.72),
+        0 0 14px rgba(59, 215, 255, 0.2);
     }
 
     .overlay[data-mode="result"] .dialog:not(.new-best) {
       background:
         linear-gradient(180deg, rgba(4, 8, 18, 0.2), rgba(4, 8, 18, 0.8)),
-        url("assets/ui/result-panel-campus.png?v=imagegen-9") center / cover no-repeat,
+        url("assets/ui/result-panel-campus.png?v=imagegen-10") center / cover no-repeat,
         radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 58%),
         linear-gradient(180deg, rgba(17, 29, 48, 0.96), rgba(5, 9, 17, 0.97));
     }
@@ -2723,6 +2735,7 @@
     const TWO_MINUTE_TARGET = 120;
     const LAST_SCORE_KEY = "laneRunnerLastScore";
     const SCORE_RANKING_KEY = "laneRunnerScoreRanking";
+    const DAILY_BEST_KEY = "laneRunnerDailyBest";
     const SCORE_RANKING_LIMIT = 5;
 
     let running = false;
@@ -2750,6 +2763,7 @@
     let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
     let lastScore = Number(localStorage.getItem(LAST_SCORE_KEY) || 0);
+    let dailyBest = loadDailyBest();
     let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
     let bestLiveRank = SCORE_RANKING_LIMIT + 1;
@@ -2802,6 +2816,7 @@
       coinCount: 0,
       finalScore: 0,
       isBest: false,
+      isDailyBest: false,
       message: ""
     };
     let obstacles = [];
@@ -2948,15 +2963,18 @@ function endGame() {
       const baseScore = distanceScore + skillScore;
       const collectedCoins = coins;
       const previousBest = best;
+      const previousDailyBest = dailyBest.score;
       const isBest = score > previousBest;
+      const isDailyBest = score > previousDailyBest;
       best = Math.max(previousBest, score);
+      dailyBest = saveDailyBest(score);
       lastScore = score;
       localStorage.setItem("laneRunnerBestScore", String(best));
       localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
       const resultRank = getScoreRank(score);
       const rankTarget = getNextRankTarget(score, resultRank);
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, resultRank);
@@ -2982,6 +3000,7 @@ function endGame() {
         coinCount: collectedCoins,
         finalScore: score,
         isBest,
+        isDailyBest,
         rank: resultRank,
         rankTarget,
         skillScore,
@@ -3000,6 +3019,7 @@ function endGame() {
         coinCount: 0,
         finalScore: 0,
         isBest: false,
+        isDailyBest: false,
         rank: 0,
         rankTarget: null,
         skillScore: 0,
@@ -3033,6 +3053,7 @@ function endGame() {
     }
 
     function updateTitleMeta() {
+      dailyBest = loadDailyBest();
       setElementHidden(titleMeta, false);
       const rankingRows = scoreRanking.length
         ? scoreRanking.map((score, index) => {
@@ -3043,7 +3064,7 @@ function endGame() {
       const chips = [
         ["last", "LAST", lastScore ? `${formatNumber(lastScore)}` : "NO SCORE", "●"],
         ["best", "BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
-        ["control", "CONTROL", "LEFT / RIGHT / JUMP", "↔"]
+        ["today", "TODAY", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "NO SCORE", "D"]
       ].map(([key, label, value, icon]) => `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
@@ -3067,12 +3088,15 @@ function endGame() {
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null) {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false) {
       const bonusText = bonusScore > 0 ? ` / NICE +${formatNumber(bonusScore)}` : "";
       const reasonText = crashReasonText(reason);
       const targetText = rankTargetText(rankTarget);
       if (isBest) {
         return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}${reasonText}${targetText}`;
+      }
+      if (isDailyBest) {
+        return `今日のベスト更新！ この調子で全体ベストへ${bonusText}${reasonText}${targetText}`;
       }
       if (rank > 0 && rank <= 3) {
         return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}${reasonText}${targetText}`;
@@ -3299,6 +3323,9 @@ function endGame() {
       }
       if (resultState.rankTarget) {
         parts.push(`次${formatScoreRank(resultState.rankTarget.rank)}まで${formatNumber(resultState.rankTarget.gap)}点`);
+      }
+      if (resultState.isDailyBest && !resultState.isBest) {
+        parts.push("TODAY BEST");
       }
       if (resultState.skillScore > 0) {
         parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
@@ -3649,6 +3676,39 @@ function endGame() {
       const millions = number / 1000000;
       if (millions < 10) return `${millions.toFixed(1).replace(".0", "")}M`;
       return `${Math.floor(millions)}M`;
+    }
+
+    function todayKey() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function loadDailyBest() {
+      const date = todayKey();
+      try {
+        const saved = JSON.parse(localStorage.getItem(DAILY_BEST_KEY) || "{}");
+        if (saved && saved.date === date) {
+          return {
+            date,
+            score: Math.max(0, Math.floor(Number(saved.score) || 0))
+          };
+        }
+      } catch {
+        localStorage.removeItem(DAILY_BEST_KEY);
+      }
+      return { date, score: 0 };
+    }
+
+    function saveDailyBest(score) {
+      const date = todayKey();
+      const normalized = Math.max(0, Math.floor(Number(score) || 0));
+      const current = dailyBest && dailyBest.date === date ? dailyBest.score : 0;
+      const next = { date, score: Math.max(current, normalized) };
+      localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(next));
+      return next;
     }
 
     function loadScoreRanking() {
