@@ -2568,6 +2568,7 @@
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
+    const SPEED_TIER_THRESHOLDS = [0.32, 0.64, 0.92];
     const TWO_MINUTE_TARGET = 120;
     const SCORE_RANKING_KEY = "laneRunnerScoreRanking";
     const SCORE_RANKING_LIMIT = 5;
@@ -2581,6 +2582,7 @@
     let runTime = 0;
     let targetTimeAnnounced = false;
     let nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+    let speedTier = 0;
     let distance = 0;
     let coins = 0;
     let scoreConvertInterval = 0;
@@ -2684,6 +2686,7 @@
       runTime = 0;
       targetTimeAnnounced = false;
       nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+      speedTier = 0;
       distance = 0;
       coins = 0;
       bestPaceAnnounced = false;
@@ -3157,6 +3160,25 @@ function endGame() {
       playSound(isBigMilestone ? "boost" : "coin");
       vibrate(isBigMilestone ? [18, 12, 18] : 10);
       setHint(`${formatNumber(milestone)}m RUN`);
+    }
+
+    function checkSpeedTier() {
+      const nextTier = SPEED_TIER_THRESHOLDS.reduce((tier, threshold) => (
+        difficultyRatio() >= threshold ? tier + 1 : tier
+      ), 0);
+      if (nextTier <= speedTier) return;
+      speedTier = nextTier;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.92);
+      ambientPulseColor = "123, 238, 255";
+      boostKickTimer = Math.max(boostKickTimer, BOOST_KICK_TIME * 0.45);
+      burstParticles(W / 2, PLAYER_Y - 138, "#7beeff", 14 + nextTier * 3, 1.05);
+      burstParticles(ROAD_VISUAL_LEFT, PLAYER_Y - 82, "rgba(123, 238, 255, 0.78)", 6, 0.65);
+      burstParticles(ROAD_VISUAL_RIGHT, PLAYER_Y - 82, "rgba(123, 238, 255, 0.78)", 6, 0.65);
+      pulseStat(scoreStat);
+      showEventToast("PACE UP!", "boost");
+      playSound("nice");
+      vibrate(8 + nextTier * 2);
+      setHint("ペースアップ。次の障害物に注意！");
     }
 
     function checkBestPace(runScore) {
@@ -3762,6 +3784,7 @@ function spawnCoins() {
       jumpGraceTimer = Math.max(0, jumpGraceTimer - dt);
       distance += (speed * dt) / 12;
       checkDistanceMilestone();
+      checkSpeedTier();
       checkPlayTimeTarget();
       roadScroll += speed * dt;
       const targetX = LANES[player.lane];
