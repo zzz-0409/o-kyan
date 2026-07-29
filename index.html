@@ -5647,6 +5647,14 @@ function onPointerDown(event) {
       return overlayMode === "result" && !running && overlay.classList.contains("show");
     }
 
+    function titleStartRequested() {
+      return overlayMode === "title" && !running && overlay.classList.contains("show");
+    }
+
+    function pauseResumeRequested() {
+      return overlayMode === "pause" && manualPaused && overlay.classList.contains("show");
+    }
+
     function isResultControlTarget(target) {
       return target && target.closest && target.closest("button, input, textarea, select, label");
     }
@@ -5669,9 +5677,19 @@ function onPointerDown(event) {
         event.preventDefault();
         if (overlayMode === "pause") {
           resumeManualPause();
-        } else {
+        } else if (overlayMode === "playing") {
           pauseManually();
         }
+        return;
+      }
+      if ((event.code === "Space" || event.code === "Enter") && titleStartRequested()) {
+        event.preventDefault();
+        handleMainButton();
+        return;
+      }
+      if ((event.code === "Space" || event.code === "Enter") && pauseResumeRequested()) {
+        event.preventDefault();
+        resumeManualPause();
         return;
       }
       if (resultAdvanceRequested() && isResultControlTarget(event.target)) return;
