@@ -21,18 +21,18 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/ui/app-icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/ui/app-icon-512.png">
   <link rel="icon" type="image/svg+xml" href="assets/ui/app-icon.svg">
-  <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-9">
-  <link rel="prefetch" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-10">
+  <link rel="prefetch" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-wide.png?v=imagegen-10">
-  <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/character/imagegen-runner-1.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/character/imagegen-runner-2.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/character/imagegen-runner-3.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/character/imagegen-runner-jump.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/obstacles/imagegen-car.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/obstacles/imagegen-hole.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/gimmicks/imagegen-boost-pad.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/gimmicks/imagegen-slow-pad.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-1.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-2.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-3.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/character/imagegen-runner-jump.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/obstacles/imagegen-car.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/obstacles/imagegen-hole.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/gimmicks/imagegen-boost-pad.png?v=imagegen-10">
+  <link rel="preload" as="image" href="assets/gimmicks/imagegen-slow-pad.png?v=imagegen-10">
   <title>RUN DASH! オープンキャンパスラン</title>
   <style>
     :root {
@@ -767,6 +767,19 @@
         0 0 0 5px rgba(59, 215, 255, 0.1),
         0 0 18px rgba(59, 215, 255, 0.2),
         0 7px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .control-button.is-cued {
+      animation: controlCuePulse 0.62s ease-in-out infinite;
+      filter: brightness(1.14) saturate(1.12);
+    }
+
+    .control-button.is-cued::before {
+      border-color: rgba(123, 238, 255, 0.72);
+      box-shadow:
+        0 0 0 6px rgba(123, 238, 255, 0.08),
+        0 0 24px rgba(123, 238, 255, 0.46),
+        0 0 22px rgba(255, 198, 41, 0.24);
     }
 
     .overlay {
@@ -1716,6 +1729,16 @@
       100% {
         opacity: 0;
         transform: translate(-50%, -18px) scale(0.98);
+      }
+    }
+
+    @keyframes controlCuePulse {
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-2px) scale(1.06);
       }
     }
 
@@ -2692,6 +2715,7 @@
     const CRASH_RESULT_DELAY = 0.42;
     const HAZARD_WARNING_DISTANCE = 430;
     const HAZARD_WARNING_NEAR = 95;
+    const ACTION_CUE_DISTANCE = 330;
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
@@ -3361,6 +3385,48 @@ function endGame() {
         checkLiveRank(runScore);
       }
       updateRunStrip();
+      updateControlCues();
+    }
+
+    function updateControlCues() {
+      const cue = nextActionCue();
+      leftButton.classList.toggle("is-cued", cue === "left");
+      rightButton.classList.toggle("is-cued", cue === "right");
+      jumpButton.classList.toggle("is-cued", cue === "jump");
+    }
+
+    function clearControlCues() {
+      leftButton.classList.remove("is-cued");
+      rightButton.classList.remove("is-cued");
+      jumpButton.classList.remove("is-cued");
+    }
+
+    function nextActionCue() {
+      if (!running || readyTimer > 0 || gameOver) return "";
+      const upcoming = obstacles
+        .filter((obstacle) => !laneObjectPassed(obstacle))
+        .map((obstacle) => ({
+          obstacle,
+          distanceToPlayer: PLAYER_Y - (obstacle.y + obstacle.h)
+        }))
+        .filter(({ distanceToPlayer }) => distanceToPlayer >= -8 && distanceToPlayer <= ACTION_CUE_DISTANCE)
+        .sort((a, b) => a.distanceToPlayer - b.distanceToPlayer)
+        .find(({ obstacle }) => obstacle.lanes.includes(player.lane))?.obstacle;
+
+      if (!upcoming) return "";
+      if (upcoming.type === "hole") return isHoleSafe() ? "" : "jump";
+
+      const openLanes = [0, 1, 2].filter((lane) => !upcoming.lanes.includes(lane));
+      if (!openLanes.length) return "";
+      const targetLane = openLanes.reduce((bestLane, lane) => {
+        const bestDistance = Math.abs(bestLane - player.lane);
+        const laneDistance = Math.abs(lane - player.lane);
+        if (laneDistance !== bestDistance) return laneDistance < bestDistance ? lane : bestLane;
+        return lane < bestLane ? lane : bestLane;
+      }, openLanes[0]);
+      if (targetLane < player.lane) return "left";
+      if (targetLane > player.lane) return "right";
+      return "";
     }
 
     function pulseStat(statElement, className = "stat-pop") {
@@ -3654,6 +3720,7 @@ function endGame() {
       touchStart = null;
       jumpBufferTimer = 0;
       inputFlashTimer = 0;
+      clearControlCues();
       overlayMode = "pause";
       overlay.dataset.mode = "pause";
       overlay.querySelector(".dialog").classList.remove("new-best");
@@ -3697,6 +3764,7 @@ function endGame() {
       autoPaused = false;
       eventToast.className = "event-toast";
       eventToast.setAttribute("aria-hidden", "true");
+      clearControlCues();
       overlayMode = "title";
       appEl.dataset.screen = "title";
       overlay.dataset.mode = "title";
@@ -4550,6 +4618,7 @@ function checkCollisions() {
       gameOver = true;
       touchStart = null;
       jumpBufferTimer = 0;
+      clearControlCues();
       screenShakeTimer = 0.22;
       screenShakePower = 8;
       crashResultTimer = CRASH_RESULT_DELAY;
@@ -5923,6 +5992,7 @@ function onPointerDown(event) {
       touchStart = null;
       jumpBufferTimer = 0;
       inputFlashTimer = 0;
+      clearControlCues();
       setHint("PAUSED");
       draw();
     }
