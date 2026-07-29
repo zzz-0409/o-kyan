@@ -2562,6 +2562,7 @@
     const LANDING_KICK_TIME = 0.16;
     const DODGE_FLASH_TIME = 0.28;
     const JUMP_CLEAR_FEEDBACK_TIME = 0.24;
+    const CRASH_RESULT_DELAY = 0.42;
     const HAZARD_WARNING_DISTANCE = 430;
     const HAZARD_WARNING_NEAR = 95;
     const BOOST_KICK_TIME = 0.24;
@@ -2612,6 +2613,7 @@
     let laneTrailToX = LANES[CENTER_LANE];
     let landingKickTimer = 0;
     let dodgeFlashTimer = 0;
+    let crashResultTimer = 0;
     let dodgeFlashX = LANES[CENTER_LANE];
     let boostKickTimer = 0;
     let slowKickTimer = 0;
@@ -2705,6 +2707,7 @@
       laneTrailToX = LANES[CENTER_LANE];
       landingKickTimer = 0;
       dodgeFlashTimer = 0;
+      crashResultTimer = 0;
       dodgeFlashX = LANES[CENTER_LANE];
       boostKickTimer = 0;
       slowKickTimer = 0;
@@ -2753,6 +2756,7 @@
       startLoop();
     }
 function endGame() {
+      crashResultTimer = 0;
       running = false;
       gameOver = true;
       autoPaused = false;
@@ -4018,14 +4022,19 @@ function checkCollisions() {
     }
 
     function crash() {
+      if (gameOver || crashResultTimer > 0) return;
+      running = false;
+      gameOver = true;
+      touchStart = null;
+      jumpBufferTimer = 0;
       screenShakeTimer = 0.22;
       screenShakePower = 8;
+      crashResultTimer = CRASH_RESULT_DELAY;
       flashStage("slow");
       burstParticles(player.x, PLAYER_Y - 30, "#ff5d4d", 24, 1.25);
       burstGroundDust(player.x, PLAYER_Y + 8, 14, 1.2);
       playSound("crash");
       vibrate([28, 18, 36]);
-      endGame();
     }
 function playerRect() {
       const collisionX = LANES[player.lane];
@@ -4124,7 +4133,6 @@ function draw() {
       }
       drawRoad();
       drawRunMotion();
-      drawLaneFocus();
       drawRunFeedback();
       drawSpeedPanels();
       drawCoins();
@@ -4141,35 +4149,32 @@ function drawRoad() {
       drawLoopVignette();
     }
 
-    function drawLaneFocus() {
-      if (!running) return;
-      const laneX = player.x;
-      const focusY = PLAYER_Y - 98;
-      const pulse = 0.5 + Math.sin(roadScroll * 0.045) * 0.5;
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      const glow = ctx.createRadialGradient(laneX, focusY, 10, laneX, focusY, 82);
-      glow.addColorStop(0, `rgba(123, 238, 255, ${0.08 + pulse * 0.04})`);
-      glow.addColorStop(0.42, "rgba(123, 238, 255, 0.035)");
-      glow.addColorStop(1, "rgba(123, 238, 255, 0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.ellipse(laneX, focusY, 48, 170, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 248, 223, 0.12)";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([18, 34]);
-      ctx.lineDashOffset = -roadScroll * 0.45;
-      ctx.beginPath();
-      ctx.moveTo(laneX, PLAYER_Y - 265);
-      ctx.lineTo(laneX, PLAYER_Y - 40);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-    }
-
     function drawRunFeedback() {
+      if (crashResultTimer > 0) {
+        const ratio = Math.max(0, Math.min(1, crashResultTimer / CRASH_RESULT_DELAY));
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = 0.16 + ratio * 0.22;
+        const impact = ctx.createRadialGradient(player.x, PLAYER_Y - 44, 12, player.x, PLAYER_Y - 44, 185);
+        impact.addColorStop(0, "rgba(255, 248, 223, 0.42)");
+        impact.addColorStop(0.22, "rgba(255, 93, 77, 0.24)");
+        impact.addColorStop(1, "rgba(255, 93, 77, 0)");
+        ctx.fillStyle = impact;
+        ctx.fillRect(0, PLAYER_Y - 250, W, 330);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = 0.24 + ratio * 0.2;
+        const edge = ctx.createLinearGradient(0, 0, W, 0);
+        edge.addColorStop(0, "rgba(255, 93, 77, 0.42)");
+        edge.addColorStop(0.28, "rgba(255, 93, 77, 0)");
+        edge.addColorStop(0.72, "rgba(255, 93, 77, 0)");
+        edge.addColorStop(1, "rgba(255, 93, 77, 0.42)");
+        ctx.fillStyle = edge;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+        return;
+      }
       if (!running) return;
       if (ambientPulseTimer > 0) {
         const ratio = Math.max(0, Math.min(1, ambientPulseTimer / AMBIENT_PULSE_TIME));
@@ -5368,7 +5373,13 @@ function onPointerDown(event) {
       if (screenShakeTimer > 0) {
         screenShakeTimer = Math.max(0, screenShakeTimer - dt);
       }
-      if (running) {
+      if (crashResultTimer > 0) {
+        crashResultTimer = Math.max(0, crashResultTimer - dt);
+        updateParticles(dt);
+        if (crashResultTimer <= 0) {
+          endGame();
+        }
+      } else if (running) {
         update(dt);
       } else if (!autoPaused) {
         roadScroll += BASE_SPEED * 0.42 * dt;
