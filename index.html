@@ -2684,6 +2684,7 @@
     let distance = 0;
     let coins = 0;
     let skillScore = 0;
+    let crashReason = "";
     let scoreConvertInterval = 0;
     let eventToastTimer = 0;
     let stageFxTimer = 0;
@@ -2795,6 +2796,7 @@
       distance = 0;
       coins = 0;
       skillScore = 0;
+      crashReason = "";
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -2894,7 +2896,7 @@ function endGame() {
       localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
       const resultRank = getScoreRank(score);
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, resultRank);
@@ -2922,6 +2924,7 @@ function endGame() {
         isBest,
         rank: resultRank,
         skillScore,
+        crashReason,
         message: resultMessage
       };
       startScoreConversion(baseScore, collectedCoins, score);
@@ -2938,6 +2941,7 @@ function endGame() {
         isBest: false,
         rank: 0,
         skillScore: 0,
+        crashReason: "",
         message: ""
       };
     }
@@ -2996,30 +3000,37 @@ function endGame() {
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0) {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "") {
       const bonusText = bonusScore > 0 ? ` / NICE +${formatNumber(bonusScore)}` : "";
+      const reasonText = crashReasonText(reason);
       if (isBest) {
-        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}`;
+        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}${reasonText}`;
       }
       if (rank > 0 && rank <= 3) {
-        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}`;
+        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}${reasonText}`;
       }
       if (previousBest > 0) {
         const gap = Math.max(0, previousBest - score);
         if (gap > 0 && gap <= 300) {
-          return `あと${formatNumber(gap)}点でベスト更新${bonusText}`;
+          return `あと${formatNumber(gap)}点でベスト更新${bonusText}${reasonText}`;
         }
       }
       if (meters >= 1800) {
-        return `いい走り。後半のペースにもついていけてる${bonusText}`;
+        return `いい走り。後半のペースにもついていけてる${bonusText}${reasonText}`;
       }
       if (coinCount >= 18) {
-        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}`;
+        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}${reasonText}`;
       }
       if (meters < 350) {
-        return `序盤は早めの左右移動がコツ${bonusText}`;
+        return `序盤は早めの左右移動がコツ${bonusText}${reasonText}`;
       }
-      return `ベスト更新を目指してもう一度${bonusText}`;
+      return `ベスト更新を目指してもう一度${bonusText}${reasonText}`;
+    }
+
+    function crashReasonText(reason) {
+      if (reason === "hole") return " / 穴はJUMP";
+      if (reason === "obstacle") return " / コーンは左右";
+      return "";
     }
 
     function setButtonIcon(button, icon) {
@@ -4315,7 +4326,7 @@ function checkCollisions() {
             for (const lane of obstacle.lanes) {
               const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
               if (rectsOverlap(feet, o)) {
-                crash();
+                crash("hole");
                 return;
               }
             }
@@ -4324,7 +4335,7 @@ function checkCollisions() {
           for (const lane of obstacle.lanes) {
             const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 8, 7);
             if (rectsOverlap(hitP, o)) {
-              crash();
+              crash("obstacle");
               return;
             }
           }
@@ -4387,8 +4398,9 @@ function checkCollisions() {
 
     }
 
-    function crash() {
+    function crash(reason = "obstacle") {
       if (gameOver || crashResultTimer > 0) return;
+      crashReason = reason;
       running = false;
       gameOver = true;
       touchStart = null;
