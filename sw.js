@@ -1,11 +1,14 @@
-const CACHE_NAME = "run-dash-cache-v1";
+const CACHE_NAME = "run-dash-cache-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./assets/ui/app-icon.svg",
+  "./assets/ui/app-icon-192.png",
+  "./assets/ui/app-icon-512.png",
   "./assets/ui/title-bg-campus.png",
   "./assets/ui/result-panel-campus.png",
+  "./assets/backgrounds/imagegen-full-road-city-loop.png",
   "./assets/character/imagegen-runner-0.png",
   "./assets/character/imagegen-runner-1.png",
   "./assets/character/imagegen-runner-2.png",
