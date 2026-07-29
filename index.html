@@ -23,7 +23,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/ui/app-icon.svg">
   <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-9">
   <link rel="prefetch" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-9">
-  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop.png?v=imagegen-9">
+  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-wide.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-9">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-1.png?v=imagegen-9">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-2.png?v=imagegen-9">
@@ -1129,6 +1129,34 @@
       font-size: 15px;
       font-weight: 950;
       text-shadow: 0 0 12px rgba(255, 198, 41, 0.18);
+    }
+
+    .title-rank-row.is-last {
+      margin: 2px -6px;
+      padding-left: 6px;
+      padding-right: 6px;
+      border-radius: 999px;
+      background:
+        linear-gradient(90deg, rgba(59, 215, 255, 0.18), rgba(255, 198, 41, 0.1), transparent 82%);
+      box-shadow:
+        inset 0 0 0 1px rgba(59, 215, 255, 0.12),
+        0 0 14px rgba(59, 215, 255, 0.08);
+    }
+
+    .title-rank-row.is-last strong::after {
+      content: "LAST";
+      display: inline-grid;
+      place-items: center;
+      margin-left: 7px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(59, 215, 255, 0.18);
+      color: #dffaff;
+      font-size: 8px;
+      font-weight: 950;
+      line-height: 1;
+      vertical-align: 2px;
+      text-shadow: none;
     }
 
     .title-rank-empty {
@@ -2566,7 +2594,7 @@
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
     const pauseButton = document.getElementById("pauseButton");
-    const ASSET_VERSION = "imagegen-9";
+    const ASSET_VERSION = "imagegen-10";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
     let assetsReadyNotified = false;
@@ -2599,7 +2627,7 @@
     citySideLoopSprite.src = assetUrl("assets/backgrounds/imagegen-city-side-loop.png");
     citySideLoopSprite.addEventListener("load", draw);
     const fullRoadCityLoopSprite = new Image();
-    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop.png");
+    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop-wide.png");
     fullRoadCityLoopSprite.addEventListener("load", draw);
     const essentialSprites = [
       ...playerRunSprites,
@@ -2611,8 +2639,8 @@
     const H = 720;
     const FRAME_MS = 1000 / 30;
     const MAX_CANVAS_DPR = 2;
-    const FULL_ROAD_BG_CROP_RATIO = 0.52;
-    const ROAD_VISUAL_LEFT = 34;
+    const FULL_ROAD_BG_CROP_RATIO = 1;
+    const ROAD_VISUAL_LEFT = 24;
     const ROAD_VISUAL_RIGHT = W - ROAD_VISUAL_LEFT;
     const ROAD_VISUAL_WIDTH = ROAD_VISUAL_RIGHT - ROAD_VISUAL_LEFT;
     const LANES = [
@@ -2983,9 +3011,10 @@ function endGame() {
     function updateTitleMeta() {
       setElementHidden(titleMeta, false);
       const rankingRows = scoreRanking.length
-        ? scoreRanking.map((score, index) => (
-          `<div class="title-rank-row"><span>#${index + 1}</span><strong>${formatNumber(score)}</strong></div>`
-        )).join("")
+        ? scoreRanking.map((score, index) => {
+          const isLast = lastScore > 0 && score === Math.floor(lastScore);
+          return `<div class="title-rank-row${isLast ? " is-last" : ""}"><span>#${index + 1}</span><strong>${formatNumber(score)}</strong></div>`;
+        }).join("")
         : `<div class="title-rank-empty">NO SCORE</div>`;
       const chips = [
         ["last", "LAST", lastScore ? `${formatNumber(lastScore)}` : "NO SCORE", "●"],
@@ -5150,6 +5179,8 @@ function drawRoad() {
         }
       }
 
+      drawAlignedRoadGuides();
+
       const roadShade = ctx.createLinearGradient(0, 0, W, 0);
       roadShade.addColorStop(0, "rgba(0,0,0,0.22)");
       roadShade.addColorStop(0.14, "rgba(0,0,0,0)");
@@ -5157,6 +5188,42 @@ function drawRoad() {
       roadShade.addColorStop(1, "rgba(0,0,0,0.22)");
       ctx.fillStyle = roadShade;
       ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawAlignedRoadGuides() {
+      const roadX = ROAD_VISUAL_LEFT;
+      const roadRight = ROAD_VISUAL_RIGHT;
+      const roadW = ROAD_VISUAL_WIDTH;
+      const dashOffset = ((roadScroll * 0.88) % 96 + 96) % 96;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(roadX, 0, roadW, H);
+      ctx.clip();
+      ctx.lineCap = "round";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(236, 246, 255, 0.72)";
+      ctx.setLineDash([34, 58]);
+      ctx.lineDashOffset = -dashOffset;
+      [roadX + roadW / 3, roadX + (roadW * 2) / 3].forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(x, -80);
+        ctx.lineTo(x, H + 80);
+        ctx.stroke();
+      });
+
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(74, 222, 255, 0.46)";
+      ctx.shadowColor = "rgba(74, 222, 255, 0.38)";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(roadX, 0);
+      ctx.lineTo(roadX, H);
+      ctx.moveTo(roadRight, 0);
+      ctx.lineTo(roadRight, H);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function positiveModulo(value, size) {
