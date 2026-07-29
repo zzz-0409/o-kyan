@@ -3786,7 +3786,20 @@ function endGame() {
     function registerServiceWorker() {
       if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {
+        navigator.serviceWorker.register("./sw.js").then((registration) => {
+          registration.update().catch(() => {
+            // Update checks are opportunistic; cached play still works if this fails.
+          });
+          registration.addEventListener("updatefound", () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener("statechange", () => {
+              if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                setHint("最新版を準備しました。次回起動で反映");
+              }
+            });
+          });
+        }).catch(() => {
           // Offline support is optional; keep the game playable if registration fails.
         });
       });
