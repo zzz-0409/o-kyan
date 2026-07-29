@@ -5813,6 +5813,7 @@ function drawObstacles() {
           ctx.shadowOffsetY = 3;
           ctx.drawImage(image, r.x, r.y, r.w, r.h);
           ctx.restore();
+          drawSpeedPanelIcon(panel, r);
           drawSpeedPanelShimmer(panel, r);
           continue;
         }
@@ -5820,13 +5821,46 @@ function drawObstacles() {
         ctx.globalAlpha *= entranceAlpha;
         ctx.fillStyle = panel.kind === "up" ? "rgba(240,194,71,0.58)" : "rgba(101,183,216,0.52)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = panel.kind === "up" ? "#f6efd9" : "#e8f8ff";
-        ctx.font = "800 18px Segoe UI, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(panel.kind === "up" ? ">>" : "<<", r.x + r.w / 2, r.y + 35);
         ctx.restore();
+        drawSpeedPanelIcon(panel, r);
         drawSpeedPanelShimmer(panel, r);
       }
+    }
+
+    function drawSpeedPanelIcon(panel, rect) {
+      const entranceAlpha = objectEntranceAlpha(rect.y);
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h / 2;
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha = 0.86 * entranceAlpha;
+      ctx.strokeStyle = panel.kind === "up" ? "rgba(255, 248, 223, 0.92)" : "rgba(220, 250, 255, 0.92)";
+      ctx.fillStyle = panel.kind === "up" ? "rgba(255, 198, 41, 0.26)" : "rgba(59, 215, 255, 0.22)";
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = panel.kind === "up" ? "rgba(255, 198, 41, 0.58)" : "rgba(59, 215, 255, 0.54)";
+      ctx.shadowBlur = 10;
+
+      if (panel.kind === "up") {
+        for (let i = 0; i < 3; i += 1) {
+          const y = cy + 14 - i * 13;
+          ctx.beginPath();
+          ctx.moveTo(cx - 15, y + 7);
+          ctx.lineTo(cx, y - 7);
+          ctx.lineTo(cx + 15, y + 7);
+          ctx.stroke();
+        }
+      } else {
+        for (let i = -1; i <= 1; i += 1) {
+          const x = cx + i * 12;
+          ctx.beginPath();
+          ctx.rect(x - 3, cy - 16, 6, 32);
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
     }
 
     function drawSpeedPanelShimmer(panel, rect) {
