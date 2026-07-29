@@ -2819,13 +2819,14 @@ function endGame() {
       const isBest = score > previousBest;
       best = Math.max(previousBest, score);
       lastScore = score;
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest);
       localStorage.setItem("laneRunnerBestScore", String(best));
       localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
+      const resultRank = getScoreRank(score);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
-      showResultStats(score, distanceScore, collectedCoins, best);
+      showResultStats(score, distanceScore, collectedCoins, resultRank);
       setStartButtonLoading(false);
       setActionButton(
         startButton,
@@ -2848,6 +2849,7 @@ function endGame() {
         coinCount: collectedCoins,
         finalScore: score,
         isBest,
+        rank: resultRank,
         message: resultMessage
       };
       startScoreConversion(distanceScore, collectedCoins, score);
@@ -2862,6 +2864,7 @@ function endGame() {
         coinCount: 0,
         finalScore: 0,
         isBest: false,
+        rank: 0,
         message: ""
       };
     }
@@ -2901,28 +2904,31 @@ function endGame() {
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
 
-    function showResultStats(score, meters, coinCount, bestScore) {
+    function showResultStats(score, meters, coinCount, rank) {
       setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
         DISTANCE: "M",
         COINS: "C",
-        BEST: "B"
+        RANK: "#"
       };
       resultStats.innerHTML = [
         ["SCORE", formatNumber(score)],
         ["DISTANCE", `${formatNumber(meters)}m`],
         ["COINS", formatNumber(coinCount)],
-        ["BEST", formatNumber(bestScore)]
+        ["RANK", formatScoreRank(rank)]
       ].map(([label, value]) => {
         const icon = statIcons[label] || "";
         return `<div class="result-stat"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest) {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0) {
       if (isBest) {
-        return `新記録！${formatNumber(score)}点まで伸びた`;
+        return `新記録！ランキング${formatScoreRank(rank)}に入った`;
+      }
+      if (rank > 0 && rank <= 3) {
+        return `ランキング${formatScoreRank(rank)}。かなりいい走り`;
       }
       if (previousBest > 0) {
         const gap = Math.max(0, previousBest - score);
@@ -3022,7 +3028,7 @@ function endGame() {
       if (remainingCoins <= 0) {
         setScoreConversionOpen(false);
         overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-        showResultStats(finalScore, Math.floor(distance), 0, best);
+        showResultStats(finalScore, Math.floor(distance), 0, resultState.rank);
         setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         setShareButtonVisible(true);
         return;
@@ -3042,7 +3048,7 @@ function endGame() {
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
         overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
-        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), best);
+        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), resultState.rank);
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -3061,7 +3067,7 @@ function endGame() {
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, best);
+      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, resultState.rank);
       setStartButtonLoading(false);
       setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
       setTitleReturnButtonVisible(true);
@@ -3378,6 +3384,18 @@ function endGame() {
         .sort((a, b) => b - a)
         .slice(0, SCORE_RANKING_LIMIT);
       localStorage.setItem(SCORE_RANKING_KEY, JSON.stringify(scoreRanking));
+    }
+
+    function getScoreRank(score) {
+      const normalized = Math.floor(Number(score) || 0);
+      if (normalized <= 0) return 0;
+      const rankIndex = scoreRanking.findIndex((rankedScore) => rankedScore === normalized);
+      return rankIndex >= 0 ? rankIndex + 1 : SCORE_RANKING_LIMIT + 1;
+    }
+
+    function formatScoreRank(rank) {
+      if (!rank) return "-";
+      return rank > SCORE_RANKING_LIMIT ? `#${SCORE_RANKING_LIMIT + 1}+` : `#${rank}`;
     }
 
     function showTitleScreen() {
