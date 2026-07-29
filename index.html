@@ -2716,6 +2716,7 @@
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
+    const OPENING_GUIDE_STEPS = 3;
     const READY_GRACE_TIME = 1.8;
     const READY_GO_THRESHOLD = 0.62;
     const GO_CUE_TIME = 0.24;
@@ -2803,6 +2804,7 @@
     let repeatedObstacleCount = 0;
     let obstacleSpacingBonus = 0;
     let obstacleTempoStep = 0;
+    let openingGuideStep = 0;
     let lastRequiredAction = "move";
     let lastCoinLane = CENTER_LANE;
     let coinPatternFlip = 1;
@@ -2907,6 +2909,7 @@
       repeatedObstacleCount = 0;
       obstacleSpacingBonus = 0;
       obstacleTempoStep = 0;
+      openingGuideStep = 0;
       lastRequiredAction = "move";
       lastCoinLane = CENTER_LANE;
       coinPatternFlip = Math.random() < 0.5 ? -1 : 1;
@@ -4016,6 +4019,16 @@ function spawnObstacle() {
       if (!hasObstacleClearance()) {
         return false;
       }
+      const openingObstacle = createOpeningGuideObstacle();
+      if (openingObstacle) {
+        if (!isObstacleSafeFromCoins(openingObstacle)) {
+          return false;
+        }
+        addObstacle(openingObstacle);
+        openingGuideStep += 1;
+        return true;
+      }
+
       const difficulty = difficultyRatio();
       const canSpawnHole = runTime >= FIRST_HOLE_TIME;
       const style = chooseObstacleStyle(difficulty, canSpawnHole);
@@ -4042,6 +4055,28 @@ function spawnObstacle() {
       }
       addObstacle(obstacle);
       return true;
+    }
+
+    function createOpeningGuideObstacle() {
+      if (openingGuideStep >= OPENING_GUIDE_STEPS) return null;
+      if (runTime > WARMUP_DURATION) {
+        openingGuideStep = OPENING_GUIDE_STEPS;
+        return null;
+      }
+
+      if (openingGuideStep === 0) {
+        return { type: "car", lanes: [player.lane], y: -132, h: 82, group: "opening" };
+      }
+
+      if (openingGuideStep === 1) {
+        if (player.lane !== CENTER_LANE) {
+          return { type: "car", lanes: [player.lane], y: -132, h: 82, group: "opening" };
+        }
+        const left = Math.random() < 0.5 ? 0 : 1;
+        return { type: "car", lanes: [left, left + 1], y: -132, h: 82, group: "opening" };
+      }
+
+      return { type: "hole", lanes: [0, 1, 2], y: -118, h: 52, group: "opening" };
     }
 
     function chooseObstacleStyle(difficulty, canSpawnHole) {
