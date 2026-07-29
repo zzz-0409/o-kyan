@@ -2544,6 +2544,7 @@
     const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
     const COIN_RADIUS = 10;
+    const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
     const SWIPE_MIN = 36;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
@@ -2599,6 +2600,8 @@
     let roadScroll = 0;
     let spawnTimer = 0;
     let coinTimer = 0;
+    let coinChainTimer = 0;
+    let coinToneStep = 0;
     let panelTimer = 0;
     let slowTimer = 0;
     let boostTimer = 0;
@@ -2694,6 +2697,8 @@
       roadScroll = 0;
       spawnTimer = 1.55;
       coinTimer = 0.55;
+      coinChainTimer = 0;
+      coinToneStep = 0;
       panelTimer = 3.0;
       slowTimer = 0;
       boostTimer = 0;
@@ -3197,6 +3202,16 @@ function endGame() {
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
     }
 
+    function registerCoinPickup(x, y) {
+      coinToneStep = coinChainTimer > 0 ? Math.min(5, coinToneStep + 1) : 0;
+      coinChainTimer = COIN_CHAIN_WINDOW;
+      if (coinToneStep >= 3) {
+        ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.36);
+        ambientPulseColor = "255, 198, 41";
+        burstParticles(x, y - 8, "#fff3a2", 4 + coinToneStep, 0.72);
+      }
+    }
+
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -3357,7 +3372,20 @@ function endGame() {
         slow: { wave: "sine", from: 260, to: 120, duration: 0.2, volume: 0.03 },
         crash: { wave: "square", from: 130, to: 46, duration: 0.24, volume: 0.045 }
       };
-      const preset = presets[type] || presets.move;
+      const basePreset = presets[type] || presets.move;
+      const activeCoinStep = type === "coin" && coinChainTimer > 0
+        ? Math.max(0, Math.min(5, coinToneStep))
+        : 0;
+      const toneScale = 1 + activeCoinStep * 0.075;
+      const preset = type === "coin"
+        ? {
+          ...basePreset,
+          from: basePreset.from * toneScale,
+          to: basePreset.to * toneScale,
+          volume: Math.min(0.052, basePreset.volume + activeCoinStep * 0.0025),
+          duration: Math.max(0.085, basePreset.duration - activeCoinStep * 0.004)
+        }
+        : basePreset;
       const osc = audio.createOscillator();
       const gain = audio.createGain();
       osc.type = preset.wave;
@@ -3766,6 +3794,10 @@ function spawnCoins() {
       boostKickTimer = Math.max(0, boostKickTimer - dt);
       slowKickTimer = Math.max(0, slowKickTimer - dt);
       ambientPulseTimer = Math.max(0, ambientPulseTimer - dt);
+      coinChainTimer = Math.max(0, coinChainTimer - dt);
+      if (coinChainTimer <= 0) {
+        coinToneStep = 0;
+      }
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
       jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
       updateSpeed(rawSpeed, dt);
@@ -4015,6 +4047,7 @@ function checkCollisions() {
           coinItems.splice(i, 1);
           burstParticles(LANES[coin.lane], coin.y, coin.bonus ? "#7beeff" : "#f0c247", coin.bonus ? 12 : 8, 0.9);
           spawnCoinFlyer(LANES[coin.lane], coin.y);
+          registerCoinPickup(LANES[coin.lane], coin.y);
           pulseStat(coinStat);
           flashStage("coin");
           playSound("coin");
