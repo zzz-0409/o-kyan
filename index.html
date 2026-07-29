@@ -3017,16 +3017,17 @@ function endGame() {
       setHudNumber(todayRankEl, remainingCoins);
       setHudNumber(bestEl, best);
       updateHudLabels(shownScore, best, remainingCoins);
-      setScoreConversionOpen(true);
       convertCoinsEl.textContent = formatNumber(remainingCoins);
       convertScoreEl.textContent = formatNumber(shownScore);
       if (remainingCoins <= 0) {
+        setScoreConversionOpen(false);
         overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
         showResultStats(finalScore, Math.floor(distance), 0, best);
         setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         setShareButtonVisible(true);
         return;
       }
+      setScoreConversionOpen(true);
 
       scoreConvertInterval = setInterval(() => {
         flyResultCoin();
