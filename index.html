@@ -2515,6 +2515,7 @@
           </div>
           <div class="menu-actions">
             <button id="startButton" type="button">スタート</button>
+            <button id="installButton" type="button" hidden>HOME</button>
             <button id="titleButton" type="button" hidden>TITLE</button>
             <button id="shareButton" type="button" hidden>SHARE</button>
           </div>
@@ -2558,6 +2559,7 @@
     const convertScoreEl = document.getElementById("convertScore");
     const convertScoreBox = document.getElementById("convertScoreBox");
     const startButton = document.getElementById("startButton");
+    const installButton = document.getElementById("installButton");
     const titleButton = document.getElementById("titleButton");
     const shareButton = document.getElementById("shareButton");
     const leftButton = document.getElementById("leftButton");
@@ -2568,6 +2570,7 @@
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
     let assetsReadyNotified = false;
+    let deferredInstallPrompt = null;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
       image.src = assetUrl(`assets/character/imagegen-runner-${frame}.png`);
@@ -2863,6 +2866,7 @@
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
       setPauseButtonVisible(true);
+      updateInstallButton();
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
       hideResultStats();
@@ -3076,6 +3080,15 @@ function endGame() {
       pauseButton.disabled = !isVisible;
     }
 
+    function updateInstallButton() {
+      const canInstall = Boolean(deferredInstallPrompt) && overlayMode === "title";
+      installButton.hidden = !canInstall;
+      installButton.disabled = !canInstall;
+      if (canInstall) {
+        setActionButton(installButton, "HOME", "⌂", "ホーム画面に追加");
+      }
+    }
+
     function setShareButtonVisible(isVisible) {
       shareButton.hidden = !isVisible;
       shareButton.disabled = !isVisible;
@@ -3265,6 +3278,22 @@ function endGame() {
         }
       } catch {
         // Sharing can be cancelled by the user; keep the result screen as-is.
+      }
+    }
+
+    async function handleInstallButton() {
+      if (!deferredInstallPrompt) return;
+      const promptEvent = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      updateInstallButton();
+      try {
+        promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === "accepted") {
+          setHint("ホーム画面に追加しました");
+        }
+      } catch {
+        setHint("ブラウザのメニューからホームに追加できます");
       }
     }
 
@@ -3649,6 +3678,7 @@ function endGame() {
       setPauseButtonVisible(false);
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
+      updateInstallButton();
       setOverlayOpen(true);
       hideResultStats();
       updateTitleMeta();
@@ -5885,6 +5915,7 @@ function onPointerDown(event) {
     }
 
     startButton.addEventListener("click", handleMainButton);
+    installButton.addEventListener("click", handleInstallButton);
     titleButton.addEventListener("click", handleTitleButton);
     shareButton.addEventListener("click", handleShareButton);
     pauseButton.addEventListener("click", pauseManually);
@@ -5902,7 +5933,18 @@ function onPointerDown(event) {
     rightButton.addEventListener("contextmenu", suppressGameContextMenu);
     jumpButton.addEventListener("contextmenu", suppressGameContextMenu);
     pauseButton.addEventListener("contextmenu", suppressGameContextMenu);
+    installButton.addEventListener("contextmenu", suppressGameContextMenu);
     shareButton.addEventListener("contextmenu", suppressGameContextMenu);
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      updateInstallButton();
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallButton();
+      setHint("ホーム画面に追加しました");
+    });
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
     document.addEventListener("visibilitychange", onVisibilityChange);
