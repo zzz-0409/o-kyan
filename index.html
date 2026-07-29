@@ -2896,7 +2896,8 @@ function endGame() {
       localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
       const resultRank = getScoreRank(score);
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason);
+      const rankTarget = getNextRankTarget(score, resultRank);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, resultRank);
@@ -2923,6 +2924,7 @@ function endGame() {
         finalScore: score,
         isBest,
         rank: resultRank,
+        rankTarget,
         skillScore,
         crashReason,
         message: resultMessage
@@ -2940,6 +2942,7 @@ function endGame() {
         finalScore: 0,
         isBest: false,
         rank: 0,
+        rankTarget: null,
         skillScore: 0,
         crashReason: "",
         message: ""
@@ -3000,37 +3003,43 @@ function endGame() {
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "") {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null) {
       const bonusText = bonusScore > 0 ? ` / NICE +${formatNumber(bonusScore)}` : "";
       const reasonText = crashReasonText(reason);
+      const targetText = rankTargetText(rankTarget);
       if (isBest) {
-        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}${reasonText}`;
+        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}${reasonText}${targetText}`;
       }
       if (rank > 0 && rank <= 3) {
-        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}${reasonText}`;
+        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}${reasonText}${targetText}`;
       }
       if (previousBest > 0) {
         const gap = Math.max(0, previousBest - score);
         if (gap > 0 && gap <= 300) {
-          return `あと${formatNumber(gap)}点でベスト更新${bonusText}${reasonText}`;
+          return `あと${formatNumber(gap)}点でベスト更新${bonusText}${reasonText}${targetText}`;
         }
       }
       if (meters >= 1800) {
-        return `いい走り。後半のペースにもついていけてる${bonusText}${reasonText}`;
+        return `いい走り。後半のペースにもついていけてる${bonusText}${reasonText}${targetText}`;
       }
       if (coinCount >= 18) {
-        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}${reasonText}`;
+        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}${reasonText}${targetText}`;
       }
       if (meters < 350) {
-        return `序盤は早めの左右移動がコツ${bonusText}${reasonText}`;
+        return `序盤は早めの左右移動がコツ${bonusText}${reasonText}${targetText}`;
       }
-      return `ベスト更新を目指してもう一度${bonusText}${reasonText}`;
+      return `ベスト更新を目指してもう一度${bonusText}${reasonText}${targetText}`;
     }
 
     function crashReasonText(reason) {
       if (reason === "hole") return " / 穴はJUMP";
       if (reason === "obstacle") return " / コーンは左右";
       return "";
+    }
+
+    function rankTargetText(target) {
+      if (!target || target.gap <= 0) return "";
+      return ` / 次${formatScoreRank(target.rank)}まで${formatNumber(target.gap)}点`;
     }
 
     function setButtonIcon(button, icon) {
@@ -3509,6 +3518,18 @@ function endGame() {
       if (normalized <= 0) return 0;
       const rankIndex = scoreRanking.findIndex((rankedScore) => rankedScore === normalized);
       return rankIndex >= 0 ? rankIndex + 1 : SCORE_RANKING_LIMIT + 1;
+    }
+
+    function getNextRankTarget(score, rank) {
+      const normalized = Math.floor(Number(score) || 0);
+      if (normalized <= 0 || rank <= 1 || scoreRanking.length < 2) return null;
+      const targetIndex = Math.min(rank - 2, scoreRanking.length - 1);
+      const targetScore = scoreRanking[targetIndex];
+      if (!targetScore || targetScore <= normalized) return null;
+      return {
+        rank: targetIndex + 1,
+        gap: targetScore - normalized + 1
+      };
     }
 
     function formatScoreRank(rank) {
