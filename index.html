@@ -4821,10 +4821,24 @@ function checkCollisions() {
       screenShakePower = 8;
       crashResultTimer = CRASH_RESULT_DELAY;
       flashStage("slow");
+      showEventToast(crashCueText(reason), "slow");
+      setHint(crashCueHint(reason));
       burstParticles(player.x, PLAYER_Y - 30, "#ff5d4d", 24, 1.25);
       burstGroundDust(player.x, PLAYER_Y + 8, 14, 1.2);
       playSound("crash");
       vibrate([28, 18, 36]);
+    }
+
+    function crashCueText(reason) {
+      if (reason === "hole") return "JUMP!";
+      if (reason === "obstacle") return "MOVE!";
+      return "MISS!";
+    }
+
+    function crashCueHint(reason) {
+      if (reason === "hole") return "穴はJUMPで回避";
+      if (reason === "obstacle") return "コーンは左右で回避";
+      return "もう一度チャレンジ";
     }
 function playerRect() {
       const collisionX = LANES[player.lane];
