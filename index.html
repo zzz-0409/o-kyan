@@ -2800,6 +2800,7 @@
     let dailyBest = loadDailyBest();
     let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
+    let dailyBestPaceAnnounced = false;
     let bestLiveRank = SCORE_RANKING_LIMIT + 1;
     let speed = BASE_SPEED;
     let roadScroll = 0;
@@ -2906,6 +2907,7 @@
       skillScore = 0;
       crashReason = "";
       bestPaceAnnounced = false;
+      dailyBestPaceAnnounced = false;
       bestLiveRank = SCORE_RANKING_LIMIT + 1;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -3466,6 +3468,7 @@ function endGame() {
       updateHudLabels(runScore, best, coins);
       const announcedBest = checkBestPace(runScore);
       if (!announcedBest) {
+        checkDailyBestPace(runScore);
         checkLiveRank(runScore);
       }
       updateRunStrip();
@@ -3605,6 +3608,29 @@ function endGame() {
         }
       }
 
+      const todayScore = dailyBest?.score || 0;
+      if (todayScore > 0) {
+        const todayProgress = Math.max(0, Math.min(100, (runScore / todayScore) * 100));
+        if (runScore >= todayScore) {
+          const lead = Math.max(0, runScore - todayScore);
+          timePill.classList.add("best", "active");
+          timePill.querySelector("span").textContent = "TODAY";
+          timeStatus.textContent = `+${formatHudNumber(lead)}`;
+          timePill.setAttribute("aria-label", `今日のベスト更新中 ${formatNumber(lead)}点リード`);
+          timePill.style.setProperty("--effect-progress", "100%");
+          return;
+        }
+        const todayGap = todayScore - runScore;
+        if (todayProgress >= 48 || todayGap <= 900) {
+          timePill.classList.add("best");
+          timePill.querySelector("span").textContent = "TODAY";
+          timeStatus.textContent = `${formatHudNumber(todayGap)}点`;
+          timePill.setAttribute("aria-label", `今日のベストまであと${formatNumber(todayGap)}点`);
+          timePill.style.setProperty("--effect-progress", `${todayProgress}%`);
+          return;
+        }
+      }
+
       const milestoneStart = nextDistanceMilestone - DISTANCE_MILESTONE_STEP;
       const milestoneProgress = Math.max(0, Math.min(100, ((distance - milestoneStart) / DISTANCE_MILESTONE_STEP) * 100));
       const remainingMeters = Math.max(0, Math.ceil(nextDistanceMilestone - distance));
@@ -3684,6 +3710,21 @@ function endGame() {
       playSound("best");
       vibrate([12, 8, 18]);
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
+      return true;
+    }
+
+    function checkDailyBestPace(runScore) {
+      const todayScore = dailyBest?.score || 0;
+      if (dailyBestPaceAnnounced || todayScore <= 0 || runScore <= todayScore) return false;
+      dailyBestPaceAnnounced = true;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.84);
+      ambientPulseColor = "255, 198, 41";
+      burstParticles(player.x, PLAYER_Y - 78, "#f0c247", 16, 0.98);
+      pulseStat(scoreStat, "stat-best");
+      showEventToast("TODAY BEST!", "milestone");
+      playSound("nice");
+      vibrate(12);
+      setHint(`今日のベスト更新ペース ${formatNumber(runScore)}点`);
       return true;
     }
 
