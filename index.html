@@ -2748,6 +2748,7 @@
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
+    const FIRST_SPEED_PANEL_TIME = 10;
     const OPENING_GUIDE_STEPS = 3;
     const READY_GRACE_TIME = 1.8;
     const READY_GO_THRESHOLD = 0.62;
@@ -2912,7 +2913,7 @@
       coinTimer = 0.55;
       coinChainTimer = 0;
       coinToneStep = 0;
-      panelTimer = 3.0;
+      panelTimer = FIRST_SPEED_PANEL_TIME;
       slowTimer = 0;
       boostTimer = 0;
       readyTimer = READY_GRACE_TIME;
@@ -4313,6 +4314,10 @@ function spawnCoins() {
     }
 
     function spawnSpeedPanel() {
+      if (runTime < FIRST_SPEED_PANEL_TIME) {
+        panelTimer = Math.max(0.5, FIRST_SPEED_PANEL_TIME - runTime);
+        return;
+      }
       if (!hasPanelClearance()) {
         panelTimer = 0.45;
         return;
