@@ -2697,6 +2697,7 @@
     let lastScore = Number(localStorage.getItem(LAST_SCORE_KEY) || 0);
     let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
+    let bestLiveRank = SCORE_RANKING_LIMIT + 1;
     let speed = BASE_SPEED;
     let roadScroll = 0;
     let spawnTimer = 0;
@@ -2799,6 +2800,7 @@
       skillScore = 0;
       crashReason = "";
       bestPaceAnnounced = false;
+      bestLiveRank = SCORE_RANKING_LIMIT + 1;
       speed = BASE_SPEED;
       roadScroll = 0;
       spawnTimer = 1.55;
@@ -3296,7 +3298,10 @@ function endGame() {
       setHudNumber(bestEl, best);
       setHudNumber(todayRankEl, coins);
       updateHudLabels(runScore, best, coins);
-      checkBestPace(runScore);
+      const announcedBest = checkBestPace(runScore);
+      if (!announcedBest) {
+        checkLiveRank(runScore);
+      }
       updateRunStrip();
     }
 
@@ -3458,7 +3463,7 @@ function endGame() {
     }
 
     function checkBestPace(runScore) {
-      if (bestPaceAnnounced || best <= 0 || runScore <= best) return;
+      if (bestPaceAnnounced || best <= 0 || runScore <= best) return false;
       bestPaceAnnounced = true;
       ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 1.15);
       ambientPulseColor = "255, 198, 41";
@@ -3471,6 +3476,21 @@ function endGame() {
       playSound("best");
       vibrate([12, 8, 18]);
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
+      return true;
+    }
+
+    function checkLiveRank(runScore) {
+      if (runScore <= 0 || readyTimer > 0 || scoreRanking.length < 2) return;
+      const rank = getPotentialScoreRank(runScore);
+      if (rank <= 0 || rank > SCORE_RANKING_LIMIT || rank >= bestLiveRank) return;
+      bestLiveRank = rank;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.62);
+      ambientPulseColor = "255, 198, 41";
+      pulseStat(scoreStat, "stat-best");
+      showEventToast(`RANK ${formatScoreRank(rank)}!`, "milestone");
+      setHint(`ランキング${formatScoreRank(rank)}圏内`);
+      playSound("nice");
+      vibrate(12);
     }
 
     function registerCoinPickup(x, y) {
@@ -3542,6 +3562,14 @@ function endGame() {
       if (normalized <= 0) return 0;
       const rankIndex = scoreRanking.findIndex((rankedScore) => rankedScore === normalized);
       return rankIndex >= 0 ? rankIndex + 1 : SCORE_RANKING_LIMIT + 1;
+    }
+
+    function getPotentialScoreRank(score) {
+      const normalized = Math.floor(Number(score) || 0);
+      if (normalized <= 0) return 0;
+      const betterScores = scoreRanking.filter((rankedScore) => rankedScore > normalized);
+      if (betterScores.length >= SCORE_RANKING_LIMIT) return SCORE_RANKING_LIMIT + 1;
+      return betterScores.length + 1;
     }
 
     function getNextRankTarget(score, rank) {
