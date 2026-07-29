@@ -2514,6 +2514,7 @@
     const H = 720;
     const FRAME_MS = 1000 / 30;
     const MAX_CANVAS_DPR = 2;
+    const FULL_ROAD_BG_CROP_RATIO = 0.70;
     const LANES = [98, 195, 292];
     const CENTER_LANE = 1;
     const PLAYER_Y = 590;
@@ -4617,7 +4618,7 @@ function drawRoad() {
       const image = fullRoadCityLoopSprite;
       const sourceW = image.naturalWidth;
       const sourceH = image.naturalHeight;
-      const cropW = sourceW * 0.78;
+      const cropW = sourceW * FULL_ROAD_BG_CROP_RATIO;
       const cropX = (sourceW - cropW) / 2;
       const sourcePerPixel = 1.42;
       const sliceH = 5;
