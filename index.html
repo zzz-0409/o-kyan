@@ -2637,6 +2637,7 @@
     const BOOST_DURATION = 3.0;
     const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
+    const NEAR_MISS_BONUS = 50;
     const COIN_RADIUS = 10;
     const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
@@ -2682,6 +2683,7 @@
     let speedTier = 0;
     let distance = 0;
     let coins = 0;
+    let skillScore = 0;
     let scoreConvertInterval = 0;
     let eventToastTimer = 0;
     let stageFxTimer = 0;
@@ -2792,6 +2794,7 @@
       speedTier = 0;
       distance = 0;
       coins = 0;
+      skillScore = 0;
       bestPaceAnnounced = false;
       speed = BASE_SPEED;
       roadScroll = 0;
@@ -2881,6 +2884,7 @@ function endGame() {
       setPauseButtonVisible(false);
       const score = computeScore();
       const distanceScore = Math.floor(distance);
+      const baseScore = distanceScore + skillScore;
       const collectedCoins = coins;
       const previousBest = best;
       const isBest = score > previousBest;
@@ -2890,7 +2894,7 @@ function endGame() {
       localStorage.setItem(LAST_SCORE_KEY, String(lastScore));
       recordScore(score);
       const resultRank = getScoreRank(score);
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, resultRank);
@@ -2911,15 +2915,16 @@ function endGame() {
       resultState = {
         active: true,
         phase: collectedCoins > 0 ? "converting" : "result",
-        baseScore: distanceScore,
+        baseScore,
         meters: distanceScore,
         coinCount: collectedCoins,
         finalScore: score,
         isBest,
         rank: resultRank,
+        skillScore,
         message: resultMessage
       };
-      startScoreConversion(distanceScore, collectedCoins, score);
+      startScoreConversion(baseScore, collectedCoins, score);
     }
 
     function resetResultState() {
@@ -2932,6 +2937,7 @@ function endGame() {
         finalScore: 0,
         isBest: false,
         rank: 0,
+        skillScore: 0,
         message: ""
       };
     }
@@ -2990,29 +2996,30 @@ function endGame() {
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0) {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0) {
+      const bonusText = bonusScore > 0 ? ` / NICE +${formatNumber(bonusScore)}` : "";
       if (isBest) {
-        return `新記録！ランキング${formatScoreRank(rank)}に入った`;
+        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}`;
       }
       if (rank > 0 && rank <= 3) {
-        return `ランキング${formatScoreRank(rank)}。かなりいい走り`;
+        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}`;
       }
       if (previousBest > 0) {
         const gap = Math.max(0, previousBest - score);
         if (gap > 0 && gap <= 300) {
-          return `あと${formatNumber(gap)}点でベスト更新`;
+          return `あと${formatNumber(gap)}点でベスト更新${bonusText}`;
         }
       }
       if (meters >= 1800) {
-        return "いい走り。後半のペースにもついていけてる";
+        return `いい走り。後半のペースにもついていけてる${bonusText}`;
       }
       if (coinCount >= 18) {
-        return "コイン回収がうまい。次は距離を伸ばそう";
+        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}`;
       }
       if (meters < 350) {
-        return "序盤は早めの左右移動がコツ";
+        return `序盤は早めの左右移動がコツ${bonusText}`;
       }
-      return "ベスト更新を目指してもう一度";
+      return `ベスト更新を目指してもう一度${bonusText}`;
     }
 
     function setButtonIcon(button, icon) {
@@ -3354,7 +3361,7 @@ function endGame() {
     }
 
     function computeScore() {
-      return coins * COIN_VALUE + Math.floor(distance);
+      return coins * COIN_VALUE + skillScore + Math.floor(distance);
     }
 
     function formatRunTime(seconds) {
@@ -4190,10 +4197,12 @@ function spawnCoins() {
 
     function triggerNearMiss(x, y) {
       nearMissCooldownTimer = 2.1;
+      skillScore += NEAR_MISS_BONUS;
       ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.7);
       ambientPulseColor = "123, 238, 255";
       burstParticles(x, y - 18, "#7beeff", 14, 0.95);
-      showEventToast("NICE!", "near");
+      pulseStat(scoreStat, "stat-pop");
+      showEventToast(`NICE +${NEAR_MISS_BONUS}`, "near");
       playSound("nice");
       vibrate(8);
     }
