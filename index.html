@@ -623,6 +623,48 @@
       transform: translateY(0);
     }
 
+    .pause-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 48%),
+        linear-gradient(180deg, rgba(17, 29, 48, 0.88), rgba(4, 8, 15, 0.86));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 8px 18px rgba(0, 0, 0, 0.28),
+        0 0 16px rgba(59, 215, 255, 0.12);
+      color: #fff8df;
+      font-family: inherit;
+      font-size: 21px;
+      font-weight: 950;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 0.16s ease, transform 0.16s ease, filter 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .stage.playing .pause-button:not([hidden]) {
+      opacity: 0.92;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .pause-button:active {
+      filter: brightness(1.16);
+      transform: translateY(1px) scale(0.96);
+    }
+
     .control-button {
       position: relative;
       z-index: 1;
@@ -2450,6 +2492,7 @@
 
     <section class="stage" id="stage">
       <canvas id="game" width="390" height="720" role="img" aria-label="3レーンのランゲーム画面">3レーンのランゲーム画面</canvas>
+      <button class="pause-button" id="pauseButton" type="button" aria-label="一時停止" hidden>Ⅱ</button>
       <div class="move-controls" id="moveControls" aria-label="左右移動ボタン">
         <button class="control-button dir-left" id="leftButton" type="button" aria-label="左へ移動">&larr;</button>
         <button class="control-button dir-right" id="rightButton" type="button" aria-label="右へ移動">&rarr;</button>
@@ -2520,6 +2563,7 @@
     const leftButton = document.getElementById("leftButton");
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
+    const pauseButton = document.getElementById("pauseButton");
     const ASSET_VERSION = "imagegen-9";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
@@ -2628,6 +2672,7 @@
     let running = false;
     let gameOver = false;
     let autoPaused = false;
+    let manualPaused = false;
     let lastTime = 0;
     let frameCarry = 0;
     let loopActive = false;
@@ -2740,6 +2785,7 @@
       running = true;
       gameOver = false;
       autoPaused = false;
+      manualPaused = false;
       runTime = 0;
       targetTimeAnnounced = false;
       nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
@@ -2808,6 +2854,7 @@
       setOverlayOpen(false);
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
+      setPauseButtonVisible(true);
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
       hideResultStats();
@@ -2823,6 +2870,7 @@ function endGame() {
       running = false;
       gameOver = true;
       autoPaused = false;
+      manualPaused = false;
       coinFlyers = [];
       overlayMode = "result";
       appEl.dataset.screen = "result";
@@ -2830,6 +2878,7 @@ function endGame() {
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
       overlay.dataset.mode = "result";
+      setPauseButtonVisible(false);
       const score = computeScore();
       const distanceScore = Math.floor(distance);
       const collectedCoins = coins;
@@ -2988,6 +3037,11 @@ function endGame() {
       }
     }
 
+    function setPauseButtonVisible(isVisible) {
+      pauseButton.hidden = !isVisible;
+      pauseButton.disabled = !isVisible;
+    }
+
     function setShareButtonVisible(isVisible) {
       shareButton.hidden = !isVisible;
       shareButton.disabled = !isVisible;
@@ -3099,6 +3153,10 @@ function endGame() {
     }
 
     function handleMainButton() {
+      if (overlayMode === "pause") {
+        resumeManualPause();
+        return;
+      }
       if (!resultState.active) {
         resetGame();
         return;
@@ -3115,7 +3173,7 @@ function endGame() {
     }
 
     function handleTitleButton() {
-      if (overlayMode !== "result") return;
+      if (overlayMode !== "result" && overlayMode !== "pause") return;
       if (resultState.active && resultState.phase === "converting") {
         finishScoreConversion();
       }
@@ -3440,11 +3498,54 @@ function endGame() {
       return rank > SCORE_RANKING_LIMIT ? `#${SCORE_RANKING_LIMIT + 1}+` : `#${rank}`;
     }
 
+    function pauseManually() {
+      if (!running || gameOver || overlayMode !== "playing") return;
+      running = false;
+      manualPaused = true;
+      touchStart = null;
+      jumpBufferTimer = 0;
+      inputFlashTimer = 0;
+      overlayMode = "pause";
+      overlay.dataset.mode = "pause";
+      overlay.querySelector(".dialog").classList.remove("new-best");
+      hideTitleMeta();
+      hideResultStats();
+      setScoreConversionOpen(false);
+      setPauseButtonVisible(false);
+      setShareButtonVisible(false);
+      setTitleReturnButtonVisible(true);
+      setActionButton(startButton, "再開", "▶", "ゲームを再開");
+      overlayTitle.textContent = "PAUSE";
+      overlayText.textContent = "休憩中。続きから再開できます";
+      setOverlayOpen(true);
+      setHint("PAUSED");
+      draw();
+    }
+
+    function resumeManualPause() {
+      if (!manualPaused || gameOver || overlayMode !== "pause") return;
+      manualPaused = false;
+      overlayMode = "playing";
+      overlay.dataset.mode = "";
+      setPauseButtonVisible(true);
+      setTitleReturnButtonVisible(false);
+      setOverlayOpen(false);
+      readyTimer = Math.max(readyTimer, READY_GRACE_TIME * 0.55);
+      lastTime = performance.now();
+      frameCarry = 0;
+      running = true;
+      setHint("READY");
+      startLoop();
+      draw();
+    }
+
     function showTitleScreen() {
       clearScoreConversion();
       resetResultState();
       clearTimeout(eventToastTimer);
       clearTimeout(stageFxTimer);
+      manualPaused = false;
+      autoPaused = false;
       eventToast.className = "event-toast";
       eventToast.setAttribute("aria-hidden", "true");
       overlayMode = "title";
@@ -3454,6 +3555,7 @@ function endGame() {
       stageEl.classList.add("title-screen");
       stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       overlay.querySelector(".dialog").classList.remove("new-best");
+      setPauseButtonVisible(false);
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
       setOverlayOpen(true);
@@ -5563,6 +5665,15 @@ function onPointerDown(event) {
     function onKeyDown(event) {
       if (isTextEntryTarget(event.target)) return;
       if (event.repeat) return;
+      if (event.code === "Escape" || event.code === "KeyP") {
+        event.preventDefault();
+        if (overlayMode === "pause") {
+          resumeManualPause();
+        } else {
+          pauseManually();
+        }
+        return;
+      }
       if (resultAdvanceRequested() && isResultControlTarget(event.target)) return;
       if ((event.code === "Space" || event.code === "Enter" || event.code === "KeyR") && resultAdvanceRequested()) {
         event.preventDefault();
@@ -5595,7 +5706,7 @@ function onPointerDown(event) {
     }
 
     function resumeFromHiddenPage() {
-      if (!autoPaused || gameOver || overlayMode !== "playing") return;
+      if (!autoPaused || manualPaused || gameOver || overlayMode !== "playing") return;
       autoPaused = false;
       running = true;
       readyTimer = Math.max(readyTimer, READY_GRACE_TIME);
@@ -5651,6 +5762,7 @@ function onPointerDown(event) {
     startButton.addEventListener("click", handleMainButton);
     titleButton.addEventListener("click", handleTitleButton);
     shareButton.addEventListener("click", handleShareButton);
+    pauseButton.addEventListener("click", pauseManually);
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
@@ -5664,6 +5776,7 @@ function onPointerDown(event) {
     leftButton.addEventListener("contextmenu", suppressGameContextMenu);
     rightButton.addEventListener("contextmenu", suppressGameContextMenu);
     jumpButton.addEventListener("contextmenu", suppressGameContextMenu);
+    pauseButton.addEventListener("contextmenu", suppressGameContextMenu);
     shareButton.addEventListener("contextmenu", suppressGameContextMenu);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
