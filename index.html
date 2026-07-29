@@ -1374,7 +1374,7 @@
 
     .result-stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 7px;
       margin: 0 0 14px;
     }
@@ -1388,7 +1388,8 @@
       position: relative;
       min-width: 0;
       overflow: hidden;
-      padding: 8px 6px;
+      min-height: 60px;
+      padding: 9px 7px;
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 10px;
       background:
@@ -1452,6 +1453,7 @@
 
     .result-stat:first-child {
       grid-column: 1 / -1;
+      min-height: 82px;
       padding: 14px 10px 15px;
       border-color: rgba(255, 198, 41, 0.62);
       background:
@@ -2430,6 +2432,15 @@
 
       .result-stat:first-child strong {
         font-size: 30px;
+      }
+
+      .result-stat {
+        min-height: 56px;
+        padding: 8px 5px;
+      }
+
+      .result-stat strong {
+        font-size: 15px;
       }
 
       .dialog.new-best .result-stat:first-child strong {
