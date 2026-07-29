@@ -2686,6 +2686,7 @@
     let skillScore = 0;
     let crashReason = "";
     let scoreConvertInterval = 0;
+    let scoreConvertHideTimer = 0;
     let eventToastTimer = 0;
     let stageFxTimer = 0;
     let screenShakeTimer = 0;
@@ -2954,6 +2955,10 @@ function endGame() {
         clearInterval(scoreConvertInterval);
         scoreConvertInterval = 0;
       }
+      if (scoreConvertHideTimer) {
+        clearTimeout(scoreConvertHideTimer);
+        scoreConvertHideTimer = 0;
+      }
       setScoreConversionOpen(false);
       convertLane.innerHTML = "";
       convertScoreBox.classList.remove("pop");
@@ -3172,6 +3177,12 @@ function endGame() {
       setTitleReturnButtonVisible(true);
       setShareButtonVisible(true);
       resultState.phase = "result";
+      scoreConvertHideTimer = window.setTimeout(() => {
+        scoreConvertHideTimer = 0;
+        if (resultState.active && resultState.phase === "result") {
+          setScoreConversionOpen(false);
+        }
+      }, 900);
     }
 
     function skipResultDetails() {
@@ -3211,7 +3222,20 @@ function endGame() {
       const score = formatNumber(resultState.finalScore || computeScore());
       const meters = formatNumber(resultState.meters || Math.floor(distance));
       const coinCount = formatNumber(resultState.coinCount || 0);
-      return `RUN DASH!で${score}点！ 距離${meters}m / コイン${coinCount}枚`;
+      const parts = [
+        `距離${meters}m`,
+        `コイン${coinCount}枚`
+      ];
+      if (resultState.rank) {
+        parts.push(`RANK ${formatScoreRank(resultState.rank)}`);
+      }
+      if (resultState.rankTarget) {
+        parts.push(`次${formatScoreRank(resultState.rankTarget.rank)}まで${formatNumber(resultState.rankTarget.gap)}点`);
+      }
+      if (resultState.skillScore > 0) {
+        parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
+      }
+      return `RUN DASH!で${score}点！ ${parts.join(" / ")}`;
     }
 
     async function handleShareButton() {
