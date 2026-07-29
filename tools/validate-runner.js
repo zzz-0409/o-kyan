@@ -68,6 +68,11 @@ const manifest = JSON.parse(manifestText);
 for (const icon of manifest.icons || []) {
   addRef("manifest.webmanifest", icon.src);
 }
+for (const shortcut of manifest.shortcuts || []) {
+  for (const icon of shortcut.icons || []) {
+    addRef("manifest.webmanifest", icon.src);
+  }
+}
 
 for (const frame of ["0", "1", "2", "3"]) {
   addRef("index.html", `assets/character/imagegen-runner-${frame}.png`);

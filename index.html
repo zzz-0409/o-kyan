@@ -2670,6 +2670,8 @@
     let assetsReady = false;
     let assetsReadyNotified = false;
     let deferredInstallPrompt = null;
+    const autoStartRequested = new URLSearchParams(window.location.search).get("start") === "1";
+    let autoStartConsumed = false;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
       image.src = assetUrl(`assets/character/imagegen-runner-${frame}.png`);
@@ -4114,9 +4116,16 @@ function endGame() {
         if (!assetsReadyNotified) {
           assetsReadyNotified = true;
           updateTitleStartButton();
+          maybeAutoStartFromShortcut();
           draw();
         }
       });
+    }
+
+    function maybeAutoStartFromShortcut() {
+      if (!autoStartRequested || autoStartConsumed || !assetsReady || overlayMode !== "title") return;
+      autoStartConsumed = true;
+      resetGame();
     }
 function spawnObstacle() {
       if (!hasObstacleClearance()) {
@@ -6342,6 +6351,7 @@ function onPointerDown(event) {
     registerServiceWorker();
     waitForEssentialAssets();
     showTitleScreen();
+    maybeAutoStartFromShortcut();
     draw();
     lastTime = performance.now();
     startLoop();
