@@ -2002,7 +2002,8 @@
 
     .run-pill.boost::before,
     .run-pill.slow::before,
-    .run-pill.progress::before {
+    .run-pill.progress::before,
+    .run-pill.best::before {
       opacity: 1;
     }
 
@@ -2017,6 +2018,13 @@
         radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.42), transparent 18px),
         linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.5));
       opacity: 0.52;
+    }
+
+    .run-pill.best::before {
+      background:
+        radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.52), transparent 18px),
+        linear-gradient(90deg, rgba(255, 198, 41, 0.1), rgba(255, 198, 41, 0.68));
+      opacity: 0.72;
     }
 
     .run-pill span,
@@ -2061,6 +2069,7 @@
 
     .run-pill.boost,
     .run-pill.slow,
+    .run-pill.best,
     .run-pill.active {
       border-color: rgba(255, 255, 255, 0.2);
       box-shadow: 0 0 14px rgba(59, 215, 255, 0.12);
@@ -2099,6 +2108,15 @@
     .run-pill.progress span {
       color: #fff3a2;
       background: rgba(255, 198, 41, 0.16);
+    }
+
+    .run-pill.best.active {
+      border-color: rgba(255, 198, 41, 0.42);
+      box-shadow:
+        0 0 0 1px rgba(255, 198, 41, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 0 18px rgba(255, 198, 41, 0.18),
+        0 5px 12px rgba(0, 0, 0, 0.2);
     }
 
     .footer {
@@ -3221,7 +3239,7 @@ function endGame() {
     }
 
     function updateRunStrip() {
-      timePill.classList.remove("boost", "slow", "progress", "active");
+      timePill.classList.remove("boost", "slow", "progress", "best", "active");
       timePill.style.setProperty("--effect-progress", "0%");
       if (boostTimer > 0) {
         const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
@@ -3241,6 +3259,30 @@ function endGame() {
         timePill.style.setProperty("--effect-progress", `${progress}%`);
         return;
       }
+
+      const runScore = computeScore();
+      if (best > 0) {
+        const bestProgress = Math.max(0, Math.min(100, (runScore / best) * 100));
+        if (runScore >= best) {
+          const lead = Math.max(0, runScore - best);
+          timePill.classList.add("best", "active");
+          timePill.querySelector("span").textContent = "BEST";
+          timeStatus.textContent = `+${formatHudNumber(lead)}`;
+          timePill.setAttribute("aria-label", `自己ベスト更新中 ${formatNumber(lead)}点リード`);
+          timePill.style.setProperty("--effect-progress", "100%");
+          return;
+        }
+        const bestGap = best - runScore;
+        if (bestProgress >= 55 || bestGap <= 1500) {
+          timePill.classList.add("best");
+          timePill.querySelector("span").textContent = "BEST";
+          timeStatus.textContent = `${formatHudNumber(bestGap)}点`;
+          timePill.setAttribute("aria-label", `自己ベストまであと${formatNumber(bestGap)}点`);
+          timePill.style.setProperty("--effect-progress", `${bestProgress}%`);
+          return;
+        }
+      }
+
       const milestoneStart = nextDistanceMilestone - DISTANCE_MILESTONE_STEP;
       const milestoneProgress = Math.max(0, Math.min(100, ((distance - milestoneStart) / DISTANCE_MILESTONE_STEP) * 100));
       const remainingMeters = Math.max(0, Math.ceil(nextDistanceMilestone - distance));
