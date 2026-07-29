@@ -3140,45 +3140,48 @@ function endGame() {
     }
 
     function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false) {
-      const bonusText = bonusScore > 0 ? ` / NICE +${formatNumber(bonusScore)}` : "";
-      const reasonText = crashReasonText(reason);
-      const targetText = rankTargetText(rankTarget);
+      const details = [
+        bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
+        crashAdviceText(reason, meters),
+        rankTargetText(rankTarget)
+      ].filter(Boolean).join(" / ");
+      const detailText = details ? ` (${details})` : "";
       if (isBest) {
-        return `新記録！ランキング${formatScoreRank(rank)}に入った${bonusText}${reasonText}${targetText}`;
+        return `新記録！ランキング${formatScoreRank(rank)}に入った${detailText}`;
       }
       if (isDailyBest) {
-        return `今日のベスト更新！ この調子で全体ベストへ${bonusText}${reasonText}${targetText}`;
+        return `今日のベスト更新！ この調子で全体ベストへ${detailText}`;
       }
       if (rank > 0 && rank <= 3) {
-        return `ランキング${formatScoreRank(rank)}。かなりいい走り${bonusText}${reasonText}${targetText}`;
+        return `ランキング${formatScoreRank(rank)}。かなりいい走り${detailText}`;
       }
       if (previousBest > 0) {
         const gap = Math.max(0, previousBest - score);
         if (gap > 0 && gap <= 300) {
-          return `あと${formatNumber(gap)}点でベスト更新${bonusText}${reasonText}${targetText}`;
+          return `あと${formatNumber(gap)}点でベスト更新${detailText}`;
         }
       }
       if (meters >= 1800) {
-        return `いい走り。後半のペースにもついていけてる${bonusText}${reasonText}${targetText}`;
+        return `いい走り。後半のペースにもついていけてる${detailText}`;
       }
       if (coinCount >= 18) {
-        return `コイン回収がうまい。次は距離を伸ばそう${bonusText}${reasonText}${targetText}`;
+        return `コイン回収がうまい。次は距離を伸ばそう${detailText}`;
       }
       if (meters < 350) {
-        return `序盤は早めの左右移動がコツ${bonusText}${reasonText}${targetText}`;
+        return `序盤は早めの左右移動がコツ${detailText}`;
       }
-      return `ベスト更新を目指してもう一度${bonusText}${reasonText}${targetText}`;
+      return `ベスト更新を目指してもう一度${detailText}`;
     }
 
-    function crashReasonText(reason) {
-      if (reason === "hole") return " / 穴はJUMP";
-      if (reason === "obstacle") return " / コーンは左右";
+    function crashAdviceText(reason, meters) {
+      if (reason === "hole") return meters < 700 ? "穴は早めにJUMP" : "穴の手前でJUMP";
+      if (reason === "obstacle") return meters < 700 ? "コーンは左右で回避" : "次は1レーン早く動く";
       return "";
     }
 
     function rankTargetText(target) {
       if (!target || target.gap <= 0) return "";
-      return ` / 次${formatScoreRank(target.rank)}まで${formatNumber(target.gap)}点`;
+      return `次${formatScoreRank(target.rank)}まで${formatNumber(target.gap)}点`;
     }
 
     function setButtonIcon(button, icon) {
