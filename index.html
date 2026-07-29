@@ -2888,6 +2888,7 @@
         return;
       }
       clearScoreConversion();
+      clearTransientRunFeedback();
       if (document.activeElement && typeof document.activeElement.blur === "function") {
         document.activeElement.blur();
       }
@@ -2963,9 +2964,6 @@
       resetResultState();
       stageEl.classList.remove("title-screen");
       stageEl.classList.add("playing");
-      stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
-      eventToast.className = "event-toast";
-      eventToast.setAttribute("aria-hidden", "true");
       unlockAudio();
       playSound("start");
       setOverlayOpen(false);
@@ -3537,6 +3535,17 @@ function endGame() {
       }, 180);
     }
 
+    function clearTransientRunFeedback() {
+      clearTimeout(eventToastTimer);
+      clearTimeout(stageFxTimer);
+      eventToastTimer = 0;
+      stageFxTimer = 0;
+      eventToast.className = "event-toast";
+      eventToast.setAttribute("aria-hidden", "true");
+      stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
+      clearControlCues();
+    }
+
     function showEventToast(message, type = "coin") {
       clearTimeout(eventToastTimer);
       eventToast.className = `event-toast ${type}`;
@@ -3916,19 +3925,14 @@ function endGame() {
     function showTitleScreen() {
       clearScoreConversion();
       resetResultState();
-      clearTimeout(eventToastTimer);
-      clearTimeout(stageFxTimer);
+      clearTransientRunFeedback();
       manualPaused = false;
       autoPaused = false;
-      eventToast.className = "event-toast";
-      eventToast.setAttribute("aria-hidden", "true");
-      clearControlCues();
       overlayMode = "title";
       appEl.dataset.screen = "title";
       overlay.dataset.mode = "title";
       stageEl.classList.remove("playing");
       stageEl.classList.add("title-screen");
-      stageEl.classList.remove("fx-coin", "fx-boost", "fx-slow");
       overlay.querySelector(".dialog").classList.remove("new-best");
       setPauseButtonVisible(false);
       setTitleReturnButtonVisible(false);
