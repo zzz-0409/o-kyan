@@ -786,6 +786,27 @@
         0 0 22px rgba(255, 198, 41, var(--cue-gold-glow, 0.24));
     }
 
+    .control-button.is-ready-cued:not(.is-cued) {
+      animation: controlReadyPulse 1.3s ease-in-out infinite;
+      filter: brightness(1.06) saturate(1.06);
+    }
+
+    .dir-right.is-ready-cued:not(.is-cued) {
+      animation-delay: 0.14s;
+    }
+
+    .jump-control .control-button.is-ready-cued:not(.is-cued) {
+      animation-delay: 0.28s;
+    }
+
+    .control-button.is-ready-cued:not(.is-cued)::before {
+      border-color: rgba(255, 243, 162, 0.52);
+      box-shadow:
+        0 0 0 5px rgba(255, 198, 41, 0.07),
+        0 0 18px rgba(255, 198, 41, 0.2),
+        0 0 20px rgba(123, 238, 255, 0.16);
+    }
+
     .overlay {
       position: absolute;
       inset: 0;
@@ -1826,6 +1847,16 @@
       }
     }
 
+    @keyframes controlReadyPulse {
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+      48% {
+        transform: translateY(-1px) scale(1.035);
+      }
+    }
+
     @keyframes statPop {
       0% {
         transform: translateY(0) scale(1);
@@ -2860,6 +2891,7 @@
     const OPENING_GUIDE_STEPS = 3;
     const READY_GRACE_TIME = 1.8;
     const QUICK_RESTART_READY_TIME = 1.05;
+    const START_CONTROL_HINT_TIME = 3.2;
     const READY_GO_THRESHOLD = 0.62;
     const GO_CUE_TIME = 0.24;
     const INPUT_FLASH_TIME = 0.18;
@@ -2941,6 +2973,7 @@
     let slowTimer = 0;
     let boostTimer = 0;
     let readyTimer = 0;
+    let startControlHintTimer = 0;
     let goCueTimer = 0;
     let goCuePlayed = false;
     let jumpTimer = 0;
@@ -3060,6 +3093,7 @@
       slowTimer = 0;
       boostTimer = 0;
       readyTimer = isQuickRestart ? QUICK_RESTART_READY_TIME : READY_GRACE_TIME;
+      startControlHintTimer = isQuickRestart ? 0 : START_CONTROL_HINT_TIME;
       goCueTimer = 0;
       goCuePlayed = false;
       jumpTimer = 0;
@@ -3752,6 +3786,7 @@
       setControlCue(leftButton, cue === "left", urgency);
       setControlCue(rightButton, cue === "right", urgency);
       setControlCue(jumpButton, cue === "jump", urgency);
+      setReadyControlCue(!cue && startControlHintTimer > 0 && running && !gameOver);
       if (cue && cue !== lastActionCue) {
         setHint(actionCueHint(cue));
       }
@@ -3760,6 +3795,7 @@
 
     function setControlCue(button, enabled, urgency = 0) {
       button.classList.toggle("is-cued", enabled);
+      if (enabled) button.classList.remove("is-ready-cued");
       if (!enabled) {
         button.style.removeProperty("--cue-duration");
         button.style.removeProperty("--cue-brightness");
@@ -3776,10 +3812,21 @@
       button.style.setProperty("--cue-gold-glow", (0.2 + level * 0.22).toFixed(2));
     }
 
+    function setReadyControlCue(enabled) {
+      [leftButton, rightButton, jumpButton].forEach((button) => {
+        if (button.classList.contains("is-cued")) {
+          button.classList.remove("is-ready-cued");
+          return;
+        }
+        button.classList.toggle("is-ready-cued", enabled);
+      });
+    }
+
     function clearControlCues() {
       setControlCue(leftButton, false);
       setControlCue(rightButton, false);
       setControlCue(jumpButton, false);
+      setReadyControlCue(false);
       lastActionCue = "";
     }
 
@@ -4910,6 +4957,7 @@ function spawnCoins() {
       boostTimer = Math.max(0, boostTimer - dt);
       const previousReadyTimer = readyTimer;
       readyTimer = Math.max(0, readyTimer - dt);
+      startControlHintTimer = Math.max(0, startControlHintTimer - dt);
       if (!goCuePlayed && previousReadyTimer > READY_GO_THRESHOLD && readyTimer <= READY_GO_THRESHOLD) {
         goCuePlayed = true;
         triggerGoCue();
