@@ -2875,6 +2875,7 @@
     let coinRushCount = 0;
     let lastCoinRushToastCount = 0;
     let panelTimer = 0;
+    let speedPanelSpawnCount = 0;
     let slowTimer = 0;
     let boostTimer = 0;
     let readyTimer = 0;
@@ -2991,6 +2992,7 @@
       coinRushCount = 0;
       lastCoinRushToastCount = 0;
       panelTimer = FIRST_SPEED_PANEL_TIME;
+      speedPanelSpawnCount = 0;
       slowTimer = 0;
       boostTimer = 0;
       readyTimer = isQuickRestart ? QUICK_RESTART_READY_TIME : READY_GRACE_TIME;
@@ -4657,17 +4659,19 @@ function spawnCoins() {
         panelTimer = 0.45;
         return;
       }
-      if (Math.random() < 0.28) {
+      if (speedPanelSpawnCount === 0 || Math.random() < 0.28) {
         const y = -124;
         const groupId = `boost-${Date.now()}-${Math.random()}`;
         for (let lane = 0; lane < 3; lane += 1) {
           speedPanels.push({ lane, kind: "up", y, h: 58, used: false, group: "tripleBoost", groupId });
         }
+        speedPanelSpawnCount += 1;
         return;
       }
       const lane = Math.floor(Math.random() * 3);
       const kind = Math.random() < 0.46 ? "up" : "down";
       speedPanels.push({ lane, kind, y: -124, h: 58, used: false, group: "solo", groupId: "" });
+      speedPanelSpawnCount += 1;
     }
 
     function hasPanelClearance() {
