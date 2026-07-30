@@ -2733,6 +2733,8 @@
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
     const OBSTACLE_CLEARANCE_HARD = 345;
+    const SPEED_CLEARANCE_BONUS_MAX = 78;
+    const BOOST_CLEARANCE_BONUS = 34;
     const PANEL_CLEARANCE = 170;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
@@ -4350,12 +4352,27 @@
       return lanes.reduce((mask, lane) => mask | (1 << lane), 0);
     }
 
+    function speedSafetyRatio() {
+      return Math.max(0, Math.min(1, (speed - BASE_SPEED) / (MAX_SPEED - BASE_SPEED)));
+    }
+
+    function obstacleSafetyClearanceBonus() {
+      const speedBonus = speedSafetyRatio() * SPEED_CLEARANCE_BONUS_MAX;
+      const boostBonus = boostTimer > 0 ? BOOST_CLEARANCE_BONUS : 0;
+      return speedBonus + boostBonus;
+    }
+
+    function spawnIntervalSafetyBonus() {
+      return speedSafetyRatio() * 0.18 + (boostTimer > 0 ? 0.08 : 0);
+    }
+
     function hasObstacleClearance() {
       const obstacleTop = -132;
       const obstacleBottom = -38;
-      const requiredClearance = lastObstacleType === "hole" || lastObstacleMask === lanesToMask([0, 1]) || lastObstacleMask === lanesToMask([1, 2])
+      const baseClearance = lastObstacleType === "hole" || lastObstacleMask === lanesToMask([0, 1]) || lastObstacleMask === lanesToMask([1, 2])
         ? OBSTACLE_CLEARANCE_HARD
         : OBSTACLE_CLEARANCE;
+      const requiredClearance = baseClearance + obstacleSafetyClearanceBonus();
       for (const obstacle of obstacles) {
         const currentTop = obstacle.y;
         const currentBottom = obstacle.y + obstacle.h;
@@ -4621,8 +4638,9 @@ function spawnCoins() {
             const difficulty = difficultyRatio();
             const warmupSpace = runTime < WARMUP_DURATION ? 0.42 : 0;
             const boostSpace = boostTimer > 0 ? 0.26 : 0;
+            const safetySpace = spawnIntervalSafetyBonus();
             const minimumGap = boostTimer > 0 ? 1.02 : 0.86;
-            spawnTimer = Math.max(minimumGap, 1.36 + warmupSpace + obstacleSpacingBonus + boostSpace - difficulty * 0.2 - rate * 0.04 + Math.random() * 0.5);
+            spawnTimer = Math.max(minimumGap, 1.36 + warmupSpace + obstacleSpacingBonus + boostSpace + safetySpace - difficulty * 0.2 - rate * 0.04 + Math.random() * 0.5);
             obstacleSpacingBonus = 0;
           } else {
             spawnTimer = 0.35;
