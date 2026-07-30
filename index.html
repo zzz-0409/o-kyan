@@ -2794,6 +2794,8 @@
     const START_QUERY_PARAM = "start";
     const autoStartRequested = new URLSearchParams(window.location.search).get(START_QUERY_PARAM) === "1";
     let autoStartConsumed = false;
+    let pendingAppRefresh = false;
+    let appRefreshReloading = false;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
       image.src = assetUrl(`assets/character/imagegen-runner-${frame}.png`);
@@ -4365,6 +4367,7 @@
       overlayText.textContent = buildTitleLeadText();
       updateTitleStartButton();
       updateHud();
+      applyPendingAppRefresh();
     }
 
     function buildTitleLeadText() {
@@ -4520,7 +4523,7 @@
             if (!worker) return;
             worker.addEventListener("statechange", () => {
               if (worker.state === "installed" && navigator.serviceWorker.controller) {
-                setHint("最新版を準備しました。次回起動で反映");
+                queueAppRefreshNotice();
               }
             });
           });
@@ -4528,6 +4531,29 @@
           // Offline support is optional; keep the game playable if registration fails.
         });
       });
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        queueAppRefreshNotice();
+      });
+    }
+
+    function queueAppRefreshNotice() {
+      if (appRefreshReloading) return;
+      pendingAppRefresh = true;
+      showEventToast("UPDATE READY", "boost");
+      setHint("最新版を準備しました。タイトルで反映します");
+      applyPendingAppRefresh();
+    }
+
+    function applyPendingAppRefresh() {
+      if (!pendingAppRefresh || appRefreshReloading) return;
+      const canReloadNow = overlayMode === "title" && !running && !resultState.active && !document.hidden;
+      if (!canReloadNow) return;
+      appRefreshReloading = true;
+      pendingAppRefresh = false;
+      setHint("最新版へ更新します");
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 420);
     }
 
     function waitForEssentialAssets() {
