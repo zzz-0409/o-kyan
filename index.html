@@ -3143,6 +3143,11 @@
     }
 
     function nextTargetScoreText() {
+      const target = nextTargetScoreValue();
+      return formatNumber(target);
+    }
+
+    function nextTargetScoreValue() {
       const current = Math.floor(Number(lastScore) || 0);
       const candidates = [
         best ? Math.floor(Number(best) || 0) + 1 : 0,
@@ -3150,9 +3155,9 @@
         ...scoreRanking.map((score) => Math.floor(Number(score) || 0) + 1)
       ].filter((score) => score > current && score > 1);
       if (!candidates.length) {
-        return best ? `${formatNumber(best + 100)}` : "500";
+        return best ? Math.floor(best + 100) : 500;
       }
-      return formatNumber(Math.min(...candidates));
+      return Math.min(...candidates);
     }
 
     function showResultStats(score, meters, coinCount, rank, previousBestValue = best) {
@@ -3753,6 +3758,20 @@
           timeStatus.textContent = `${formatHudNumber(todayGap)}点`;
           timePill.setAttribute("aria-label", `今日のベストまであと${formatNumber(todayGap)}点`);
           timePill.style.setProperty("--effect-progress", `${todayProgress}%`);
+          return;
+        }
+      }
+
+      const scoreTarget = nextTargetScoreValue();
+      if (scoreTarget > runScore) {
+        const targetGap = scoreTarget - runScore;
+        const targetProgress = Math.max(0, Math.min(100, (runScore / scoreTarget) * 100));
+        if (targetProgress >= 45 || targetGap <= 1200) {
+          timePill.classList.add("progress");
+          timePill.querySelector("span").textContent = "TARGET";
+          timeStatus.textContent = `${formatHudNumber(targetGap)}点`;
+          timePill.setAttribute("aria-label", `次の目標まであと${formatNumber(targetGap)}点`);
+          timePill.style.setProperty("--effect-progress", `${targetProgress}%`);
           return;
         }
       }
