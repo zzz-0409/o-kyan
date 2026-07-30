@@ -6516,7 +6516,33 @@ function drawRoad() {
         const pulse = 0.58 + Math.sin(roadScroll * 0.13 + obstacle.y * 0.035) * 0.42;
         drawHazardWarningRail(30, y, obstacle.lanes, color, warningRatio, pulse);
         drawHazardWarningRail(W - 30, y, obstacle.lanes, color, warningRatio, pulse);
+        if (obstacle.lanes.includes(player.lane) && !(obstacle.type === "hole" && isHoleSafe())) {
+          drawImmediateHazardPulse(color, warningRatio, pulse);
+        }
       }
+    }
+
+    function drawImmediateHazardPulse(color, warningRatio, pulse) {
+      const alpha = (0.04 + warningRatio * 0.12) * (0.78 + pulse * 0.22);
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const edge = ctx.createLinearGradient(0, 0, W, 0);
+      edge.addColorStop(0, `rgba(${color}, ${alpha})`);
+      edge.addColorStop(0.18, `rgba(${color}, ${alpha * 0.2})`);
+      edge.addColorStop(0.5, "rgba(255, 248, 223, 0)");
+      edge.addColorStop(0.82, `rgba(${color}, ${alpha * 0.2})`);
+      edge.addColorStop(1, `rgba(${color}, ${alpha})`);
+      ctx.fillStyle = edge;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalAlpha = 0.2 + warningRatio * 0.42;
+      ctx.strokeStyle = `rgba(${color}, 0.86)`;
+      ctx.lineWidth = 2 + warningRatio * 2.2;
+      ctx.setLineDash([16, 14]);
+      ctx.lineDashOffset = -roadScroll * 0.22;
+      roundedRectPath(6, 6, W - 12, H - 12, 10);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawHazardWarningRail(x, y, lanes, color, warningRatio, pulse) {
