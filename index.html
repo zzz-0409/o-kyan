@@ -2755,6 +2755,7 @@
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
+    const COIN_MILESTONE_STEP = 10;
     const SPEED_TIER_THRESHOLDS = [0.32, 0.64, 0.92];
     const TWO_MINUTE_TARGET = 120;
     const LAST_SCORE_KEY = "laneRunnerLastScore";
@@ -2772,6 +2773,7 @@
     let runTime = 0;
     let targetTimeAnnounced = false;
     let nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+    let nextCoinMilestone = COIN_MILESTONE_STEP;
     let speedTier = 0;
     let distance = 0;
     let coins = 0;
@@ -2892,6 +2894,7 @@
       runTime = 0;
       targetTimeAnnounced = false;
       nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+      nextCoinMilestone = COIN_MILESTONE_STEP;
       speedTier = 0;
       distance = 0;
       coins = 0;
@@ -3689,6 +3692,20 @@
       playSound(isBigMilestone ? "boost" : "coin");
       vibrate(isBigMilestone ? [18, 12, 18] : 10);
       setHint(`${formatNumber(milestone)}m RUN`);
+    }
+
+    function checkCoinMilestone() {
+      if (coins < nextCoinMilestone) return;
+      const milestone = nextCoinMilestone;
+      nextCoinMilestone += COIN_MILESTONE_STEP;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.76);
+      ambientPulseColor = "255, 198, 41";
+      burstParticles(LANES[player.lane], PLAYER_Y - 78, "#fff3a2", 16, 0.94);
+      pulseStat(coinStat, "stat-best");
+      showEventToast(`${formatNumber(milestone)} COINS!`, "milestone");
+      playSound("nice");
+      vibrate(12);
+      setHint(`コイン${formatNumber(milestone)}枚`);
     }
 
     function checkSpeedTier() {
@@ -4805,6 +4822,7 @@ function checkCollisions() {
           playSound("coin");
           showEventToast("+1 COIN", "coin");
           setHint(`コイン +1 / ${coins}`);
+          checkCoinMilestone();
         }
       }
 
