@@ -84,6 +84,9 @@ for (const shortcut of manifest.shortcuts || []) {
     addRef("manifest.webmanifest", icon.src);
   }
 }
+for (const screenshot of manifest.screenshots || []) {
+  addRef("manifest.webmanifest", screenshot.src);
+}
 
 for (const frame of ["0", "1", "2", "3"]) {
   addRef("index.html", `assets/character/imagegen-runner-${frame}.png`);
@@ -114,6 +117,8 @@ for (const ref of requiredPreloads) {
 const iconSizes = new Set((manifest.icons || []).map((icon) => icon.sizes));
 assert(iconSizes.has("192x192"), "manifest is missing a 192x192 icon");
 assert(iconSizes.has("512x512"), "manifest is missing a 512x512 icon");
+const screenshotSizes = new Set((manifest.screenshots || []).map((screenshot) => screenshot.sizes));
+assert(screenshotSizes.has("390x900"), "manifest is missing narrow app screenshots");
 
 if (process.exitCode) process.exit(process.exitCode);
 

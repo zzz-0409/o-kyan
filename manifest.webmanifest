@@ -28,6 +28,22 @@
       ]
     }
   ],
+  "screenshots": [
+    {
+      "src": "assets/ui/pwa-screenshot-title.png",
+      "sizes": "390x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "タイトル画面"
+    },
+    {
+      "src": "assets/ui/pwa-screenshot-play.png",
+      "sizes": "390x900",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ラン中のゲーム画面"
+    }
+  ],
   "icons": [
     {
       "src": "assets/ui/app-icon-192.png",
