@@ -4571,12 +4571,9 @@ function spawnCoins() {
       const spawnedCoins = [];
       for (let i = 0; i < count; i += 1) {
         const nextLane = coinLaneForPattern(lane, i, pattern, patternDirection);
-        const coin = { lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false };
-        if (isCoinSafeFromObstacles(coin)) {
-          spawnedCoins.push(coin);
-        }
+        spawnedCoins.push({ lane: nextLane, y: -128 - i * 38, r: COIN_RADIUS, collected: false });
       }
-      if (!spawnedCoins.length) {
+      if (!spawnedCoins.every(isCoinSafeFromObstacles)) {
         coinTimer = 0.45;
         return;
       }
