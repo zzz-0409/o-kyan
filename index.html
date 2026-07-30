@@ -6413,7 +6413,23 @@ function drawObstacles() {
           // Pointer capture can fail in older embedded browsers; swipes still work without it.
         }
       }
-      touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId, canTapJump: canTapJumpFrom(event) };
+      touchStart = {
+        x: event.clientX,
+        y: event.clientY,
+        id: event.pointerId,
+        canTapJump: canTapJumpFrom(event),
+        handled: false
+      };
+    }
+
+    function onPointerMove(event) {
+      if (!touchStart || touchStart.handled || event.pointerId !== touchStart.id) return;
+      const dx = event.clientX - touchStart.x;
+      const dy = event.clientY - touchStart.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) <= SWIPE_MIN) return;
+      event.preventDefault();
+      touchStart.handled = true;
+      handleScreenDirection(dx, dy);
     }
 
     function onPointerUp(event) {
@@ -6431,6 +6447,7 @@ function drawObstacles() {
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
       touchStart = null;
+      if (start.handled) return;
       if (Math.max(Math.abs(dx), Math.abs(dy)) > SWIPE_MIN) {
         handleScreenDirection(dx, dy);
         return;
@@ -6618,6 +6635,7 @@ function drawObstacles() {
     pauseButton.addEventListener("click", pauseManually);
     overlay.addEventListener("pointerup", onOverlayPointerUp);
     canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", () => {
       if (touchStart && typeof canvas.releasePointerCapture === "function") {
