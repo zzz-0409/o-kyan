@@ -67,6 +67,15 @@ for (const match of sw.matchAll(/["'](\.\/(?:assets|manifest|index)[^"']*)["']/g
 }
 
 const manifest = JSON.parse(manifestText);
+assert(manifest.name === "RUN DASH! オープンキャンパスラン", "manifest name is incorrect or mojibake");
+assert(
+  manifest.description === "オープンキャンパスでも家でも気軽に遊べる3レーン・スワイプランゲーム。",
+  "manifest description is incorrect or mojibake"
+);
+assert(
+  (manifest.shortcuts || []).some((shortcut) => shortcut.name === "すぐ遊ぶ" && shortcut.url === "./index.html?start=1"),
+  "manifest is missing the quick play shortcut"
+);
 for (const icon of manifest.icons || []) {
   addRef("manifest.webmanifest", icon.src);
 }
