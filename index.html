@@ -4538,7 +4538,15 @@
       const fromX = LANES[player.lane];
       const fromLane = player.lane;
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
-      if (nextLane === player.lane) return;
+      if (nextLane === player.lane) {
+        pressMoveButton(direction);
+        inputFlashTimer = INPUT_FLASH_TIME * 0.72;
+        inputFlashDirection = direction;
+        addCameraKick(direction * 2.2, 0, -direction * 0.003);
+        vibrate(5);
+        setHint("端のレーンです");
+        return;
+      }
       pressMoveButton(direction);
       armPerfectDodge(fromLane, nextLane);
       player.lane = nextLane;
