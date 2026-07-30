@@ -1439,14 +1439,15 @@
       overflow: hidden;
       min-height: 60px;
       padding: 9px 7px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
       background:
-        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.08), transparent 58%),
-        linear-gradient(180deg, rgba(21, 32, 51, 0.92), rgba(4, 8, 15, 0.92));
+        radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 58%),
+        linear-gradient(180deg, rgba(24, 39, 62, 0.98), rgba(4, 8, 15, 0.97));
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 8px 16px rgba(0, 0, 0, 0.16);
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 0 1px rgba(59, 215, 255, 0.05),
+        0 8px 16px rgba(0, 0, 0, 0.22);
       text-align: center;
       animation: cardIn 0.18s ease-out both;
     }
@@ -1473,9 +1474,10 @@
 
     .result-stat:not(:first-child) {
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        inset 3px 0 0 rgba(59, 215, 255, 0.16),
-        0 8px 16px rgba(0, 0, 0, 0.16);
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 3px 0 0 rgba(59, 215, 255, 0.28),
+        0 0 0 1px rgba(59, 215, 255, 0.04),
+        0 8px 16px rgba(0, 0, 0, 0.22);
     }
 
     .result-stat-skill,
@@ -1559,7 +1561,7 @@
       position: relative;
       z-index: 1;
       display: block;
-      color: var(--accent);
+      color: #ffe37a;
       font-size: 10px;
       font-weight: 950;
       line-height: 1;
@@ -1588,12 +1590,15 @@
       display: block;
       margin-top: 5px;
       overflow: hidden;
-      color: #ffffff;
+      color: #fff8df;
       font-size: 16px;
       font-weight: 950;
       line-height: 1;
       text-overflow: ellipsis;
       white-space: nowrap;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.74),
+        0 0 10px rgba(59, 215, 255, 0.1);
     }
 
     .result-stat:first-child strong {
