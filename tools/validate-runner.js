@@ -17,9 +17,11 @@ function assert(condition, message) {
 const html = readText("index.html");
 const manifestText = readText("manifest.webmanifest");
 const sw = readText("sw.js");
+const previewServer = readText("tools/preview-server.js");
 
 JSON.parse(manifestText);
 new Function(sw);
+new Function(previewServer);
 
 const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
   .map((match) => match[1])
