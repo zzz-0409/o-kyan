@@ -2820,7 +2820,6 @@
     let dodgeFlashX = LANES[CENTER_LANE];
     let boostKickTimer = 0;
     let slowKickTimer = 0;
-    let ambientTimer = 0;
     let ambientPulseTimer = 0;
     let ambientPulseColor = "123, 238, 255";
     let nearMissCooldownTimer = 0;
@@ -2852,7 +2851,6 @@
     let obstacles = [];
     let coinItems = [];
     let speedPanels = [];
-    let ambientItems = [];
     let particles = [];
     let coinFlyers = [];
 
@@ -2930,7 +2928,6 @@
       dodgeFlashX = LANES[CENTER_LANE];
       boostKickTimer = 0;
       slowKickTimer = 0;
-      ambientTimer = 2.4;
       ambientPulseTimer = 0;
       ambientPulseColor = "123, 238, 255";
       nearMissCooldownTimer = 0;
@@ -2948,7 +2945,6 @@
       obstacles = [];
       coinItems = [];
       speedPanels = [];
-      ambientItems = [];
       particles = [];
       coinFlyers = [];
       screenShakeTimer = 0;
@@ -4470,20 +4466,6 @@ function spawnCoins() {
       speedPanels.push({ lane, kind, y: -124, h: 58, used: false, group: "solo", groupId: "" });
     }
 
-    function spawnAmbientGate() {
-      const theme = Math.random() < 0.55 ? "blue" : "gold";
-      ambientItems.push({
-        y: -170,
-        h: 62 + Math.random() * 18,
-        theme,
-        passed: false,
-        phase: Math.random() * Math.PI * 2
-      });
-      if (ambientItems.length > 5) {
-        ambientItems.splice(0, ambientItems.length - 5);
-      }
-    }
-
     function hasPanelClearance() {
       const panelTop = -124;
       const panelBottom = panelTop + 58;
@@ -4520,20 +4502,6 @@ function spawnCoins() {
 
     function rangesTooClose(aTop, aBottom, bTop, bBottom, clearance) {
       return aTop < bBottom + clearance && aBottom + clearance > bTop;
-    }
-
-    function updateAmbientItems(dt) {
-      for (const item of ambientItems) {
-        item.y += speed * dt;
-        if (!item.passed && item.y > PLAYER_Y - 36) {
-          item.passed = true;
-          ambientPulseTimer = AMBIENT_PULSE_TIME;
-          ambientPulseColor = item.theme === "blue" ? "123, 238, 255" : "255, 198, 41";
-          burstParticles(48, PLAYER_Y - 62, `rgba(${ambientPulseColor}, 0.78)`, 5, 0.62);
-          burstParticles(W - 48, PLAYER_Y - 62, `rgba(${ambientPulseColor}, 0.78)`, 5, 0.62);
-        }
-      }
-      ambientItems = ambientItems.filter((item) => item.y < H + 150);
     }
 
     function difficultyRatio() {
@@ -4667,8 +4635,6 @@ function spawnCoins() {
         panel.y += speed * dt;
       }
       speedPanels = speedPanels.filter((panel) => panel.y < H + 80 && !panel.used);
-
-      updateAmbientItems(dt);
 
       updateParticles(dt);
       updateCoinFlyers(dt);
@@ -5276,56 +5242,6 @@ function drawRoad() {
       ctx.restore();
     }
 
-    function drawAmbientGates() {
-      if (!running || !ambientItems.length) return;
-      const roadX = ROAD_VISUAL_LEFT;
-      const roadRight = ROAD_VISUAL_RIGHT;
-      const roadW = ROAD_VISUAL_WIDTH;
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      for (const item of ambientItems) {
-        const y = item.y;
-        const alphaIn = Math.max(0, Math.min(1, (y + 170) / 110));
-        const alphaOut = Math.max(0, Math.min(1, (H + 120 - y) / 170));
-        const alpha = Math.min(alphaIn, alphaOut) * 0.9;
-        if (alpha <= 0) continue;
-        const pulse = 0.5 + Math.sin(roadScroll * 0.035 + item.phase) * 0.5;
-        const color = item.theme === "blue" ? "123, 238, 255" : "255, 198, 41";
-        const barY = y + item.h * 0.3;
-
-        ctx.globalAlpha = alpha * (0.18 + pulse * 0.08);
-        const wash = ctx.createLinearGradient(roadX, 0, roadRight, 0);
-        wash.addColorStop(0, `rgba(${color}, 0.08)`);
-        wash.addColorStop(0.5, `rgba(${color}, 0.32)`);
-        wash.addColorStop(1, `rgba(${color}, 0.08)`);
-        ctx.fillStyle = wash;
-        ctx.fillRect(roadX + 3, y, roadW - 6, item.h);
-
-        ctx.globalAlpha = alpha * (0.42 + pulse * 0.22);
-        ctx.strokeStyle = `rgba(${color}, 0.95)`;
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(roadX + 12, barY);
-        ctx.lineTo(roadRight - 12, barY);
-        ctx.stroke();
-
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(roadX + 10, y + item.h);
-        ctx.lineTo(roadX + 22, barY);
-        ctx.moveTo(roadRight - 10, y + item.h);
-        ctx.lineTo(roadRight - 22, barY);
-        ctx.stroke();
-
-        ctx.globalAlpha = alpha * 0.16;
-        ctx.fillStyle = `rgba(${color}, 1)`;
-        ctx.fillRect(roadX - 4, y + 8, 8, item.h - 4);
-        ctx.fillRect(roadRight - 4, y + 8, 8, item.h - 4);
-      }
-      ctx.restore();
-    }
-
     function drawSeamlessCampusRoad() {
       if (imageReady(fullRoadCityLoopSprite)) {
         drawLoopingFullRoadCity();
@@ -5917,6 +5833,7 @@ function drawObstacles() {
           ctx.restore();
           drawSpeedPanelIcon(panel, r);
           drawSpeedPanelShimmer(panel, r);
+          drawSpeedPanelLabel(panel, r);
           continue;
         }
         ctx.save();
@@ -5926,6 +5843,7 @@ function drawObstacles() {
         ctx.restore();
         drawSpeedPanelIcon(panel, r);
         drawSpeedPanelShimmer(panel, r);
+        drawSpeedPanelLabel(panel, r);
       }
     }
 
@@ -5962,6 +5880,30 @@ function drawObstacles() {
           ctx.stroke();
         }
       }
+      ctx.restore();
+    }
+
+    function drawSpeedPanelLabel(panel, rect) {
+      const entranceAlpha = objectEntranceAlpha(rect.y);
+      const label = panel.kind === "up" ? "BOOST" : "SLOW";
+      const accent = panel.kind === "up" ? "#fff3a2" : "#dff9ff";
+      const bg = panel.kind === "up" ? "rgba(82, 54, 0, 0.62)" : "rgba(0, 41, 62, 0.62)";
+      ctx.save();
+      ctx.globalAlpha = 0.96 * entranceAlpha;
+      roundedRectPath(rect.x + 9, rect.y + rect.h - 18, rect.w - 18, 14, 5);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.strokeStyle = panel.kind === "up" ? "rgba(255, 243, 162, 0.52)" : "rgba(123, 238, 255, 0.52)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "900 9px Segoe UI, sans-serif";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(2, 5, 10, 0.82)";
+      ctx.strokeText(label, rect.x + rect.w / 2, rect.y + rect.h - 11);
+      ctx.fillStyle = accent;
+      ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h - 11);
       ctx.restore();
     }
 
