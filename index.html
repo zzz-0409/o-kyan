@@ -3115,10 +3115,11 @@
     }
 
     function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false) {
+      const needsBestTarget = previousBest > score;
       const details = [
         bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
         crashAdviceText(reason, meters),
-        rankTargetText(rankTarget)
+        needsBestTarget ? `BESTまであと${formatNumber(previousBest - score)}点` : rankTargetText(rankTarget)
       ].filter(Boolean).join(" / ");
       const detailText = details ? ` (${details})` : "";
       if (isBest) {
@@ -3130,11 +3131,12 @@
       if (rank > 0 && rank <= 3) {
         return `ランキング${formatScoreRank(rank)}。かなりいい走り${detailText}`;
       }
-      if (previousBest > 0) {
-        const gap = Math.max(0, previousBest - score);
-        if (gap > 0 && gap <= 300) {
-          return `あと${formatNumber(gap)}点でベスト更新${detailText}`;
-        }
+      if (needsBestTarget) {
+        const subDetails = [
+          bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
+          crashAdviceText(reason, meters)
+        ].filter(Boolean).join(" / ");
+        return `BESTまであと${formatNumber(previousBest - score)}点${subDetails ? ` (${subDetails})` : ""}`;
       }
       if (meters >= 1800) {
         return `いい走り。後半のペースにもついていけてる${detailText}`;
