@@ -99,7 +99,7 @@ for (const [ref, sources] of refs) {
 const preloads = [...html.matchAll(/<link rel="preload" as="image" href="([^"]+)"/g)]
   .map((match) => match[1].split("?")[0]);
 const requiredPreloads = [
-  "assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png",
+  "assets/backgrounds/imagegen-full-road-city-loop-lane-fit.png",
   "assets/character/imagegen-runner-0.png",
   "assets/character/imagegen-runner-1.png",
   "assets/character/imagegen-runner-2.png",

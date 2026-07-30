@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/ui/app-icon.svg">
   <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-10">
   <link rel="prefetch" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-10">
-  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png?v=imagegen-14">
+  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-lane-fit.png?v=imagegen-15">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-1.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-2.png?v=imagegen-10">
@@ -2755,7 +2755,7 @@
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
     const pauseButton = document.getElementById("pauseButton");
-    const ASSET_VERSION = "imagegen-14";
+    const ASSET_VERSION = "imagegen-15";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
     let assetsReadyNotified = false;
@@ -2791,7 +2791,7 @@
     citySideLoopSprite.src = assetUrl("assets/backgrounds/imagegen-city-side-loop.png");
     citySideLoopSprite.addEventListener("load", draw);
     const fullRoadCityLoopSprite = new Image();
-    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png");
+    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop-lane-fit.png");
     fullRoadCityLoopSprite.addEventListener("load", draw);
     const essentialSprites = [
       ...playerRunSprites,

@@ -1,4 +1,4 @@
-const CACHE_NAME = "run-dash-cache-v15";
+const CACHE_NAME = "run-dash-cache-v16";
 const CORE_SHELL = [
   "./",
   "./index.html",
@@ -15,7 +15,7 @@ const APP_SHELL = [
   "./assets/ui/result-panel-campus.png",
   "./assets/ui/pwa-screenshot-title.png",
   "./assets/ui/pwa-screenshot-play.png",
-  "./assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png",
+  "./assets/backgrounds/imagegen-full-road-city-loop-lane-fit.png",
   "./assets/backgrounds/imagegen-city-side-loop.png",
   "./assets/character/imagegen-runner-0.png",
   "./assets/character/imagegen-runner-1.png",
