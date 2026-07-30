@@ -2757,6 +2757,7 @@
     const DISTANCE_MILESTONE_STEP = 500;
     const COIN_MILESTONE_STEP = 10;
     const SPEED_TIER_THRESHOLDS = [0.32, 0.64, 0.92];
+    const BEST_CHASE_THRESHOLDS = [0.5, 0.75, 0.9];
     const TWO_MINUTE_TARGET = 120;
     const LAST_SCORE_KEY = "laneRunnerLastScore";
     const SCORE_RANKING_KEY = "laneRunnerScoreRanking";
@@ -2794,6 +2795,7 @@
     let bestPaceAnnounced = false;
     let dailyBestPaceAnnounced = false;
     let bestLiveRank = SCORE_RANKING_LIMIT + 1;
+    let bestChaseStage = 0;
     let speed = BASE_SPEED;
     let roadScroll = 0;
     let spawnTimer = 0;
@@ -2902,6 +2904,7 @@
       bestPaceAnnounced = false;
       dailyBestPaceAnnounced = false;
       bestLiveRank = SCORE_RANKING_LIMIT + 1;
+      bestChaseStage = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
       spawnTimer = 1.55;
@@ -3490,6 +3493,7 @@
       updateHudLabels(runScore, best, coins);
       const announcedBest = checkBestPace(runScore);
       if (!announcedBest) {
+        checkBestChase(runScore);
         checkDailyBestPace(runScore);
         checkLiveRank(runScore);
       }
@@ -3785,6 +3789,25 @@
       vibrate(12);
       setHint(`今日のベスト更新ペース ${formatNumber(runScore)}点`);
       return true;
+    }
+
+    function checkBestChase(runScore) {
+      if (best <= 0 || runScore <= 0 || bestPaceAnnounced) return;
+      const progress = runScore / best;
+      if (bestChaseStage < BEST_CHASE_THRESHOLDS.length && progress >= BEST_CHASE_THRESHOLDS[bestChaseStage]) {
+        bestChaseStage += 1;
+        const percent = Math.round(BEST_CHASE_THRESHOLDS[bestChaseStage - 1] * 100);
+        const gap = Math.max(0, best - runScore);
+        ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.54);
+        ambientPulseColor = percent >= 90 ? "255, 198, 41" : "123, 238, 255";
+        pulseStat(bestStat, percent >= 90 ? "stat-best" : "stat-pop");
+        pulseStat(scoreStat, percent >= 90 ? "stat-best" : "stat-pop");
+        burstParticles(player.x, PLAYER_Y - 92, percent >= 90 ? "#f0c247" : "#7beeff", percent >= 90 ? 14 : 9, 0.78);
+        showEventToast(`BEST ${percent}%`, percent >= 90 ? "milestone" : "near");
+        playSound(percent >= 90 ? "nice" : "coin");
+        vibrate(percent >= 90 ? 12 : 6);
+        setHint(`BESTまであと${formatNumber(gap)}点`);
+      }
     }
 
     function checkLiveRank(runScore) {
