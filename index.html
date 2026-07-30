@@ -3867,6 +3867,8 @@
         lastCoinRushToastCount = coinRushCount;
         pulseStat(coinStat, "stat-best");
         showEventToast(`COIN RUSH x${coinRushCount}`, "milestone");
+        playSound("nice");
+        vibrate(10);
         setHint(`コイン連続${coinRushCount}枚`);
       }
     }
