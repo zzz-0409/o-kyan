@@ -1502,6 +1502,7 @@
 
     .result-stat-skill,
     .result-stat-gain,
+    .result-stat-tip,
     .result-stat-next {
       border-color: rgba(255, 198, 41, 0.28);
       background:
@@ -1510,6 +1511,7 @@
     }
 
     .result-stat-gain,
+    .result-stat-tip,
     .result-stat-next {
       border-color: rgba(59, 215, 255, 0.3);
       background:
@@ -1519,6 +1521,7 @@
 
     .result-stat-skill span,
     .result-stat-gain span,
+    .result-stat-tip span,
     .result-stat-next span {
       color: #fff3a2;
     }
@@ -1529,6 +1532,7 @@
     }
 
     .result-stat-gain strong,
+    .result-stat-tip strong,
     .result-stat-next strong {
       color: #7beeff;
       text-shadow: 0 0 12px rgba(59, 215, 255, 0.24);
@@ -3406,13 +3410,14 @@
       return Math.min(...candidates);
     }
 
-    function showResultStats(score, meters, coinCount, rank, previousBestValue = best, bonusScore = 0, improvementScore = 0, rankTarget = null) {
+    function showResultStats(score, meters, coinCount, rank, previousBestValue = best, bonusScore = 0, improvementScore = 0, rankTarget = null, reason = crashReason) {
       setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
         DISTANCE: "M",
         COINS: "C",
         SKILL: "+",
+        TIP: "!",
         GAIN: "↑",
         NEXT: ">",
         RANK: "#",
@@ -3427,6 +3432,10 @@
         rows.push(["SKILL", `+${formatNumber(bonusScore)}`, "result-stat-skill"]);
       } else if (improvementScore > 0) {
         rows.push(["GAIN", `+${formatNumber(improvementScore)}`, "result-stat-gain"]);
+      }
+      const adviceText = crashAdviceText(reason, meters);
+      if (adviceText) {
+        rows.push(["TIP", adviceText, "result-stat-tip"]);
       }
       const nextTargetText = resultNextTargetText(score, previousBestValue, rankTarget);
       if (nextTargetText) {
