@@ -2910,6 +2910,8 @@
     const JUMP_CLEAR_BONUS = 50;
     const PERFECT_DODGE_BONUS = 100;
     const BOOST_PAD_BONUS = 25;
+    const SKILL_FLOW_WINDOW = 4.2;
+    const SKILL_FLOW_MAX = 5;
     const PERFECT_DODGE_DISTANCE = 210;
     const PERFECT_DODGE_EXPIRE_TIME = 1.25;
     const COIN_RADIUS = 10;
@@ -3038,6 +3040,8 @@
     let ambientPulseTimer = 0;
     let ambientPulseColor = "123, 238, 255";
     let nearMissCooldownTimer = 0;
+    let skillFlowTimer = 0;
+    let skillFlowCount = 0;
     let jumpClearFeedbackTimer = 0;
     let perfectDodgeTimer = 0;
     let perfectDodgeObstacle = null;
@@ -3159,6 +3163,8 @@
       ambientPulseTimer = 0;
       ambientPulseColor = "123, 238, 255";
       nearMissCooldownTimer = 0;
+      skillFlowTimer = 0;
+      skillFlowCount = 0;
       jumpClearFeedbackTimer = 0;
       perfectDodgeTimer = 0;
       perfectDodgeObstacle = null;
@@ -5091,6 +5097,10 @@ function spawnCoins() {
         lastCoinRushToastCount = 0;
       }
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
+      skillFlowTimer = Math.max(0, skillFlowTimer - dt);
+      if (skillFlowTimer <= 0) {
+        skillFlowCount = 0;
+      }
       jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
       perfectDodgeTimer = Math.max(0, perfectDodgeTimer - dt);
       if (perfectDodgeTimer <= 0) {
@@ -5205,14 +5215,30 @@ function spawnCoins() {
       return obstacle.lanes.length > 1 || obstacle.lanes.some((lane) => Math.abs(lane - player.lane) === 1);
     }
 
+    function registerSkillFlow() {
+      skillFlowCount = skillFlowTimer > 0 ? Math.min(SKILL_FLOW_MAX, skillFlowCount + 1) : 1;
+      skillFlowTimer = SKILL_FLOW_WINDOW;
+      return skillFlowCount;
+    }
+
+    function skillFlowSuffix(count) {
+      return count > 1 ? ` x${count}` : "";
+    }
+
+    function skillFlowParticleBonus(count) {
+      return Math.max(0, Math.min(10, (count - 1) * 3));
+    }
+
     function triggerNearMiss(x, y) {
       nearMissCooldownTimer = 2.1;
       skillScore += NEAR_MISS_BONUS;
-      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.7);
+      const flow = registerSkillFlow();
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * (0.7 + Math.min(0.26, flow * 0.045)));
       ambientPulseColor = "123, 238, 255";
-      burstParticles(x, y - 18, "#7beeff", 14, 0.95);
+      burstParticles(x, y - 18, "#7beeff", 14 + skillFlowParticleBonus(flow), 0.95);
+      if (flow >= 3) burstParticles(W / 2, PLAYER_Y - 132, "#dffaff", 6, 0.58);
       pulseStat(scoreStat, "stat-pop");
-      showEventToast(`NICE +${NEAR_MISS_BONUS}`, "near");
+      showEventToast(`NICE +${NEAR_MISS_BONUS}${skillFlowSuffix(flow)}`, "near");
       playSound("nice");
       vibrate(8);
     }
@@ -5253,12 +5279,14 @@ function spawnCoins() {
       }
 
       skillScore += PERFECT_DODGE_BONUS;
-      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.9);
+      const flow = registerSkillFlow();
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * (0.9 + Math.min(0.28, flow * 0.045)));
       ambientPulseColor = "255, 198, 41";
-      burstParticles(x, y - 22, "#ffc629", 20, 1.1);
+      burstParticles(x, y - 22, "#ffc629", 20 + skillFlowParticleBonus(flow), 1.1);
+      if (flow >= 3) burstParticles(W / 2, PLAYER_Y - 132, "#fff3a2", 7, 0.62);
       burstGroundDust(x, PLAYER_Y + 8, 12, 0.94);
       pulseStat(scoreStat, "stat-best");
-      showEventToast(`DASH +${PERFECT_DODGE_BONUS}`, "milestone");
+      showEventToast(`DASH +${PERFECT_DODGE_BONUS}${skillFlowSuffix(flow)}`, "milestone");
       playSound("nice");
       vibrate(16);
       return true;
@@ -5268,12 +5296,14 @@ function spawnCoins() {
       if (jumpClearFeedbackTimer > 0) return;
       jumpClearFeedbackTimer = JUMP_CLEAR_FEEDBACK_TIME;
       skillScore += JUMP_CLEAR_BONUS;
-      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.54);
+      const flow = registerSkillFlow();
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * (0.54 + Math.min(0.22, flow * 0.04)));
       ambientPulseColor = "255, 198, 41";
-      burstParticles(x, y, "#f0c247", 16, 0.82);
+      burstParticles(x, y, "#f0c247", 16 + skillFlowParticleBonus(flow), 0.82);
+      if (flow >= 3) burstParticles(W / 2, PLAYER_Y - 132, "#fff3a2", 6, 0.58);
       burstGroundDust(x, PLAYER_Y + 8, 8, 0.78);
       pulseStat(scoreStat, "stat-pop");
-      showEventToast(`JUMP +${JUMP_CLEAR_BONUS}`, "milestone");
+      showEventToast(`JUMP +${JUMP_CLEAR_BONUS}${skillFlowSuffix(flow)}`, "milestone");
       playSound("nice");
       vibrate(10);
     }
