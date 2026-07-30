@@ -2873,6 +2873,8 @@
     const ACTION_CUE_DISTANCE = 330;
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
+    const CAMERA_KICK_SETTLE = 9.5;
+    const CAMERA_TILT_SETTLE = 8.2;
     const FIRST_DISTANCE_MILESTONE = 250;
     const DISTANCE_MILESTONE_STEP = 500;
     const COIN_MILESTONE_STEP = 10;
@@ -2909,6 +2911,9 @@
     let stageFxTimer = 0;
     let screenShakeTimer = 0;
     let screenShakePower = 0;
+    let cameraKickX = 0;
+    let cameraKickY = 0;
+    let cameraTilt = 0;
     let audioContext = null;
     let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
@@ -3093,6 +3098,9 @@
       coinFlyers = [];
       screenShakeTimer = 0;
       screenShakePower = 0;
+      cameraKickX = 0;
+      cameraKickY = 0;
+      cameraTilt = 0;
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -4333,6 +4341,7 @@
       laneTrailTimer = LANE_TRAIL_TIME;
       laneTrailFromX = fromX;
       laneTrailToX = LANES[nextLane];
+      addCameraKick(-direction * 4.8, 0.4, direction * 0.006);
       burstGroundDust(fromX, PLAYER_Y + 8, 7, 0.72);
       playSound("move");
       vibrate(10);
@@ -4359,6 +4368,7 @@
       player.holdTimer = 0.22;
       inputFlashTimer = INPUT_FLASH_TIME;
       inputFlashDirection = 0;
+      addCameraKick(0, 2.8, 0);
       burstGroundDust(player.x, PLAYER_Y + 8, 9, 0.82);
       playSound("jump");
       vibrate(14);
@@ -4929,6 +4939,7 @@ function spawnCoins() {
         landingKickTimer = LANDING_KICK_TIME;
         screenShakeTimer = Math.max(screenShakeTimer, 0.09);
         screenShakePower = Math.max(screenShakePower, 2.8);
+        addCameraKick(0, -3.6, 0);
         burstGroundDust(player.x, PLAYER_Y + 8, 10, 0.9);
       }
       jumpGraceTimer = Math.max(0, jumpGraceTimer - dt);
@@ -5240,6 +5251,7 @@ function checkCollisions() {
             applySpeedPadImpulse("up");
             screenShakeTimer = Math.max(screenShakeTimer, 0.1);
             screenShakePower = Math.max(screenShakePower, 2.6);
+            addCameraKick(0, -3, 0);
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
             flashStage("boost");
             playSound("boost");
@@ -5250,6 +5262,7 @@ function checkCollisions() {
             boostTimer = 0;
             slowKickTimer = BOOST_KICK_TIME;
             applySpeedPadImpulse("down");
+            addCameraKick(0, 3.4, 0);
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
             flashStage("slow");
             playSound("slow");
@@ -5277,6 +5290,7 @@ function checkCollisions() {
       clearControlCues();
       screenShakeTimer = 0.22;
       screenShakePower = 8;
+      addCameraKick((player.x - W / 2) * -0.035, 5.5, (player.x - W / 2) * 0.00008);
       crashResultTimer = CRASH_RESULT_DELAY;
       flashStage("slow");
       showEventToast(crashCueText(reason), "slow");
@@ -5298,6 +5312,23 @@ function checkCollisions() {
       if (reason === "obstacle") return "コーンは左右で回避";
       return "もう一度チャレンジ";
     }
+    function addCameraKick(x, y, tilt = 0) {
+      cameraKickX = Math.max(-8, Math.min(8, cameraKickX + x));
+      cameraKickY = Math.max(-7, Math.min(7, cameraKickY + y));
+      cameraTilt = Math.max(-0.012, Math.min(0.012, cameraTilt + tilt));
+    }
+
+    function updateCameraKick(dt) {
+      const kickSettle = Math.min(1, dt * CAMERA_KICK_SETTLE);
+      const tiltSettle = Math.min(1, dt * CAMERA_TILT_SETTLE);
+      cameraKickX += (0 - cameraKickX) * kickSettle;
+      cameraKickY += (0 - cameraKickY) * kickSettle;
+      cameraTilt += (0 - cameraTilt) * tiltSettle;
+      if (Math.abs(cameraKickX) < 0.02) cameraKickX = 0;
+      if (Math.abs(cameraKickY) < 0.02) cameraKickY = 0;
+      if (Math.abs(cameraTilt) < 0.00005) cameraTilt = 0;
+    }
+
 function playerRect() {
       const collisionX = LANES[player.lane];
       return {
@@ -5393,6 +5424,7 @@ function draw() {
         const shake = screenShakePower * (screenShakeTimer / 0.22);
         ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
       }
+      applyRunCameraMotion();
       drawRoad();
       drawRunMotion();
       drawRunFeedback();
@@ -5405,6 +5437,22 @@ function draw() {
       drawPlayer();
       drawReadyPrompt();
       ctx.restore();
+    }
+
+    function applyRunCameraMotion() {
+      if (!running && crashResultTimer <= 0 && landingKickTimer <= 0) return;
+      const laneDrift = (player.x - LANES[CENTER_LANE]) / ROAD_VISUAL_WIDTH;
+      const boostRatio = boostKickTimer > 0 ? Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME)) : 0;
+      const slowRatio = slowKickTimer > 0 ? Math.max(0, Math.min(1, slowKickTimer / BOOST_KICK_TIME)) : 0;
+      const landingRatio = landingKickTimer > 0 ? Math.max(0, Math.min(1, landingKickTimer / LANDING_KICK_TIME)) : 0;
+      const jumpRatio = isJumping() ? Math.max(0, Math.min(1, jumpLift() / 46)) : 0;
+      const offsetX = cameraKickX - laneDrift * 3.2;
+      const offsetY = cameraKickY - boostRatio * 1.4 + slowRatio * 1.5 - jumpRatio * 1.6 + landingRatio * 1.2;
+      const tilt = Math.max(-0.009, Math.min(0.009, cameraTilt + laneDrift * 0.004));
+      if (Math.abs(offsetX) < 0.05 && Math.abs(offsetY) < 0.05 && Math.abs(tilt) < 0.0005) return;
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(tilt);
+      ctx.translate(-W / 2 + offsetX, -H / 2 + offsetY);
     }
 function drawRoad() {
       drawSeamlessCampusRoad();
@@ -6845,6 +6893,7 @@ function drawObstacles() {
       if (screenShakeTimer > 0) {
         screenShakeTimer = Math.max(0, screenShakeTimer - dt);
       }
+      updateCameraKick(dt);
       if (crashResultTimer > 0) {
         crashResultTimer = Math.max(0, crashResultTimer - dt);
         updateParticles(dt);
