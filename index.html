@@ -5577,6 +5577,51 @@ function drawRoad() {
         ctx.stroke();
       }
 
+      if (boostTimer > 0) {
+        const dashOffset = -roadScroll * 1.72;
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.setLineDash([82, 54]);
+        ctx.lineDashOffset = dashOffset;
+        ctx.globalAlpha = 0.16 + boostRatio * 0.2;
+        ctx.strokeStyle = "rgba(123, 238, 255, 0.94)";
+        ctx.lineWidth = 3;
+        [ROAD_VISUAL_LEFT + 10, ROAD_VISUAL_RIGHT - 10].forEach((x) => {
+          ctx.beginPath();
+          ctx.moveTo(x, -90);
+          ctx.lineTo(x, H + 90);
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 0.08 + boostRatio * 0.12;
+        ctx.strokeStyle = "rgba(255, 248, 223, 0.86)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([54, 66]);
+        ctx.lineDashOffset = dashOffset * 1.18;
+        [ROAD_VISUAL_LEFT + 25, ROAD_VISUAL_RIGHT - 25].forEach((x) => {
+          ctx.beginPath();
+          ctx.moveTo(x, -80);
+          ctx.lineTo(x, H + 80);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      if (slowTimer > 0) {
+        ctx.save();
+        const dragAlpha = 0.06 + slowRatio * 0.12;
+        const leftDrag = ctx.createLinearGradient(0, 0, W * 0.32, 0);
+        leftDrag.addColorStop(0, `rgba(255, 93, 77, ${dragAlpha})`);
+        leftDrag.addColorStop(1, "rgba(255, 93, 77, 0)");
+        ctx.fillStyle = leftDrag;
+        ctx.fillRect(0, 0, W * 0.34, H);
+        const rightDrag = ctx.createLinearGradient(W, 0, W * 0.68, 0);
+        rightDrag.addColorStop(0, `rgba(255, 93, 77, ${dragAlpha})`);
+        rightDrag.addColorStop(1, "rgba(255, 93, 77, 0)");
+        ctx.fillStyle = rightDrag;
+        ctx.fillRect(W * 0.66, 0, W * 0.34, H);
+        ctx.restore();
+      }
+
       if (boostTimer > 0 || slowTimer > 0) {
         const color = boostTimer > 0 ? "59, 215, 255" : "255, 93, 77";
         const glow = ctx.createRadialGradient(W / 2, H * 0.9, 10, W / 2, H * 0.9, H * 0.86);
