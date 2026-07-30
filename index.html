@@ -2791,6 +2791,7 @@
     const COIN_RADIUS = 10;
     const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
+    const OPENING_COIN_TRAIL_COUNT = 5;
     const HOLE_COLLISION_INSET_Y = 12;
     const SWIPE_MIN = 36;
     const SWIPE_HORIZONTAL_BIAS = 0.58;
@@ -2913,6 +2914,7 @@
     let lastRequiredAction = "move";
     let lastCoinLane = CENTER_LANE;
     let coinPatternFlip = 1;
+    let openingCoinTrailSpawned = false;
     let touchStart = null;
     let overlayMode = "title";
     let resultState = {
@@ -3030,6 +3032,7 @@
       lastRequiredAction = "move";
       lastCoinLane = CENTER_LANE;
       coinPatternFlip = Math.random() < 0.5 ? -1 : 1;
+      openingCoinTrailSpawned = false;
       obstacles = [];
       coinItems = [];
       speedPanels = [];
@@ -4562,6 +4565,21 @@
 function spawnCoins() {
       if (!hasCoinClearance()) {
         coinTimer = 0.5;
+        return;
+      }
+
+      if (!openingCoinTrailSpawned && runTime < FIRST_HOLE_TIME) {
+        const openingCoins = [];
+        for (let i = 0; i < OPENING_COIN_TRAIL_COUNT; i += 1) {
+          openingCoins.push({ lane: CENTER_LANE, y: -128 - i * 38, r: COIN_RADIUS, collected: false });
+        }
+        if (!openingCoins.every(isCoinSafeFromObstacles)) {
+          coinTimer = 0.45;
+          return;
+        }
+        coinItems.push(...openingCoins);
+        openingCoinTrailSpawned = true;
+        lastCoinLane = CENTER_LANE;
         return;
       }
 
