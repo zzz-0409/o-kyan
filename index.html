@@ -6016,6 +6016,45 @@ function drawRoad() {
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
       }
+
+      const rushIntensity = Math.max(0, Math.min(1, speedRatio * 1.15 + boostRatio * 0.62 + speedTier * 0.075 - slowRatio * 0.36));
+      if (rushIntensity > 0.16) {
+        const edgeAlpha = 0.035 + rushIntensity * 0.1;
+        const leftRush = ctx.createLinearGradient(0, 0, W * 0.34, 0);
+        leftRush.addColorStop(0, `rgba(123, 238, 255, ${edgeAlpha})`);
+        leftRush.addColorStop(0.42, `rgba(255, 198, 41, ${edgeAlpha * 0.45})`);
+        leftRush.addColorStop(1, "rgba(123, 238, 255, 0)");
+        ctx.fillStyle = leftRush;
+        ctx.fillRect(0, 0, W * 0.34, H);
+
+        const rightRush = ctx.createLinearGradient(W, 0, W * 0.66, 0);
+        rightRush.addColorStop(0, `rgba(123, 238, 255, ${edgeAlpha})`);
+        rightRush.addColorStop(0.42, `rgba(255, 198, 41, ${edgeAlpha * 0.45})`);
+        rightRush.addColorStop(1, "rgba(123, 238, 255, 0)");
+        ctx.fillStyle = rightRush;
+        ctx.fillRect(W * 0.66, 0, W * 0.34, H);
+
+        ctx.save();
+        ctx.lineCap = "round";
+        ctx.globalCompositeOperation = "screen";
+        const railCount = 8 + Math.floor(rushIntensity * 10);
+        for (let i = 0; i < railCount; i += 1) {
+          const side = i % 2 === 0 ? -1 : 1;
+          const railX = side < 0
+            ? 8 + (i % 4) * 8
+            : W - 8 - (i % 4) * 8;
+          const y = ((roadScroll * (1.7 + rushIntensity * 0.54) + i * 97) % (H + 240)) - 170;
+          const length = 70 + rushIntensity * 170 + (i % 3) * 18;
+          ctx.globalAlpha = 0.045 + rushIntensity * 0.14;
+          ctx.strokeStyle = i % 3 === 0 ? "rgba(255, 248, 223, 0.74)" : "rgba(123, 238, 255, 0.86)";
+          ctx.lineWidth = 1.1 + rushIntensity * 1.35;
+          ctx.beginPath();
+          ctx.moveTo(railX, y);
+          ctx.lineTo(railX, y + length);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
       ctx.restore();
     }
 
