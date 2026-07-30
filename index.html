@@ -2992,6 +2992,7 @@
       const collectedCoins = coins;
       const previousBest = best;
       const previousDailyBest = dailyBest.score;
+      const previousRunScore = lastScore;
       const isBest = score > previousBest;
       const isDailyBest = score > previousDailyBest;
       best = Math.max(previousBest, score);
@@ -3002,7 +3003,7 @@
       recordScore(score);
       const resultRank = getScoreRank(score);
       const rankTarget = getNextRankTarget(score, resultRank);
-      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest);
+      const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest, previousRunScore);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
       showResultStats(score, distanceScore, collectedCoins, resultRank);
@@ -3116,9 +3117,10 @@
       }).join("");
     }
 
-    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false) {
+    function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false, previousRunScore = 0) {
       const needsBestTarget = previousBest > score;
       const details = [
+        runImprovementText(score, previousRunScore),
         bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
         crashAdviceText(reason, meters),
         needsBestTarget ? `BESTまであと${formatNumber(previousBest - score)}点` : rankTargetText(rankTarget)
@@ -3135,6 +3137,7 @@
       }
       if (needsBestTarget) {
         const subDetails = [
+          runImprovementText(score, previousRunScore),
           bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
           crashAdviceText(reason, meters)
         ].filter(Boolean).join(" / ");
@@ -3150,6 +3153,13 @@
         return `序盤は早めの左右移動がコツ${detailText}`;
       }
       return `ベスト更新を目指してもう一度${detailText}`;
+    }
+
+    function runImprovementText(score, previousRunScore) {
+      const previous = Math.floor(Number(previousRunScore) || 0);
+      const current = Math.floor(Number(score) || 0);
+      if (previous <= 0 || current <= previous) return "";
+      return `前回より+${formatNumber(current - previous)}点`;
     }
 
     function crashAdviceText(reason, meters) {
