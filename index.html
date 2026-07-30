@@ -2875,6 +2875,8 @@
     const AMBIENT_PULSE_TIME = 0.34;
     const CAMERA_KICK_SETTLE = 9.5;
     const CAMERA_TILT_SETTLE = 8.2;
+    const FOOTSTEP_DUST_BASE_INTERVAL = 0.18;
+    const FOOTSTEP_DUST_MIN_INTERVAL = 0.075;
     const FIRST_DISTANCE_MILESTONE = 250;
     const DISTANCE_MILESTONE_STEP = 500;
     const COIN_MILESTONE_STEP = 10;
@@ -2914,6 +2916,8 @@
     let cameraKickX = 0;
     let cameraKickY = 0;
     let cameraTilt = 0;
+    let footstepDustTimer = 0;
+    let footstepSide = -1;
     let audioContext = null;
     let lastSoundAt = Object.create(null);
     let best = Number(localStorage.getItem("laneRunnerBestScore") || 0);
@@ -3101,6 +3105,8 @@
       cameraKickX = 0;
       cameraKickY = 0;
       cameraTilt = 0;
+      footstepDustTimer = FOOTSTEP_DUST_BASE_INTERVAL * 0.5;
+      footstepSide = -1;
       player.lane = CENTER_LANE;
       player.x = LANES[CENTER_LANE];
       player.holdTimer = 0;
@@ -4951,6 +4957,7 @@ function spawnCoins() {
       const targetX = LANES[player.lane];
       player.x += (targetX - player.x) * Math.min(1, dt * 14);
       player.holdTimer = Math.max(0, player.holdTimer - dt);
+      updateFootstepDust(dt);
 
       {
         spawnTimer -= dt;
@@ -5141,6 +5148,50 @@ function spawnCoins() {
           life: 0.34 + Math.random() * 0.16,
           maxLife: 0.5,
           color: "rgba(255, 248, 223, 0.88)"
+        });
+      }
+      if (particles.length > 90) {
+        particles.splice(0, particles.length - 90);
+      }
+    }
+
+    function updateFootstepDust(dt) {
+      if (readyTimer > 0 || gameOver || isJumping()) {
+        footstepDustTimer = Math.min(footstepDustTimer, FOOTSTEP_DUST_BASE_INTERVAL * 0.6);
+        return;
+      }
+      footstepDustTimer -= dt;
+      if (footstepDustTimer > 0) return;
+      const speedRatio = Math.max(0, Math.min(1, (speed - BASE_SPEED) / (MAX_SPEED - BASE_SPEED)));
+      const interval = Math.max(
+        FOOTSTEP_DUST_MIN_INTERVAL,
+        FOOTSTEP_DUST_BASE_INTERVAL - speedRatio * 0.055 - (boostTimer > 0 ? 0.035 : 0)
+      );
+      footstepDustTimer += interval;
+      spawnFootstepDust();
+    }
+
+    function spawnFootstepDust() {
+      footstepSide *= -1;
+      const boostActive = boostTimer > 0;
+      const slowActive = slowTimer > 0;
+      const color = boostActive
+        ? "rgba(123, 238, 255, 0.72)"
+        : slowActive
+          ? "rgba(167, 200, 214, 0.62)"
+          : "rgba(255, 248, 223, 0.46)";
+      const count = boostActive ? 3 : 2;
+      const baseX = player.x + footstepSide * 7;
+      for (let i = 0; i < count; i += 1) {
+        particles.push({
+          x: baseX + (Math.random() - 0.5) * 9,
+          y: PLAYER_Y + 6 + Math.random() * 4,
+          vx: -footstepSide * (12 + Math.random() * 20) + (Math.random() - 0.5) * 14,
+          vy: -12 - Math.random() * (boostActive ? 28 : 18),
+          r: boostActive ? 2.1 + Math.random() * 2.2 : 1.5 + Math.random() * 1.8,
+          life: boostActive ? 0.28 + Math.random() * 0.12 : 0.22 + Math.random() * 0.12,
+          maxLife: boostActive ? 0.4 : 0.34,
+          color
         });
       }
       if (particles.length > 90) {
