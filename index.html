@@ -3017,7 +3017,7 @@
         burstParticles(W / 2, PLAYER_Y - 220, "#f0c247", 26, 1.3);
       }
       setOverlayOpen(true);
-      setHint("障害物に当たった");
+      setHint(crashCueHint(crashReason));
       resultState = {
         active: true,
         phase: collectedCoins > 0 ? "converting" : "result",
@@ -3923,9 +3923,21 @@
       hideResultStats();
       updateTitleMeta();
       overlayTitle.textContent = "RUN DASH!";
-      overlayText.textContent = "左右で避けて、ジャンプで穴を越えろ！";
+      overlayText.textContent = buildTitleLeadText();
       updateTitleStartButton();
       updateHud();
+    }
+
+    function buildTitleLeadText() {
+      if (!lastScore && !best) return "左右で避けて、ジャンプで穴を越えろ！";
+      if (best > 0 && lastScore > 0 && lastScore < best) {
+        return `前回${formatNumber(lastScore)}点。BESTまであと${formatNumber(best - lastScore)}点！`;
+      }
+      if (lastScore > 0 && best > 0 && lastScore >= best) {
+        return `BEST ${formatNumber(best)}点更新中。次はさらに遠くへ！`;
+      }
+      if (best > 0) return `BEST ${formatNumber(best)}点。次のランで更新を狙おう！`;
+      return "左右で避けて、ジャンプで穴を越えろ！";
     }
 
     function moveSide(direction) {
