@@ -140,6 +140,30 @@ assert(iconSizes.has("512x512"), "manifest is missing a 512x512 icon");
 const screenshotSizes = new Set((manifest.screenshots || []).map((screenshot) => screenshot.sizes));
 assert(screenshotSizes.has("390x900"), "manifest is missing narrow app screenshots");
 
+function pngDimensions(ref) {
+  const buffer = fs.readFileSync(path.join(root, ref.replace(/^\.\//, "")));
+  const isPng = buffer.length >= 24
+    && buffer[0] === 0x89
+    && buffer[1] === 0x50
+    && buffer[2] === 0x4e
+    && buffer[3] === 0x47;
+  assert(isPng, `${ref} should be a PNG file`);
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20)
+  };
+}
+
+for (const screenshot of manifest.screenshots || []) {
+  if (!screenshot.src || !screenshot.sizes) continue;
+  const [expectedWidth, expectedHeight] = screenshot.sizes.split("x").map(Number);
+  const { width, height } = pngDimensions(screenshot.src);
+  assert(
+    width === expectedWidth && height === expectedHeight,
+    `Screenshot dimensions do not match manifest: ${screenshot.src} is ${width}x${height}, expected ${screenshot.sizes}`
+  );
+}
+
 if (process.exitCode) process.exit(process.exitCode);
 
 console.log(`runner validation ok (${refs.size} refs, ${requiredPreloads.length} required preloads)`);
