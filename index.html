@@ -2292,6 +2292,20 @@
         0 5px 12px rgba(0, 0, 0, 0.2);
     }
 
+    .run-pill.best.chase {
+      border-color: rgba(255, 198, 41, 0.34);
+      box-shadow:
+        0 0 0 1px rgba(255, 198, 41, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 0 15px rgba(255, 198, 41, 0.14),
+        0 5px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .run-pill.best.chase span,
+    .run-pill.best.chase strong {
+      color: #fff3a2;
+    }
+
     .footer {
       position: relative;
       min-height: 28px;
@@ -3763,7 +3777,7 @@
     }
 
     function updateRunStrip() {
-      timePill.classList.remove("boost", "slow", "progress", "best", "active");
+      timePill.classList.remove("boost", "slow", "progress", "best", "active", "chase");
       timePill.style.setProperty("--effect-progress", "0%");
       if (boostTimer > 0) {
         const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
@@ -3799,6 +3813,7 @@
         const bestGap = best - runScore;
         if (bestProgress >= 55 || bestGap <= 1500) {
           timePill.classList.add("best");
+          if (bestProgress >= 90) timePill.classList.add("chase");
           timePill.querySelector("span").textContent = "BEST";
           timeStatus.textContent = `${formatHudNumber(bestGap)}点`;
           timePill.setAttribute("aria-label", `自己ベストまであと${formatNumber(bestGap)}点`);
@@ -3822,6 +3837,7 @@
         const todayGap = todayScore - runScore;
         if (todayProgress >= 48 || todayGap <= 900) {
           timePill.classList.add("best");
+          if (todayProgress >= 90) timePill.classList.add("chase");
           timePill.querySelector("span").textContent = "TODAY";
           timeStatus.textContent = `${formatHudNumber(todayGap)}点`;
           timePill.setAttribute("aria-label", `今日のベストまであと${formatNumber(todayGap)}点`);
