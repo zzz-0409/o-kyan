@@ -2784,6 +2784,7 @@
     const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
     const NEAR_MISS_BONUS = 50;
+    const JUMP_CLEAR_BONUS = 50;
     const PERFECT_DODGE_BONUS = 100;
     const PERFECT_DODGE_DISTANCE = 210;
     const PERFECT_DODGE_EXPIRE_TIME = 1.25;
@@ -4946,11 +4947,13 @@ function spawnCoins() {
     function triggerJumpClear(x, y) {
       if (jumpClearFeedbackTimer > 0) return;
       jumpClearFeedbackTimer = JUMP_CLEAR_FEEDBACK_TIME;
+      skillScore += JUMP_CLEAR_BONUS;
       ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.54);
       ambientPulseColor = "255, 198, 41";
       burstParticles(x, y, "#f0c247", 16, 0.82);
       burstGroundDust(x, PLAYER_Y + 8, 8, 0.78);
-      showEventToast("JUMP!", "milestone");
+      pulseStat(scoreStat, "stat-pop");
+      showEventToast(`JUMP +${JUMP_CLEAR_BONUS}`, "milestone");
       playSound("nice");
       vibrate(10);
     }
