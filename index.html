@@ -3204,12 +3204,21 @@
     }
 
     function updateInstallButton() {
-      const canInstall = Boolean(deferredInstallPrompt) && overlayMode === "title";
-      installButton.hidden = !canInstall;
-      installButton.disabled = !canInstall;
-      if (canInstall) {
-        setActionButton(installButton, "HOME", "⌂", "ホーム画面に追加");
+      const canShowHome = overlayMode === "title" && !isStandaloneApp();
+      installButton.hidden = !canShowHome;
+      installButton.disabled = !canShowHome;
+      if (canShowHome) {
+        setActionButton(
+          installButton,
+          "HOME",
+          "⌂",
+          deferredInstallPrompt ? "ホーム画面に追加" : "ホーム画面追加の案内"
+        );
       }
+    }
+
+    function isStandaloneApp() {
+      return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
     }
 
     function setShareButtonVisible(isVisible) {
@@ -3415,7 +3424,10 @@
     }
 
     async function handleInstallButton() {
-      if (!deferredInstallPrompt) return;
+      if (!deferredInstallPrompt) {
+        showHomeInstallHint();
+        return;
+      }
       const promptEvent = deferredInstallPrompt;
       deferredInstallPrompt = null;
       updateInstallButton();
@@ -3428,6 +3440,15 @@
       } catch {
         setHint("ブラウザのメニューからホームに追加できます");
       }
+    }
+
+    function showHomeInstallHint() {
+      const message = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? "共有ボタンから「ホーム画面に追加」"
+        : "ブラウザのメニューからホームに追加できます";
+      overlayText.textContent = message;
+      setHint(message);
+      showEventToast("HOME TIP", "milestone");
     }
 
     function flyResultCoin() {
