@@ -2930,6 +2930,9 @@
     const PANEL_CLEARANCE = 170;
     const BOOST_PANEL_CLEARANCE = 250;
     const WARMUP_DURATION = 22;
+    const RETRY_ASSIST_TIME = 16;
+    const RETRY_ASSIST_SHORT_RUN_TIME = 35;
+    const RETRY_ASSIST_SHORT_DISTANCE = 650;
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
     const FIRST_CENTER_BLOCK_TIME = 8;
@@ -3020,6 +3023,8 @@
     let speedPanelSpawnCount = 0;
     let slowTimer = 0;
     let boostTimer = 0;
+    let retryAssistTimer = 0;
+    let lastRunWasShort = false;
     let readyTimer = 0;
     let startControlHintTimer = 0;
     let goCueTimer = 0;
@@ -3133,7 +3138,8 @@
       bestChaseStage = 0;
       speed = BASE_SPEED;
       roadScroll = 0;
-      spawnTimer = 1.55;
+      retryAssistTimer = isQuickRestart && lastRunWasShort ? RETRY_ASSIST_TIME : 0;
+      spawnTimer = retryAssistTimer > 0 ? 1.95 : 1.55;
       coinTimer = 0.55;
       coinChainTimer = 0;
       coinToneStep = 0;
@@ -3235,6 +3241,7 @@
       const distanceScore = Math.floor(distance);
       const baseScore = distanceScore + skillScore;
       const collectedCoins = coins;
+      lastRunWasShort = runTime < RETRY_ASSIST_SHORT_RUN_TIME && distanceScore < RETRY_ASSIST_SHORT_DISTANCE;
       const previousBest = best;
       const previousDailyBest = dailyBest.score;
       const previousRunScore = lastScore;
@@ -4845,8 +4852,14 @@
       return speedBonus + boostBonus;
     }
 
+    function retryAssistRatio() {
+      return RETRY_ASSIST_TIME > 0
+        ? Math.max(0, Math.min(1, retryAssistTimer / RETRY_ASSIST_TIME))
+        : 0;
+    }
+
     function spawnIntervalSafetyBonus() {
-      return speedSafetyRatio() * 0.18 + (boostTimer > 0 ? 0.08 : 0);
+      return speedSafetyRatio() * 0.18 + (boostTimer > 0 ? 0.08 : 0) + retryAssistRatio() * 0.34;
     }
 
     function hasObstacleClearance() {
@@ -5085,6 +5098,7 @@ function spawnCoins() {
       const rawSpeed = Math.min(MAX_SPEED, BASE_SPEED + distance * SPEED_GAIN * BASE_SPEED);
       slowTimer = Math.max(0, slowTimer - dt);
       boostTimer = Math.max(0, boostTimer - dt);
+      retryAssistTimer = Math.max(0, retryAssistTimer - dt);
       const previousReadyTimer = readyTimer;
       readyTimer = Math.max(0, readyTimer - dt);
       startControlHintTimer = Math.max(0, startControlHintTimer - dt);
