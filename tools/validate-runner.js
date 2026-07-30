@@ -76,6 +76,26 @@ assert(
   (manifest.shortcuts || []).some((shortcut) => shortcut.name === "すぐ遊ぶ" && shortcut.url === "./index.html?start=1"),
   "manifest is missing the quick play shortcut"
 );
+
+function metaContent(selector, label) {
+  const pattern = new RegExp(`<meta ${selector} content=["']([^"']+)["']`);
+  const match = html.match(pattern);
+  assert(match, `Missing HTML meta ${label}`);
+  return match?.[1] || "";
+}
+
+assert(
+  metaContent("name=[\"']description[\"']", "description") === manifest.description,
+  "HTML description should match the manifest description"
+);
+assert(
+  metaContent("property=[\"']og:description[\"']", "og:description") === manifest.description,
+  "OG description should match the manifest description"
+);
+assert(
+  metaContent("name=[\"']twitter:description[\"']", "twitter:description") === manifest.description,
+  "Twitter description should match the manifest description"
+);
 for (const icon of manifest.icons || []) {
   addRef("manifest.webmanifest", icon.src);
 }
