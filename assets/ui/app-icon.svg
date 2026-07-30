@@ -2,24 +2,40 @@
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#10264b"/>
-      <stop offset="1" stop-color="#050910"/>
+      <stop offset="0.56" stop-color="#071426"/>
+      <stop offset="1" stop-color="#03060c"/>
     </linearGradient>
     <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#394653"/>
-      <stop offset="1" stop-color="#151b23"/>
+      <stop offset="0" stop-color="#3a4652"/>
+      <stop offset="1" stop-color="#141b23"/>
     </linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#fff077"/>
-      <stop offset="0.55" stop-color="#ffc629"/>
+      <stop offset="0.54" stop-color="#ffc629"/>
       <stop offset="1" stop-color="#d48a00"/>
     </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.1" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
   <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-  <rect x="18" y="8" width="92" height="128" rx="10" fill="url(#road)"/>
-  <path d="M49 8v112M79 8v112" fill="none" stroke="#dbe8ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 14" opacity="0.75"/>
-  <circle cx="64" cy="68" r="22" fill="url(#gold)" stroke="#fff7bd" stroke-width="4"/>
-  <path d="M55 70l8 8 15-20" fill="none" stroke="#111725" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M24 35h24M20 49h22M86 37h24M88 53h18" stroke="#3bd7ff" stroke-width="5" stroke-linecap="round" opacity="0.82"/>
-  <rect x="22" y="94" width="84" height="16" rx="8" fill="#07101f" opacity="0.78"/>
-  <path d="M38 102h52" stroke="#ffc629" stroke-width="5" stroke-linecap="round"/>
+  <path d="M28 7h72l13 121H15L28 7z" fill="url(#road)"/>
+  <path d="M28 7h72l13 121H15L28 7z" fill="none" stroke="#5ee8ff" stroke-width="2" opacity="0.35"/>
+  <path d="M49 12 43 121M79 12l6 109" fill="none" stroke="#e8f3ff" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="12 13" opacity="0.78"/>
+  <path d="M20 82h88" stroke="#0b121e" stroke-width="18" opacity="0.44"/>
+  <path d="M21 82h86" stroke="#ffc629" stroke-width="3.8" stroke-linecap="round" opacity="0.95"/>
+  <g filter="url(#glow)">
+    <path d="M27 32h22M20 45h26M84 34h24M86 49h20" stroke="#3bd7ff" stroke-width="5" stroke-linecap="round" opacity="0.82"/>
+  </g>
+  <circle cx="64" cy="51" r="9" fill="#ffcf4e" stroke="#fff6c5" stroke-width="2.4"/>
+  <path d="M55 66c6-7 12-7 18 0l8 18-10 5-5-13-6 14-11-3 6-21z" fill="#101827"/>
+  <path d="M55 68c-6 5-10 12-11 21M73 68c7 5 11 12 12 21" fill="none" stroke="#101827" stroke-width="8" stroke-linecap="round"/>
+  <path d="M58 89 47 111M70 89l13 22" fill="none" stroke="#101827" stroke-width="8" stroke-linecap="round"/>
+  <path d="M54 63c7-4 14-4 21 0" fill="none" stroke="#7beeff" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <path d="M34 103h60" stroke="#f7fbff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <text x="64" y="118" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-size="17" font-weight="900" fill="#ffc629" stroke="#050910" stroke-width="3" paint-order="stroke">RUN</text>
 </svg>

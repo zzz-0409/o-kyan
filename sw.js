@@ -1,4 +1,4 @@
-const CACHE_NAME = "run-dash-cache-v13";
+const CACHE_NAME = "run-dash-cache-v14";
 const CORE_SHELL = [
   "./",
   "./index.html",
