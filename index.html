@@ -2868,6 +2868,7 @@
     const NEAR_MISS_BONUS = 50;
     const JUMP_CLEAR_BONUS = 50;
     const PERFECT_DODGE_BONUS = 100;
+    const BOOST_PAD_BONUS = 25;
     const PERFECT_DODGE_DISTANCE = 210;
     const PERFECT_DODGE_EXPIRE_TIME = 1.25;
     const COIN_RADIUS = 10;
@@ -5377,11 +5378,13 @@ function checkCollisions() {
             screenShakeTimer = Math.max(screenShakeTimer, 0.1);
             screenShakePower = Math.max(screenShakePower, 2.6);
             addCameraKick(0, -3, 0);
+            skillScore += BOOST_PAD_BONUS;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
+            pulseStat(scoreStat, "stat-pop");
             flashStage("boost");
             playSound("boost");
-            showEventToast("BOOST", "boost");
-            setHint("スピードアップ");
+            showEventToast(`BOOST +${BOOST_PAD_BONUS}`, "boost");
+            setHint(`スピードアップ +${BOOST_PAD_BONUS}`);
           } else {
             slowTimer = SLOW_DURATION;
             boostTimer = 0;
