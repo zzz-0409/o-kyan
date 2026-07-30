@@ -2729,6 +2729,7 @@
     const COIN_RADIUS = 10;
     const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
+    const HOLE_COLLISION_INSET_Y = 12;
     const SWIPE_MIN = 36;
     const SWIPE_HORIZONTAL_BIAS = 0.58;
     const SWIPE_VERTICAL_BIAS = 0.78;
@@ -4868,7 +4869,7 @@ function checkCollisions() {
           if (obstacle.type === "hole") {
             if (isHoleSafe()) continue;
             for (const lane of obstacle.lanes) {
-              const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, 6);
+              const o = shrinkRect(laneRect(lane, obstacle.y, obstacle.h), 9, HOLE_COLLISION_INSET_Y);
               if (rectsOverlap(feet, o)) {
                 crash("hole");
                 return;
