@@ -2966,6 +2966,7 @@
     let scoreRanking = loadScoreRanking();
     let bestPaceAnnounced = false;
     let dailyBestPaceAnnounced = false;
+    let previousRunPaceAnnounced = false;
     let bestLiveRank = SCORE_RANKING_LIMIT + 1;
     let bestChaseStage = 0;
     let speed = BASE_SPEED;
@@ -3086,6 +3087,7 @@
       crashReason = "";
       bestPaceAnnounced = false;
       dailyBestPaceAnnounced = false;
+      previousRunPaceAnnounced = false;
       bestLiveRank = SCORE_RANKING_LIMIT + 1;
       bestChaseStage = 0;
       speed = BASE_SPEED;
@@ -3780,8 +3782,11 @@
       const announcedBest = checkBestPace(runScore);
       if (!announcedBest) {
         checkBestChase(runScore);
-        checkDailyBestPace(runScore);
-        checkLiveRank(runScore);
+        const announcedDailyBest = checkDailyBestPace(runScore);
+        const announcedPreviousRun = announcedDailyBest ? false : checkPreviousRunPace(runScore);
+        if (!announcedDailyBest && !announcedPreviousRun) {
+          checkLiveRank(runScore);
+        }
       }
       updateRunStrip();
       updateControlCues();
@@ -4134,6 +4139,23 @@
       playSound("nice");
       vibrate(12);
       setHint(`今日のベスト更新ペース ${formatNumber(runScore)}点`);
+      return true;
+    }
+
+    function checkPreviousRunPace(runScore) {
+      const previousScore = Math.floor(Number(lastScore) || 0);
+      if (previousRunPaceAnnounced || previousScore <= 0 || runScore <= previousScore) return false;
+      if (bestPaceAnnounced && previousScore >= best) return false;
+      previousRunPaceAnnounced = true;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.48);
+      ambientPulseColor = "123, 238, 255";
+      pulseStat(scoreStat, "stat-pop");
+      burstParticles(player.x, PLAYER_Y - 84, "#7beeff", 13, 0.82);
+      burstParticles(W / 2, PLAYER_Y - 148, "rgba(123, 238, 255, 0.78)", 8, 0.66);
+      showEventToast("LAST CLEAR!", "near");
+      playSound("nice");
+      vibrate(8);
+      setHint(`前回スコア更新 ${formatNumber(runScore)}点`);
       return true;
     }
 
