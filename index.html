@@ -2610,7 +2610,7 @@
     </div>
 
     <footer class="footer">
-      <span id="hint" aria-live="polite">2分目安。左右で移動、ジャンプで回避</span>
+      <span id="hint" aria-live="polite">2分目安。左右で移動、タップ/上スワイプでジャンプ</span>
     </footer>
   </main>
 
@@ -6137,7 +6137,7 @@ function onPointerDown(event) {
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
       touchStart = null;
-      if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy)) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > SWIPE_MIN) {
         handleScreenDirection(dx, dy);
         return;
       }
@@ -6173,6 +6173,10 @@ function onPointerDown(event) {
     function handleScreenDirection(dx, dy) {
       if (Math.abs(dx) >= Math.abs(dy)) {
         moveSide(dx < 0 ? -1 : 1);
+        return;
+      }
+      if (dy < -SWIPE_MIN) {
+        jump();
       }
     }
 
@@ -6231,15 +6235,15 @@ function onPointerDown(event) {
         handleMainButton();
         return;
       }
-      if (event.code === "ArrowUp" || event.code === "Space") {
+      if (event.code === "ArrowUp" || event.code === "Space" || event.code === "KeyW") {
         event.preventDefault();
         jump();
       }
-      if (event.code === "ArrowLeft") {
+      if (event.code === "ArrowLeft" || event.code === "KeyA") {
         event.preventDefault();
         handleScreenDirection(-1, 0);
       }
-      if (event.code === "ArrowRight") {
+      if (event.code === "ArrowRight" || event.code === "KeyD") {
         event.preventDefault();
         handleScreenDirection(1, 0);
       }
