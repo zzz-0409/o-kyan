@@ -2823,6 +2823,7 @@
     let ambientPulseColor = "123, 238, 255";
     let nearMissCooldownTimer = 0;
     let jumpClearFeedbackTimer = 0;
+    let lastActionCue = "";
     let lastObstacleMask = 0;
     let lastObstacleType = "";
     let repeatedObstacleCount = 0;
@@ -2930,6 +2931,7 @@
       ambientPulseColor = "123, 238, 255";
       nearMissCooldownTimer = 0;
       jumpClearFeedbackTimer = 0;
+      lastActionCue = "";
       lastObstacleMask = 0;
       lastObstacleType = "";
       repeatedObstacleCount = 0;
@@ -3459,12 +3461,24 @@
       leftButton.classList.toggle("is-cued", cue === "left");
       rightButton.classList.toggle("is-cued", cue === "right");
       jumpButton.classList.toggle("is-cued", cue === "jump");
+      if (cue && cue !== lastActionCue) {
+        setHint(actionCueHint(cue));
+      }
+      lastActionCue = cue;
     }
 
     function clearControlCues() {
       leftButton.classList.remove("is-cued");
       rightButton.classList.remove("is-cued");
       jumpButton.classList.remove("is-cued");
+      lastActionCue = "";
+    }
+
+    function actionCueHint(cue) {
+      if (cue === "left") return "左へ避ける";
+      if (cue === "right") return "右へ避ける";
+      if (cue === "jump") return "タップ/上スワイプでジャンプ";
+      return "";
     }
 
     function nextActionCue() {
