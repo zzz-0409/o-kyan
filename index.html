@@ -3397,7 +3397,8 @@
     }
 
     function buildShareText() {
-      const score = formatNumber(resultState.finalScore || computeScore());
+      const rawScore = resultState.finalScore || computeScore();
+      const score = formatNumber(rawScore);
       const meters = formatNumber(resultState.meters || Math.floor(distance));
       const coinCount = formatNumber(resultState.coinCount || 0);
       const parts = [
@@ -3412,6 +3413,11 @@
       }
       if (resultState.isDailyBest && !resultState.isBest) {
         parts.push("TODAY BEST");
+      }
+      if (resultState.isBest) {
+        parts.push(`NEW BEST ${bestDeltaText(rawScore, resultState.previousBest)}`);
+      } else if (resultState.previousBest > 0) {
+        parts.push(`BEST ${bestDeltaText(rawScore, resultState.previousBest)}`);
       }
       if (resultState.skillScore > 0) {
         parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
