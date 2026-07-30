@@ -1446,11 +1446,31 @@
       animation-delay: 0.12s;
     }
 
+    .result-stat:nth-child(6) {
+      animation-delay: 0.15s;
+    }
+
     .result-stat:not(:first-child) {
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
         inset 3px 0 0 rgba(59, 215, 255, 0.16),
         0 8px 16px rgba(0, 0, 0, 0.16);
+    }
+
+    .result-stat-skill {
+      border-color: rgba(255, 198, 41, 0.28);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.16), transparent 58%),
+        linear-gradient(180deg, rgba(42, 35, 18, 0.94), rgba(4, 8, 15, 0.92));
+    }
+
+    .result-stat-skill span {
+      color: #fff3a2;
+    }
+
+    .result-stat-skill strong {
+      color: #ffe37a;
+      text-shadow: 0 0 12px rgba(255, 198, 41, 0.22);
     }
 
     .result-stat::after {
@@ -3056,7 +3076,7 @@
       const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest, previousRunScore);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
-      showResultStats(score, distanceScore, collectedCoins, resultRank, previousBest);
+      showResultStats(score, distanceScore, collectedCoins, resultRank, previousBest, skillScore);
       setStartButtonLoading(false);
       setActionButton(
         startButton,
@@ -3171,22 +3191,29 @@
       return Math.min(...candidates);
     }
 
-    function showResultStats(score, meters, coinCount, rank, previousBestValue = best) {
+    function showResultStats(score, meters, coinCount, rank, previousBestValue = best, bonusScore = 0) {
       setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
         DISTANCE: "M",
         COINS: "C",
+        SKILL: "+",
         RANK: "#",
         BEST: "B"
       };
-      resultStats.innerHTML = [
+      const rows = [
         ["SCORE", formatNumber(score)],
         ["DISTANCE", `${formatNumber(meters)}m`],
-        ["COINS", formatNumber(coinCount)],
+        ["COINS", formatNumber(coinCount)]
+      ];
+      if (bonusScore > 0) {
+        rows.push(["SKILL", `+${formatNumber(bonusScore)}`, "result-stat-skill"]);
+      }
+      rows.push(
         ["RANK", formatScoreRank(rank)],
         ["BEST", bestDeltaText(score, previousBestValue)]
-      ].map(([label, value, className = ""]) => {
+      );
+      resultStats.innerHTML = rows.map(([label, value, className = ""]) => {
         const icon = statIcons[label] || "";
         return `<div class="result-stat ${escapeHtml(className)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
       }).join("");
@@ -3365,7 +3392,7 @@
       if (remainingCoins <= 0) {
         setScoreConversionOpen(false);
         overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-        showResultStats(finalScore, Math.floor(distance), 0, resultState.rank, resultState.previousBest);
+        showResultStats(finalScore, Math.floor(distance), 0, resultState.rank, resultState.previousBest, resultState.skillScore);
         setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         setShareButtonVisible(true);
         return;
@@ -3385,7 +3412,7 @@
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
         overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
-        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), resultState.rank, resultState.previousBest);
+        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), resultState.rank, resultState.previousBest, resultState.skillScore);
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -3404,7 +3431,7 @@
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, resultState.rank, resultState.previousBest);
+      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, resultState.rank, resultState.previousBest, resultState.skillScore);
       setStartButtonLoading(false);
       setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
       setTitleReturnButtonVisible(true);
