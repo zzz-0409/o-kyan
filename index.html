@@ -2229,6 +2229,7 @@
 
     .run-pill.boost::before,
     .run-pill.slow::before,
+    .run-pill.last::before,
     .run-pill.progress::before,
     .run-pill.best::before {
       opacity: 1;
@@ -2245,6 +2246,13 @@
         radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.42), transparent 18px),
         linear-gradient(90deg, rgba(255, 198, 41, 0.08), rgba(255, 198, 41, 0.5));
       opacity: 0.52;
+    }
+
+    .run-pill.last::before {
+      background:
+        radial-gradient(circle at 100% 50%, rgba(255, 255, 255, 0.44), transparent 18px),
+        linear-gradient(90deg, rgba(59, 215, 255, 0.08), rgba(59, 215, 255, 0.5));
+      opacity: 0.58;
     }
 
     .run-pill.best::before {
@@ -2335,6 +2343,34 @@
     .run-pill.progress span {
       color: #fff3a2;
       background: rgba(255, 198, 41, 0.16);
+    }
+
+    .run-pill.last span {
+      color: #dffaff;
+      background: rgba(59, 215, 255, 0.16);
+    }
+
+    .run-pill.last.active {
+      border-color: rgba(59, 215, 255, 0.38);
+      box-shadow:
+        0 0 0 1px rgba(59, 215, 255, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 0 16px rgba(59, 215, 255, 0.16),
+        0 5px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .run-pill.last.chase {
+      border-color: rgba(59, 215, 255, 0.3);
+      box-shadow:
+        0 0 0 1px rgba(59, 215, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 14px rgba(59, 215, 255, 0.12),
+        0 5px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .run-pill.last.chase span,
+    .run-pill.last.chase strong {
+      color: #dffaff;
     }
 
     .run-pill.best.active {
@@ -3944,7 +3980,7 @@
     }
 
     function updateRunStrip() {
-      timePill.classList.remove("boost", "slow", "progress", "best", "active", "chase");
+      timePill.classList.remove("boost", "slow", "last", "progress", "best", "active", "chase");
       timePill.style.setProperty("--effect-progress", "0%");
       if (boostTimer > 0) {
         const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
@@ -4009,6 +4045,30 @@
           timeStatus.textContent = `${formatHudNumber(todayGap)}点`;
           timePill.setAttribute("aria-label", `今日のベストまであと${formatNumber(todayGap)}点`);
           timePill.style.setProperty("--effect-progress", `${todayProgress}%`);
+          return;
+        }
+      }
+
+      const previousScore = Math.floor(Number(lastScore) || 0);
+      if (previousScore > 0 && runScore > 0) {
+        const previousProgress = Math.max(0, Math.min(100, (runScore / previousScore) * 100));
+        if (runScore >= previousScore) {
+          const lead = Math.max(0, runScore - previousScore);
+          timePill.classList.add("last", "active");
+          timePill.querySelector("span").textContent = "LAST";
+          timeStatus.textContent = `+${formatHudNumber(lead)}`;
+          timePill.setAttribute("aria-label", `前回スコア更新中 ${formatNumber(lead)}点リード`);
+          timePill.style.setProperty("--effect-progress", "100%");
+          return;
+        }
+        const previousGap = previousScore - runScore;
+        if (previousProgress >= 42 || previousGap <= 900) {
+          timePill.classList.add("last");
+          if (previousProgress >= 88) timePill.classList.add("chase");
+          timePill.querySelector("span").textContent = "LAST";
+          timeStatus.textContent = `${formatHudNumber(previousGap)}点`;
+          timePill.setAttribute("aria-label", `前回スコアまであと${formatNumber(previousGap)}点`);
+          timePill.style.setProperty("--effect-progress", `${previousProgress}%`);
           return;
         }
       }
