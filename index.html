@@ -4443,6 +4443,10 @@
         return { type: "car", lanes: [left, left + 1], y: -132, h: 82, group: "opening" };
       }
 
+      if (runTime < FIRST_HOLE_TIME) {
+        return null;
+      }
+
       return { type: "hole", lanes: [0, 1, 2], y: -118, h: 52, group: "opening" };
     }
 
