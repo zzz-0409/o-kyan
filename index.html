@@ -5390,6 +5390,8 @@ function checkCollisions() {
             boostTimer = 0;
             slowKickTimer = BOOST_KICK_TIME;
             applySpeedPadImpulse("down");
+            screenShakeTimer = Math.max(screenShakeTimer, 0.08);
+            screenShakePower = Math.max(screenShakePower, 1.8);
             addCameraKick(0, 3.4, 0);
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
             flashStage("slow");
@@ -5861,6 +5863,31 @@ function drawRoad() {
         rightDrag.addColorStop(1, "rgba(255, 93, 77, 0)");
         ctx.fillStyle = rightDrag;
         ctx.fillRect(W * 0.66, 0, W * 0.34, H);
+
+        ctx.beginPath();
+        ctx.rect(ROAD_VISUAL_LEFT, 0, ROAD_VISUAL_WIDTH, H);
+        ctx.clip();
+        ctx.globalCompositeOperation = "screen";
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 5; i += 1) {
+          const y = PLAYER_Y - 190 + i * 52 + Math.sin(roadScroll * 0.024 + i) * 8;
+          const width = 86 + i * 9;
+          const centerX = W / 2 + Math.sin(roadScroll * 0.018 + i * 1.4) * 18;
+          ctx.globalAlpha = 0.1 + slowRatio * 0.12 - i * 0.01;
+          ctx.strokeStyle = "rgba(255, 93, 77, 0.92)";
+          ctx.beginPath();
+          ctx.moveTo(centerX - width, y);
+          ctx.lineTo(centerX + width, y);
+          ctx.stroke();
+
+          ctx.globalAlpha = 0.08 + slowRatio * 0.08;
+          ctx.strokeStyle = "rgba(220, 250, 255, 0.5)";
+          ctx.beginPath();
+          ctx.moveTo(centerX - width * 0.62, y + 7);
+          ctx.lineTo(centerX + width * 0.62, y + 7);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
