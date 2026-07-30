@@ -774,16 +774,16 @@
     }
 
     .control-button.is-cued {
-      animation: controlCuePulse 0.62s ease-in-out infinite;
-      filter: brightness(1.14) saturate(1.12);
+      animation: controlCuePulse var(--cue-duration, 0.62s) ease-in-out infinite;
+      filter: brightness(var(--cue-brightness, 1.14)) saturate(var(--cue-saturation, 1.12));
     }
 
     .control-button.is-cued::before {
       border-color: rgba(123, 238, 255, 0.72);
       box-shadow:
         0 0 0 6px rgba(123, 238, 255, 0.08),
-        0 0 24px rgba(123, 238, 255, 0.46),
-        0 0 22px rgba(255, 198, 41, 0.24);
+        0 0 24px rgba(123, 238, 255, var(--cue-cyan-glow, 0.46)),
+        0 0 22px rgba(255, 198, 41, var(--cue-gold-glow, 0.24));
     }
 
     .overlay {
@@ -3666,20 +3666,40 @@
     }
 
     function updateControlCues() {
-      const cue = nextActionCue();
-      leftButton.classList.toggle("is-cued", cue === "left");
-      rightButton.classList.toggle("is-cued", cue === "right");
-      jumpButton.classList.toggle("is-cued", cue === "jump");
+      const cueInfo = nextActionCue();
+      const cue = cueInfo.action;
+      const urgency = cueInfo.urgency || 0;
+      setControlCue(leftButton, cue === "left", urgency);
+      setControlCue(rightButton, cue === "right", urgency);
+      setControlCue(jumpButton, cue === "jump", urgency);
       if (cue && cue !== lastActionCue) {
         setHint(actionCueHint(cue));
       }
       lastActionCue = cue;
     }
 
+    function setControlCue(button, enabled, urgency = 0) {
+      button.classList.toggle("is-cued", enabled);
+      if (!enabled) {
+        button.style.removeProperty("--cue-duration");
+        button.style.removeProperty("--cue-brightness");
+        button.style.removeProperty("--cue-saturation");
+        button.style.removeProperty("--cue-cyan-glow");
+        button.style.removeProperty("--cue-gold-glow");
+        return;
+      }
+      const level = Math.max(0, Math.min(1, urgency));
+      button.style.setProperty("--cue-duration", `${(0.68 - level * 0.22).toFixed(2)}s`);
+      button.style.setProperty("--cue-brightness", (1.12 + level * 0.12).toFixed(2));
+      button.style.setProperty("--cue-saturation", (1.1 + level * 0.18).toFixed(2));
+      button.style.setProperty("--cue-cyan-glow", (0.42 + level * 0.22).toFixed(2));
+      button.style.setProperty("--cue-gold-glow", (0.2 + level * 0.22).toFixed(2));
+    }
+
     function clearControlCues() {
-      leftButton.classList.remove("is-cued");
-      rightButton.classList.remove("is-cued");
-      jumpButton.classList.remove("is-cued");
+      setControlCue(leftButton, false);
+      setControlCue(rightButton, false);
+      setControlCue(jumpButton, false);
       lastActionCue = "";
     }
 
@@ -3691,7 +3711,7 @@
     }
 
     function nextActionCue() {
-      if (!running || readyTimer > 0 || gameOver) return "";
+      if (!running || readyTimer > 0 || gameOver) return { action: "", urgency: 0 };
       const upcoming = obstacles
         .filter((obstacle) => !laneObjectPassed(obstacle))
         .map((obstacle) => ({
@@ -3700,22 +3720,29 @@
         }))
         .filter(({ distanceToPlayer }) => distanceToPlayer >= -8 && distanceToPlayer <= ACTION_CUE_DISTANCE)
         .sort((a, b) => a.distanceToPlayer - b.distanceToPlayer)
-        .find(({ obstacle }) => obstacle.lanes.includes(player.lane))?.obstacle;
+        .find(({ obstacle }) => obstacle.lanes.includes(player.lane));
 
-      if (!upcoming) return "";
-      if (upcoming.type === "hole") return isHoleSafe() ? "" : "jump";
+      if (!upcoming) return { action: "", urgency: 0 };
+      const { obstacle, distanceToPlayer } = upcoming;
+      const urgency = 1 - Math.max(0, Math.min(1, distanceToPlayer / ACTION_CUE_DISTANCE));
+      if (obstacle.type === "hole") {
+        return {
+          action: isHoleSafe() ? "" : "jump",
+          urgency
+        };
+      }
 
-      const openLanes = [0, 1, 2].filter((lane) => !upcoming.lanes.includes(lane));
-      if (!openLanes.length) return "";
+      const openLanes = [0, 1, 2].filter((lane) => !obstacle.lanes.includes(lane));
+      if (!openLanes.length) return { action: "", urgency: 0 };
       const targetLane = openLanes.reduce((bestLane, lane) => {
         const bestDistance = Math.abs(bestLane - player.lane);
         const laneDistance = Math.abs(lane - player.lane);
         if (laneDistance !== bestDistance) return laneDistance < bestDistance ? lane : bestLane;
         return lane < bestLane ? lane : bestLane;
       }, openLanes[0]);
-      if (targetLane < player.lane) return "left";
-      if (targetLane > player.lane) return "right";
-      return "";
+      if (targetLane < player.lane) return { action: "left", urgency };
+      if (targetLane > player.lane) return { action: "right", urgency };
+      return { action: "", urgency: 0 };
     }
 
     function pulseStat(statElement, className = "stat-pop") {
