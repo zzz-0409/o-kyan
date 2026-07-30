@@ -2824,6 +2824,7 @@
     const ACTION_CUE_DISTANCE = 330;
     const BOOST_KICK_TIME = 0.24;
     const AMBIENT_PULSE_TIME = 0.34;
+    const FIRST_DISTANCE_MILESTONE = 250;
     const DISTANCE_MILESTONE_STEP = 500;
     const COIN_MILESTONE_STEP = 10;
     const COIN_RUSH_START = 4;
@@ -2845,7 +2846,8 @@
     let loopActive = false;
     let runTime = 0;
     let targetTimeAnnounced = false;
-    let nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+    let previousDistanceMilestone = 0;
+    let nextDistanceMilestone = FIRST_DISTANCE_MILESTONE;
     let nextCoinMilestone = COIN_MILESTONE_STEP;
     let speedTier = 0;
     let distance = 0;
@@ -2975,7 +2977,8 @@
       manualPaused = false;
       runTime = 0;
       targetTimeAnnounced = false;
-      nextDistanceMilestone = DISTANCE_MILESTONE_STEP;
+      previousDistanceMilestone = 0;
+      nextDistanceMilestone = FIRST_DISTANCE_MILESTONE;
       nextCoinMilestone = COIN_MILESTONE_STEP;
       speedTier = 0;
       distance = 0;
@@ -3840,8 +3843,8 @@
         }
       }
 
-      const milestoneStart = nextDistanceMilestone - DISTANCE_MILESTONE_STEP;
-      const milestoneProgress = Math.max(0, Math.min(100, ((distance - milestoneStart) / DISTANCE_MILESTONE_STEP) * 100));
+      const milestoneSpan = Math.max(1, nextDistanceMilestone - previousDistanceMilestone);
+      const milestoneProgress = Math.max(0, Math.min(100, ((distance - previousDistanceMilestone) / milestoneSpan) * 100));
       const remainingMeters = Math.max(0, Math.ceil(nextDistanceMilestone - distance));
       timePill.classList.add("progress");
       timePill.querySelector("span").textContent = "NEXT";
@@ -3872,7 +3875,10 @@
     function checkDistanceMilestone() {
       if (distance < nextDistanceMilestone) return;
       const milestone = nextDistanceMilestone;
-      nextDistanceMilestone += DISTANCE_MILESTONE_STEP;
+      previousDistanceMilestone = milestone;
+      nextDistanceMilestone = milestone === FIRST_DISTANCE_MILESTONE
+        ? DISTANCE_MILESTONE_STEP
+        : milestone + DISTANCE_MILESTONE_STEP;
       const isBigMilestone = milestone % 1000 === 0;
       ambientPulseTimer = AMBIENT_PULSE_TIME;
       ambientPulseColor = isBigMilestone ? "255, 198, 41" : "123, 238, 255";
