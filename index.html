@@ -1288,6 +1288,21 @@
       white-space: nowrap;
     }
 
+    .title-chip em {
+      position: relative;
+      z-index: 1;
+      display: block;
+      margin-top: 5px;
+      overflow: hidden;
+      color: rgba(255, 248, 223, 0.78);
+      font-size: 9px;
+      font-style: normal;
+      font-weight: 850;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .title-chip-last {
       border-color: rgba(59, 215, 255, 0.22);
       box-shadow:
@@ -1370,6 +1385,11 @@
       text-shadow:
         0 1px 0 rgba(0, 0, 0, 0.72),
         0 0 14px rgba(255, 198, 41, 0.22);
+    }
+
+    .title-chip-next em {
+      color: #fff3a2;
+      text-shadow: 0 0 10px rgba(255, 198, 41, 0.16);
     }
 
     .overlay[data-mode="result"] .dialog:not(.new-best) {
@@ -3352,13 +3372,24 @@
         ["best", "BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
         ["today", "TODAY", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "NO SCORE", "D"],
         ["next", "NEXT", nextTargetScoreText(), "→"]
-      ].map(([key, label, value, icon]) => `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
+      ].map(([key, label, value, icon]) => {
+        const subText = key === "next" ? nextTargetScoreDetailText() : "";
+        const subHtml = subText ? `<em>${escapeHtml(subText)}</em>` : "";
+        return `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong>${subHtml}</div>`;
+      }).join("");
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
 
     function nextTargetScoreText() {
       const target = nextTargetScoreValue();
       return formatNumber(target);
+    }
+
+    function nextTargetScoreDetailText() {
+      const current = Math.floor(Number(lastScore) || 0);
+      const target = nextTargetScoreValue(current);
+      const gap = Math.max(0, target - current);
+      return current > 0 ? `あと${formatNumber(gap)}点` : "まずここを目標";
     }
 
     function nextTargetScoreValue(baseScore = lastScore) {
