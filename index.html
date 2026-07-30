@@ -3416,9 +3416,9 @@
         parts.push("TODAY BEST");
       }
       if (resultState.isBest) {
-        parts.push(`NEW BEST ${bestDeltaText(rawScore, resultState.previousBest)}`);
+        parts.push(shareBestDeltaText(rawScore, resultState.previousBest, true));
       } else if (resultState.previousBest > 0) {
-        parts.push(`BEST ${bestDeltaText(rawScore, resultState.previousBest)}`);
+        parts.push(shareBestDeltaText(rawScore, resultState.previousBest, false));
       }
       if (resultState.skillScore > 0) {
         parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
@@ -3427,6 +3427,14 @@
         parts.push(`前回+${formatNumber(resultState.runImprovement)}点`);
       }
       return `RUN DASH!で${score}点！ ${parts.join(" / ")}`;
+    }
+
+    function shareBestDeltaText(score, previousBestValue, isBest) {
+      const delta = bestDeltaText(score, previousBestValue);
+      if (isBest) {
+        return delta === "NEW" ? "NEW BEST" : `NEW BEST ${delta}`;
+      }
+      return `BEST ${delta}`;
     }
 
     async function handleShareButton() {
