@@ -2937,6 +2937,7 @@
     const OPENING_GUIDE_STEPS = 3;
     const READY_GRACE_TIME = 1.8;
     const QUICK_RESTART_READY_TIME = 1.05;
+    const RESUME_READY_TIME = 1.28;
     const START_CONTROL_HINT_TIME = 3.2;
     const READY_GO_THRESHOLD = 0.62;
     const GO_CUE_TIME = 0.24;
@@ -4429,13 +4430,22 @@
       setPauseButtonVisible(true);
       setTitleReturnButtonVisible(false);
       setOverlayOpen(false);
-      readyTimer = Math.max(readyTimer, READY_GRACE_TIME * 0.55);
+      armResumeReady(RESUME_READY_TIME);
       lastTime = performance.now();
       frameCarry = 0;
       running = true;
       setHint("READY");
       startLoop();
       draw();
+    }
+
+    function armResumeReady(duration = RESUME_READY_TIME) {
+      readyTimer = Math.max(readyTimer, duration);
+      goCueTimer = 0;
+      goCuePlayed = false;
+      jumpBufferTimer = 0;
+      inputFlashTimer = 0;
+      clearControlCues();
     }
 
     function showTitleScreen() {
@@ -7196,7 +7206,7 @@ function drawObstacles() {
       if (!autoPaused || manualPaused || gameOver || overlayMode !== "playing") return;
       autoPaused = false;
       running = true;
-      readyTimer = Math.max(readyTimer, READY_GRACE_TIME);
+      armResumeReady(READY_GRACE_TIME);
       lastTime = performance.now();
       frameCarry = 0;
       setHint("READY");
