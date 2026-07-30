@@ -3204,15 +3204,16 @@
       return formatNumber(target);
     }
 
-    function nextTargetScoreValue() {
-      const current = Math.floor(Number(lastScore) || 0);
+    function nextTargetScoreValue(baseScore = lastScore) {
+      const current = Math.floor(Number(baseScore) || 0);
       const candidates = [
         best ? Math.floor(Number(best) || 0) + 1 : 0,
         dailyBest.score ? dailyBest.score + 1 : 0,
         ...scoreRanking.map((score) => Math.floor(Number(score) || 0) + 1)
       ].filter((score) => score > current && score > 1);
       if (!candidates.length) {
-        return best ? Math.floor(best + 100) : 500;
+        const nextHundred = Math.ceil((current + 1) / 100) * 100;
+        return best ? Math.max(nextHundred, Math.floor(best + 100)) : Math.max(nextHundred, 500);
       }
       return Math.min(...candidates);
     }
@@ -3829,7 +3830,7 @@
         }
       }
 
-      const scoreTarget = nextTargetScoreValue();
+      const scoreTarget = nextTargetScoreValue(runScore);
       if (scoreTarget > runScore) {
         const targetGap = scoreTarget - runScore;
         const targetProgress = Math.max(0, Math.min(100, (runScore / scoreTarget) * 100));
