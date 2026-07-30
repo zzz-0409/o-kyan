@@ -27,7 +27,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/ui/app-icon.svg">
   <link rel="preload" as="image" href="assets/ui/title-bg-campus.png?v=imagegen-10">
   <link rel="prefetch" as="image" href="assets/ui/result-panel-campus.png?v=imagegen-10">
-  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-lane-clean.png?v=imagegen-16">
+  <link rel="preload" as="image" href="assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png?v=imagegen-17">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-0.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-1.png?v=imagegen-10">
   <link rel="preload" as="image" href="assets/character/imagegen-runner-2.png?v=imagegen-10">
@@ -2791,7 +2791,7 @@
     const rightButton = document.getElementById("rightButton");
     const jumpButton = document.getElementById("jumpButton");
     const pauseButton = document.getElementById("pauseButton");
-    const ASSET_VERSION = "imagegen-16";
+    const ASSET_VERSION = "imagegen-17";
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
     let assetsReadyNotified = false;
@@ -2829,7 +2829,7 @@
     citySideLoopSprite.src = assetUrl("assets/backgrounds/imagegen-city-side-loop.png");
     citySideLoopSprite.addEventListener("load", draw);
     const fullRoadCityLoopSprite = new Image();
-    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop-lane-clean.png");
+    fullRoadCityLoopSprite.src = assetUrl("assets/backgrounds/imagegen-full-road-city-loop-maximum-width.png");
     fullRoadCityLoopSprite.addEventListener("load", draw);
     const essentialSprites = [
       ...playerRunSprites,
@@ -2842,7 +2842,7 @@
     const FRAME_MS = 1000 / 30;
     const MAX_CANVAS_DPR = 2;
     const FULL_ROAD_BG_CROP_RATIO = 1;
-    const ROAD_VISUAL_LEFT = 12;
+    const ROAD_VISUAL_LEFT = 0;
     const ROAD_VISUAL_RIGHT = W - ROAD_VISUAL_LEFT;
     const ROAD_VISUAL_WIDTH = ROAD_VISUAL_RIGHT - ROAD_VISUAL_LEFT;
     const LANES = [
