@@ -2802,6 +2802,7 @@
     const SPEED_CLEARANCE_BONUS_MAX = 78;
     const BOOST_CLEARANCE_BONUS = 34;
     const PANEL_CLEARANCE = 170;
+    const BOOST_PANEL_CLEARANCE = 250;
     const WARMUP_DURATION = 22;
     const FULL_DIFFICULTY_TIME = 115;
     const FIRST_HOLE_TIME = 6;
@@ -4555,7 +4556,8 @@
       for (const panel of speedPanels) {
         const panelTop = panel.y;
         const panelBottom = panel.y + panel.h;
-        if (rangesTooClose(obstacleTop, obstacleBottom, panelTop, panelBottom, PANEL_CLEARANCE)) {
+        const panelClearance = panel.kind === "up" ? BOOST_PANEL_CLEARANCE : PANEL_CLEARANCE;
+        if (rangesTooClose(obstacleTop, obstacleBottom, panelTop, panelBottom, panelClearance)) {
           return false;
         }
       }
