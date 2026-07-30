@@ -2846,6 +2846,7 @@
       finalScore: 0,
       isBest: false,
       isDailyBest: false,
+      runImprovement: 0,
       message: ""
     };
     let obstacles = [];
@@ -3006,6 +3007,7 @@
       recordScore(score);
       const resultRank = getScoreRank(score);
       const rankTarget = getNextRankTarget(score, resultRank);
+      const runImprovement = runImprovementValue(score, previousRunScore);
       const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest, previousRunScore);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
@@ -3036,6 +3038,7 @@
         rank: resultRank,
         rankTarget,
         skillScore,
+        runImprovement,
         crashReason,
         message: resultMessage
       };
@@ -3055,6 +3058,7 @@
         rank: 0,
         rankTarget: null,
         skillScore: 0,
+        runImprovement: 0,
         crashReason: "",
         message: ""
       };
@@ -3159,10 +3163,14 @@
     }
 
     function runImprovementText(score, previousRunScore) {
+      const improvement = runImprovementValue(score, previousRunScore);
+      return improvement > 0 ? `前回より+${formatNumber(improvement)}点` : "";
+    }
+
+    function runImprovementValue(score, previousRunScore) {
       const previous = Math.floor(Number(previousRunScore) || 0);
       const current = Math.floor(Number(score) || 0);
-      if (previous <= 0 || current <= previous) return "";
-      return `前回より+${formatNumber(current - previous)}点`;
+      return previous > 0 && current > previous ? current - previous : 0;
     }
 
     function crashAdviceText(reason, meters) {
@@ -3384,6 +3392,9 @@
       }
       if (resultState.skillScore > 0) {
         parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
+      }
+      if (resultState.runImprovement > 0) {
+        parts.push(`前回+${formatNumber(resultState.runImprovement)}点`);
       }
       return `RUN DASH!で${score}点！ ${parts.join(" / ")}`;
     }
