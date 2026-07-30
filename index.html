@@ -6127,13 +6127,30 @@ function drawObstacles() {
       return point.y < point.h - TAP_JUMP_BOTTOM_DEAD_ZONE;
     }
 
-function onPointerDown(event) {
+    function onPointerDown(event) {
+      event.preventDefault();
+      if (typeof canvas.setPointerCapture === "function") {
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch {
+          // Pointer capture can fail in older embedded browsers; swipes still work without it.
+        }
+      }
       touchStart = { x: event.clientX, y: event.clientY, id: event.pointerId, canTapJump: canTapJumpFrom(event) };
     }
 
     function onPointerUp(event) {
       if (!touchStart) return;
       const start = touchStart;
+      if (event.pointerId !== start.id) return;
+      event.preventDefault();
+      if (typeof canvas.releasePointerCapture === "function") {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch {
+          // Already released or unsupported.
+        }
+      }
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
       touchStart = null;
@@ -6324,6 +6341,13 @@ function onPointerDown(event) {
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", () => {
+      if (touchStart && typeof canvas.releasePointerCapture === "function") {
+        try {
+          canvas.releasePointerCapture(touchStart.id);
+        } catch {
+          // Already released or unsupported.
+        }
+      }
       touchStart = null;
     });
     canvas.addEventListener("contextmenu", suppressGameContextMenu);
