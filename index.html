@@ -2808,6 +2808,7 @@
     const FIRST_SPEED_PANEL_TIME = 10;
     const OPENING_GUIDE_STEPS = 3;
     const READY_GRACE_TIME = 1.8;
+    const QUICK_RESTART_READY_TIME = 1.05;
     const READY_GO_THRESHOLD = 0.62;
     const GO_CUE_TIME = 0.24;
     const INPUT_FLASH_TIME = 0.18;
@@ -2955,6 +2956,7 @@
         updateTitleStartButton();
         return;
       }
+      const isQuickRestart = overlayMode === "result";
       clearScoreConversion();
       clearTransientRunFeedback();
       if (document.activeElement && typeof document.activeElement.blur === "function") {
@@ -2991,7 +2993,7 @@
       panelTimer = FIRST_SPEED_PANEL_TIME;
       slowTimer = 0;
       boostTimer = 0;
-      readyTimer = READY_GRACE_TIME;
+      readyTimer = isQuickRestart ? QUICK_RESTART_READY_TIME : READY_GRACE_TIME;
       goCueTimer = 0;
       goCuePlayed = false;
       jumpTimer = 0;
