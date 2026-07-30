@@ -6630,6 +6630,19 @@ function drawObstacles() {
       }
     }
 
+    function onPointerCancel(event) {
+      if (!touchStart) return;
+      if (event && event.pointerId != null && event.pointerId !== touchStart.id) return;
+      if (typeof canvas.releasePointerCapture === "function") {
+        try {
+          canvas.releasePointerCapture(touchStart.id);
+        } catch {
+          // Already released or unsupported.
+        }
+      }
+      touchStart = null;
+    }
+
     function onControlButton(event, action) {
       event.preventDefault();
       event.stopPropagation();
@@ -6810,16 +6823,8 @@ function drawObstacles() {
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
-    canvas.addEventListener("pointercancel", () => {
-      if (touchStart && typeof canvas.releasePointerCapture === "function") {
-        try {
-          canvas.releasePointerCapture(touchStart.id);
-        } catch {
-          // Already released or unsupported.
-        }
-      }
-      touchStart = null;
-    });
+    canvas.addEventListener("pointercancel", onPointerCancel);
+    canvas.addEventListener("lostpointercapture", onPointerCancel);
     canvas.addEventListener("contextmenu", suppressGameContextMenu);
     leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(-1, 0)));
     rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(1, 0)));
