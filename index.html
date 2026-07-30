@@ -2670,7 +2670,8 @@
     let assetsReady = false;
     let assetsReadyNotified = false;
     let deferredInstallPrompt = null;
-    const autoStartRequested = new URLSearchParams(window.location.search).get("start") === "1";
+    const START_QUERY_PARAM = "start";
+    const autoStartRequested = new URLSearchParams(window.location.search).get(START_QUERY_PARAM) === "1";
     let autoStartConsumed = false;
     const playerRunSprites = ["0", "1", "2", "3"].map((frame) => {
       const image = new Image();
@@ -3399,7 +3400,7 @@ function endGame() {
     async function handleShareButton() {
       if (!resultState.active || resultState.phase !== "result") return;
       const text = buildShareText();
-      const url = location.href.split("#")[0];
+      const url = shareGameUrl();
       const shareData = {
         title: "RUN DASH!",
         text,
@@ -3422,6 +3423,13 @@ function endGame() {
       } catch {
         // Sharing can be cancelled by the user; keep the result screen as-is.
       }
+    }
+
+    function shareGameUrl() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete(START_QUERY_PARAM);
+      url.hash = "";
+      return url.toString();
     }
 
     async function handleInstallButton() {
@@ -4125,9 +4133,23 @@ function endGame() {
     function maybeAutoStartFromShortcut() {
       if (!autoStartRequested || autoStartConsumed || !assetsReady || overlayMode !== "title") return;
       autoStartConsumed = true;
+      cleanQuickStartUrl();
       resetGame();
     }
-function spawnObstacle() {
+
+    function cleanQuickStartUrl() {
+      if (!window.history?.replaceState) return;
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has(START_QUERY_PARAM)) return;
+      url.searchParams.delete(START_QUERY_PARAM);
+      try {
+        window.history.replaceState(null, document.title, url.toString());
+      } catch {
+        // Some file:// environments can reject history edits; gameplay should continue.
+      }
+    }
+
+    function spawnObstacle() {
       if (!hasObstacleClearance()) {
         return false;
       }
