@@ -3913,6 +3913,7 @@
       ), 0);
       if (nextTier <= speedTier) return;
       speedTier = nextTier;
+      const paceLevel = nextTier + 1;
       ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.92);
       ambientPulseColor = "123, 238, 255";
       boostKickTimer = Math.max(boostKickTimer, BOOST_KICK_TIME * 0.45);
@@ -3920,10 +3921,10 @@
       burstParticles(ROAD_VISUAL_LEFT, PLAYER_Y - 82, "rgba(123, 238, 255, 0.78)", 6, 0.65);
       burstParticles(ROAD_VISUAL_RIGHT, PLAYER_Y - 82, "rgba(123, 238, 255, 0.78)", 6, 0.65);
       pulseStat(scoreStat);
-      showEventToast("PACE UP!", "boost");
+      showEventToast(`PACE LV${paceLevel}!`, "boost");
       playSound("nice");
       vibrate(8 + nextTier * 2);
-      setHint("ペースアップ。次の障害物に注意！");
+      setHint(`PACE LV${paceLevel}. Watch the next obstacle!`);
     }
 
     function checkBestPace(runScore) {
@@ -5479,8 +5480,9 @@ function drawRoad() {
       const boostRatio = boostTimer > 0 ? Math.max(0, Math.min(1, boostTimer / BOOST_DURATION)) : 0;
       const slowRatio = slowTimer > 0 ? Math.max(0, Math.min(1, slowTimer / SLOW_DURATION)) : 0;
       const kickRatio = boostKickTimer > 0 ? Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME)) : 0;
-      const intensity = Math.max(0.18, speedRatio * 0.74 + boostRatio * 0.55 + kickRatio * 0.38 - slowRatio * 0.16);
-      const lineCount = boostTimer > 0 ? 20 : 10;
+      const tierLift = speedTier * 0.06;
+      const intensity = Math.max(0.18, speedRatio * 0.74 + boostRatio * 0.55 + kickRatio * 0.38 + tierLift - slowRatio * 0.16);
+      const lineCount = (boostTimer > 0 ? 20 : 10) + speedTier * 2;
 
       ctx.save();
       ctx.globalCompositeOperation = "screen";
