@@ -1429,23 +1429,6 @@
         0 8px 16px rgba(0, 0, 0, 0.16);
     }
 
-    .result-stat.result-grade {
-      border-color: rgba(255, 198, 41, 0.32);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.14), transparent 58%),
-        linear-gradient(180deg, rgba(39, 37, 28, 0.94), rgba(7, 9, 15, 0.92));
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        inset 3px 0 0 rgba(255, 198, 41, 0.24),
-        0 0 16px rgba(255, 198, 41, 0.08),
-        0 8px 16px rgba(0, 0, 0, 0.16);
-    }
-
-    .result-stat.result-grade strong {
-      color: #fff3a2;
-      text-shadow: 0 0 13px rgba(255, 198, 41, 0.22);
-    }
-
     .result-stat::after {
       content: "";
       position: absolute;
@@ -2860,7 +2843,6 @@
       finalScore: 0,
       isBest: false,
       isDailyBest: false,
-      grade: null,
       message: ""
     };
     let obstacles = [];
@@ -2988,7 +2970,7 @@
       frameCarry = 0;
       startLoop();
     }
-function endGame() {
+    function endGame() {
       crashResultTimer = 0;
       running = false;
       gameOver = true;
@@ -3018,11 +3000,10 @@ function endGame() {
       recordScore(score);
       const resultRank = getScoreRank(score);
       const rankTarget = getNextRankTarget(score, resultRank);
-      const resultGrade = computeRunGrade(score, distanceScore, collectedCoins, skillScore, isBest, isDailyBest);
       const resultMessage = buildResultMessage(score, distanceScore, collectedCoins, isBest, previousBest, resultRank, skillScore, crashReason, rankTarget, isDailyBest);
       overlayTitle.textContent = isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = collectedCoins > 0 ? "コインをスコアに換算中" : resultMessage;
-      showResultStats(score, distanceScore, collectedCoins, resultRank, resultGrade);
+      showResultStats(score, distanceScore, collectedCoins, resultRank);
       setStartButtonLoading(false);
       setActionButton(
         startButton,
@@ -3046,7 +3027,6 @@ function endGame() {
         finalScore: score,
         isBest,
         isDailyBest,
-        grade: resultGrade,
         rank: resultRank,
         rankTarget,
         skillScore,
@@ -3066,7 +3046,6 @@ function endGame() {
         finalScore: 0,
         isBest: false,
         isDailyBest: false,
-        grade: null,
         rank: 0,
         rankTarget: null,
         skillScore: 0,
@@ -3116,18 +3095,16 @@ function endGame() {
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
     }
 
-    function showResultStats(score, meters, coinCount, rank, grade = null) {
+    function showResultStats(score, meters, coinCount, rank) {
       setElementHidden(resultStats, false);
       const statIcons = {
         SCORE: "S",
-        STYLE: grade?.icon || "!",
         DISTANCE: "M",
         COINS: "C",
         RANK: "#"
       };
       resultStats.innerHTML = [
         ["SCORE", formatNumber(score)],
-        ["STYLE", grade?.label || "RUNNER", "result-grade"],
         ["DISTANCE", `${formatNumber(meters)}m`],
         ["COINS", formatNumber(coinCount)],
         ["RANK", formatScoreRank(rank)]
@@ -3135,15 +3112,6 @@ function endGame() {
         const icon = statIcons[label] || "";
         return `<div class="result-stat ${escapeHtml(className)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
       }).join("");
-    }
-
-    function computeRunGrade(score, meters, coinCount, bonusScore, isBest, isDailyBest) {
-      if (isBest) return { label: "LEGEND", icon: "★" };
-      if (isDailyBest) return { label: "TODAY", icon: "D" };
-      if (score >= 5000 || meters >= 2200) return { label: "ACE", icon: "A" };
-      if (score >= 3000 || meters >= 1400 || coinCount >= 18) return { label: "DASH", icon: ">" };
-      if (bonusScore >= NEAR_MISS_BONUS * 2 || score >= 1600 || meters >= 800) return { label: "NICE", icon: "!" };
-      return { label: "RUNNER", icon: "R" };
     }
 
     function buildResultMessage(score, meters, coinCount, isBest, previousBest, rank = 0, bonusScore = 0, reason = "", rankTarget = null, isDailyBest = false) {
@@ -3285,7 +3253,7 @@ function endGame() {
       if (remainingCoins <= 0) {
         setScoreConversionOpen(false);
         overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-        showResultStats(finalScore, Math.floor(distance), 0, resultState.rank, resultState.grade);
+        showResultStats(finalScore, Math.floor(distance), 0, resultState.rank);
         setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
         setShareButtonVisible(true);
         return;
@@ -3305,7 +3273,7 @@ function endGame() {
         void convertScoreBox.offsetWidth;
         convertScoreBox.classList.add("pop");
         overlayText.textContent = `コイン換算中 残り${Math.max(0, remainingCoins)}枚`;
-        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), resultState.rank, resultState.grade);
+        showResultStats(shownScore, Math.floor(distance), Math.max(0, remainingCoins), resultState.rank);
         if (remainingCoins <= 0) {
           finishScoreConversion();
         }
@@ -3324,7 +3292,7 @@ function endGame() {
       updateHudLabels(resultState.finalScore, best, 0);
       overlayTitle.textContent = resultState.isBest ? "新記録！" : "ゲームオーバー";
       overlayText.textContent = resultState.message || "ベスト更新を目指してもう一度";
-      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, resultState.rank, resultState.grade);
+      showResultStats(resultState.finalScore, Math.floor(distance), resultState.coinCount, resultState.rank);
       setStartButtonLoading(false);
       setActionButton(startButton, "もう一度", "↻", "もう一度遊ぶ");
       setTitleReturnButtonVisible(true);
@@ -3387,9 +3355,6 @@ function endGame() {
       }
       if (resultState.isDailyBest && !resultState.isBest) {
         parts.push("TODAY BEST");
-      }
-      if (resultState.grade?.label) {
-        parts.push(`STYLE ${resultState.grade.label}`);
       }
       if (resultState.skillScore > 0) {
         parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
