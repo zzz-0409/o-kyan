@@ -2730,6 +2730,8 @@
     const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
     const SWIPE_MIN = 36;
+    const SWIPE_HORIZONTAL_BIAS = 0.58;
+    const SWIPE_VERTICAL_BIAS = 0.78;
     const TAP_JUMP_BOTTOM_DEAD_ZONE = 112;
     const OBSTACLE_CLEARANCE = 285;
     const OBSTACLE_CLEARANCE_HARD = 345;
@@ -6245,11 +6247,13 @@ function drawObstacles() {
     }
 
     function handleScreenDirection(dx, dy) {
-      if (Math.abs(dx) >= Math.abs(dy)) {
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      if (absX >= SWIPE_MIN && absX >= absY * SWIPE_HORIZONTAL_BIAS) {
         moveSide(dx < 0 ? -1 : 1);
         return;
       }
-      if (dy < -SWIPE_MIN) {
+      if (dy < -SWIPE_MIN && absY >= absX * SWIPE_VERTICAL_BIAS) {
         jump();
       }
     }
