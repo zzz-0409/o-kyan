@@ -2750,6 +2750,9 @@
     const BOOST_FACTOR = 1.72;
     const COIN_VALUE = 100;
     const NEAR_MISS_BONUS = 50;
+    const PERFECT_DODGE_BONUS = 100;
+    const PERFECT_DODGE_DISTANCE = 210;
+    const PERFECT_DODGE_EXPIRE_TIME = 1.25;
     const COIN_RADIUS = 10;
     const COIN_CHAIN_WINDOW = 0.72;
     const COIN_OBSTACLE_CLEARANCE = 118;
@@ -2859,6 +2862,10 @@
     let ambientPulseColor = "123, 238, 255";
     let nearMissCooldownTimer = 0;
     let jumpClearFeedbackTimer = 0;
+    let perfectDodgeTimer = 0;
+    let perfectDodgeObstacle = null;
+    let perfectDodgeFromLane = CENTER_LANE;
+    let perfectDodgeToLane = CENTER_LANE;
     let lastActionCue = "";
     let lastObstacleMask = 0;
     let lastObstacleType = "";
@@ -2970,6 +2977,10 @@
       ambientPulseColor = "123, 238, 255";
       nearMissCooldownTimer = 0;
       jumpClearFeedbackTimer = 0;
+      perfectDodgeTimer = 0;
+      perfectDodgeObstacle = null;
+      perfectDodgeFromLane = CENTER_LANE;
+      perfectDodgeToLane = CENTER_LANE;
       lastActionCue = "";
       lastObstacleMask = 0;
       lastObstacleType = "";
@@ -4140,9 +4151,11 @@
     function moveSide(direction) {
       if (!running) return;
       const fromX = LANES[player.lane];
+      const fromLane = player.lane;
       const nextLane = Math.max(0, Math.min(2, player.lane + direction));
       if (nextLane === player.lane) return;
       pressMoveButton(direction);
+      armPerfectDodge(fromLane, nextLane);
       player.lane = nextLane;
       player.holdTimer = 0.18;
       inputFlashTimer = INPUT_FLASH_TIME;
@@ -4712,6 +4725,10 @@ function spawnCoins() {
       }
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
       jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
+      perfectDodgeTimer = Math.max(0, perfectDodgeTimer - dt);
+      if (perfectDodgeTimer <= 0) {
+        perfectDodgeObstacle = null;
+      }
       updateSpeed(rawSpeed, dt);
       const bufferedJump = jumpBufferTimer > 0;
       jumpBufferTimer = Math.max(0, jumpBufferTimer - dt);
@@ -4804,6 +4821,9 @@ function spawnCoins() {
           dodgeFlashTimer = DODGE_FLASH_TIME;
           dodgeFlashX = clearX;
           burstParticles(clearX, clearY, obstacle.lanes.length > 1 ? "#f0c247" : "#7beeff", 8, 0.65);
+          if (triggerPerfectDodgeIfReady(obstacle, clearX, clearY)) {
+            continue;
+          }
           if (isNearMiss(obstacle)) {
             triggerNearMiss(clearX, clearY);
           }
@@ -4826,6 +4846,53 @@ function spawnCoins() {
       showEventToast(`NICE +${NEAR_MISS_BONUS}`, "near");
       playSound("nice");
       vibrate(8);
+    }
+
+    function armPerfectDodge(fromLane, toLane) {
+      if (readyTimer > 0 || gameOver) return;
+      const candidate = obstacles
+        .filter((obstacle) => obstacle.type !== "hole" && !laneObjectPassed(obstacle))
+        .map((obstacle) => ({
+          obstacle,
+          distanceToPlayer: PLAYER_Y - (obstacle.y + obstacle.h)
+        }))
+        .filter(({ obstacle, distanceToPlayer }) => (
+          distanceToPlayer >= 0
+          && distanceToPlayer <= PERFECT_DODGE_DISTANCE
+          && obstacle.lanes.includes(fromLane)
+          && !obstacle.lanes.includes(toLane)
+        ))
+        .sort((a, b) => a.distanceToPlayer - b.distanceToPlayer)[0];
+
+      if (!candidate) return;
+      perfectDodgeTimer = PERFECT_DODGE_EXPIRE_TIME;
+      perfectDodgeObstacle = candidate.obstacle;
+      perfectDodgeFromLane = fromLane;
+      perfectDodgeToLane = toLane;
+    }
+
+    function triggerPerfectDodgeIfReady(obstacle, x, y) {
+      if (perfectDodgeObstacle !== obstacle || perfectDodgeTimer <= 0) return false;
+      perfectDodgeTimer = 0;
+      perfectDodgeObstacle = null;
+      if (
+        !obstacle.lanes.includes(perfectDodgeFromLane)
+        || obstacle.lanes.includes(player.lane)
+        || player.lane !== perfectDodgeToLane
+      ) {
+        return false;
+      }
+
+      skillScore += PERFECT_DODGE_BONUS;
+      ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.9);
+      ambientPulseColor = "255, 198, 41";
+      burstParticles(x, y - 22, "#ffc629", 20, 1.1);
+      burstGroundDust(x, PLAYER_Y + 8, 12, 0.94);
+      pulseStat(scoreStat, "stat-best");
+      showEventToast(`DASH +${PERFECT_DODGE_BONUS}`, "milestone");
+      playSound("nice");
+      vibrate(16);
+      return true;
     }
 
     function triggerJumpClear(x, y) {
