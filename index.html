@@ -2760,6 +2760,8 @@
     const AMBIENT_PULSE_TIME = 0.34;
     const DISTANCE_MILESTONE_STEP = 500;
     const COIN_MILESTONE_STEP = 10;
+    const COIN_RUSH_START = 4;
+    const COIN_RUSH_STEP = 3;
     const SPEED_TIER_THRESHOLDS = [0.32, 0.64, 0.92];
     const BEST_CHASE_THRESHOLDS = [0.5, 0.75, 0.9];
     const TWO_MINUTE_TARGET = 120;
@@ -2806,6 +2808,8 @@
     let coinTimer = 0;
     let coinChainTimer = 0;
     let coinToneStep = 0;
+    let coinRushCount = 0;
+    let lastCoinRushToastCount = 0;
     let panelTimer = 0;
     let slowTimer = 0;
     let boostTimer = 0;
@@ -2915,6 +2919,8 @@
       coinTimer = 0.55;
       coinChainTimer = 0;
       coinToneStep = 0;
+      coinRushCount = 0;
+      lastCoinRushToastCount = 0;
       panelTimer = FIRST_SPEED_PANEL_TIME;
       slowTimer = 0;
       boostTimer = 0;
@@ -3829,12 +3835,19 @@
     }
 
     function registerCoinPickup(x, y) {
+      coinRushCount = coinChainTimer > 0 ? coinRushCount + 1 : 1;
       coinToneStep = coinChainTimer > 0 ? Math.min(5, coinToneStep + 1) : 0;
       coinChainTimer = COIN_CHAIN_WINDOW;
       if (coinToneStep >= 3) {
         ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.36);
         ambientPulseColor = "255, 198, 41";
         burstParticles(x, y - 8, "#fff3a2", 4 + coinToneStep, 0.72);
+      }
+      if (coinRushCount >= COIN_RUSH_START && coinRushCount - lastCoinRushToastCount >= COIN_RUSH_STEP) {
+        lastCoinRushToastCount = coinRushCount;
+        pulseStat(coinStat, "stat-best");
+        showEventToast(`COIN RUSH x${coinRushCount}`, "milestone");
+        setHint(`コイン連続${coinRushCount}枚`);
       }
     }
 
@@ -4606,6 +4619,8 @@ function spawnCoins() {
       coinChainTimer = Math.max(0, coinChainTimer - dt);
       if (coinChainTimer <= 0) {
         coinToneStep = 0;
+        coinRushCount = 0;
+        lastCoinRushToastCount = 0;
       }
       nearMissCooldownTimer = Math.max(0, nearMissCooldownTimer - dt);
       jumpClearFeedbackTimer = Math.max(0, jumpClearFeedbackTimer - dt);
