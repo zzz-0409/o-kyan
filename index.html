@@ -5411,6 +5411,37 @@ function drawRoad() {
         ctx.restore();
       }
 
+      if (isJumping()) {
+        const lift = jumpLift();
+        const airRatio = Math.max(0, Math.min(1, lift / 46));
+        const topY = PLAYER_Y - lift + 20;
+        const bottomY = PLAYER_Y + 14;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.lineCap = "round";
+        ctx.globalAlpha = 0.16 + airRatio * 0.24;
+        const glow = ctx.createLinearGradient(player.x, topY, player.x, bottomY);
+        glow.addColorStop(0, "rgba(255, 248, 223, 0.04)");
+        glow.addColorStop(0.42, "rgba(123, 238, 255, 0.72)");
+        glow.addColorStop(1, "rgba(255, 198, 41, 0.18)");
+        ctx.strokeStyle = glow;
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(player.x, topY);
+        ctx.quadraticCurveTo(player.x + Math.sin(roadScroll * 0.08) * 7, (topY + bottomY) / 2, player.x, bottomY);
+        ctx.stroke();
+        ctx.globalAlpha = 0.12 + airRatio * 0.18;
+        ctx.strokeStyle = "rgba(255, 248, 223, 0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(player.x - 10, topY + 12);
+        ctx.quadraticCurveTo(player.x - 17, topY + 30, player.x - 8, bottomY - 8);
+        ctx.moveTo(player.x + 10, topY + 12);
+        ctx.quadraticCurveTo(player.x + 17, topY + 30, player.x + 8, bottomY - 8);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       if (laneTrailTimer > 0) {
         const ratio = Math.max(0, Math.min(1, laneTrailTimer / LANE_TRAIL_TIME));
         const progress = 1 - ratio;
