@@ -3112,9 +3112,23 @@
       const chips = [
         ["last", "LAST", lastScore ? `${formatNumber(lastScore)}` : "NO SCORE", "●"],
         ["best", "BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
-        ["today", "TODAY", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "NO SCORE", "D"]
+        ["today", "TODAY", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "NO SCORE", "D"],
+        ["next", "NEXT", nextTargetScoreText(), "→"]
       ].map(([key, label, value, icon]) => `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
       titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
+    }
+
+    function nextTargetScoreText() {
+      const current = Math.floor(Number(lastScore) || 0);
+      const candidates = [
+        best ? Math.floor(Number(best) || 0) + 1 : 0,
+        dailyBest.score ? dailyBest.score + 1 : 0,
+        ...scoreRanking.map((score) => Math.floor(Number(score) || 0) + 1)
+      ].filter((score) => score > current && score > 1);
+      if (!candidates.length) {
+        return best ? `${formatNumber(best + 100)}` : "500";
+      }
+      return formatNumber(Math.min(...candidates));
     }
 
     function showResultStats(score, meters, coinCount, rank, previousBestValue = best) {
