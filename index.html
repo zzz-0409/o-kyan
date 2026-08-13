@@ -3418,7 +3418,7 @@
         coins: "コイン",
         skill: "ボーナス",
         gain: "伸び",
-        best: "ベスト差"
+        best: "ベスト"
       };
       const rows = [
         ["score", formatNumber(score)],
@@ -3430,7 +3430,7 @@
       } else if (improvementScore > 0) {
         rows.push(["gain", `+${formatNumber(improvementScore)}`, "result-stat-gain"]);
       }
-      rows.push(["best", bestDeltaText(score, previousBestValue)]);
+      rows.push(["best", formatNumber(Math.max(best, Math.floor(Number(score) || 0), Math.floor(Number(previousBestValue) || 0)))]);
       resultStats.innerHTML = rows.map(([label, value, className = ""]) => {
         const icon = statIcons[label] || "";
         return `<div class="result-stat ${escapeHtml(className)}"><span data-icon="${escapeHtml(icon)}">${escapeHtml(statLabels[label] || label)}</span><strong>${escapeHtml(value)}</strong></div>`;
@@ -5556,7 +5556,6 @@ function checkCollisions() {
             skillScore += BOOST_PAD_BONUS;
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#7beeff", 12, 0.9);
             pulseStat(scoreStat, "stat-pop");
-            flashStage("boost");
             playSound("boost");
             showEventToast(`加速 +${BOOST_PAD_BONUS}`, "boost");
             setHint(`スピードアップ +${BOOST_PAD_BONUS}`);
@@ -5569,7 +5568,6 @@ function checkCollisions() {
             screenShakePower = Math.max(screenShakePower, 1.8);
             addCameraKick(0, 3.4, 0);
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
-            flashStage("slow");
             playSound("slow");
             showEventToast("減速", "slow");
             setHint("スピードダウン");
@@ -5808,23 +5806,6 @@ function drawRoad() {
         ctx.restore();
       }
 
-      if (boostKickTimer > 0 || slowKickTimer > 0) {
-        const boostRatio = Math.max(0, Math.min(1, boostKickTimer / BOOST_KICK_TIME));
-        const slowRatio = Math.max(0, Math.min(1, slowKickTimer / BOOST_KICK_TIME));
-        const ratio = Math.max(boostRatio, slowRatio);
-        const color = boostRatio >= slowRatio ? "123, 238, 255" : "255, 93, 77";
-        ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        ctx.globalAlpha = 0.18 * ratio;
-        ctx.fillStyle = `rgba(${color}, 1)`;
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalAlpha = 0.28 * ratio;
-        ctx.fillStyle = `rgba(${color}, 1)`;
-        ctx.fillRect(0, 0, 10 + 14 * ratio, H);
-        ctx.fillRect(W - (10 + 14 * ratio), 0, 10 + 14 * ratio, H);
-        ctx.restore();
-      }
-
       if (goCueTimer > 0) {
         const ratio = Math.max(0, Math.min(1, goCueTimer / GO_CUE_TIME));
         const spread = 1 - ratio;
@@ -6027,18 +6008,6 @@ function drawRoad() {
 
       if (slowTimer > 0) {
         ctx.save();
-        const dragAlpha = 0.06 + slowRatio * 0.12;
-        const leftDrag = ctx.createLinearGradient(0, 0, W * 0.32, 0);
-        leftDrag.addColorStop(0, `rgba(255, 93, 77, ${dragAlpha})`);
-        leftDrag.addColorStop(1, "rgba(255, 93, 77, 0)");
-        ctx.fillStyle = leftDrag;
-        ctx.fillRect(0, 0, W * 0.34, H);
-        const rightDrag = ctx.createLinearGradient(W, 0, W * 0.68, 0);
-        rightDrag.addColorStop(0, `rgba(255, 93, 77, ${dragAlpha})`);
-        rightDrag.addColorStop(1, "rgba(255, 93, 77, 0)");
-        ctx.fillStyle = rightDrag;
-        ctx.fillRect(W * 0.66, 0, W * 0.34, H);
-
         ctx.beginPath();
         ctx.rect(ROAD_VISUAL_LEFT, 0, ROAD_VISUAL_WIDTH, H);
         ctx.clip();
@@ -6064,15 +6033,6 @@ function drawRoad() {
           ctx.stroke();
         }
         ctx.restore();
-      }
-
-      if (boostTimer > 0 || slowTimer > 0) {
-        const color = boostTimer > 0 ? "59, 215, 255" : "255, 93, 77";
-        const glow = ctx.createRadialGradient(W / 2, H * 0.9, 10, W / 2, H * 0.9, H * 0.86);
-        glow.addColorStop(0, `rgba(${color}, ${boostTimer > 0 ? 0.14 : 0.1})`);
-        glow.addColorStop(1, `rgba(${color}, 0)`);
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, W, H);
       }
 
       const rushIntensity = Math.max(0, Math.min(1, speedRatio * 1.15 + boostRatio * 0.62 + speedTier * 0.075 - slowRatio * 0.36));
