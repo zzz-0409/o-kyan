@@ -924,7 +924,7 @@
     }
 
     .dialog.new-best h2::before {
-      content: "NEW BEST!";
+      content: "新記録!";
       display: block;
       width: max-content;
       margin-bottom: 6px;
@@ -1182,7 +1182,7 @@
     }
 
     .title-rank-row.is-last strong::after {
-      content: "LAST";
+      content: "前回";
       display: inline-grid;
       place-items: center;
       margin-left: 7px;
@@ -1501,18 +1501,14 @@
     }
 
     .result-stat-skill,
-    .result-stat-gain,
-    .result-stat-tip,
-    .result-stat-next {
+    .result-stat-gain {
       border-color: rgba(255, 198, 41, 0.28);
       background:
         radial-gradient(circle at 50% 0%, rgba(255, 198, 41, 0.16), transparent 58%),
         linear-gradient(180deg, rgba(42, 35, 18, 0.94), rgba(4, 8, 15, 0.92));
     }
 
-    .result-stat-gain,
-    .result-stat-tip,
-    .result-stat-next {
+    .result-stat-gain {
       border-color: rgba(59, 215, 255, 0.3);
       background:
         radial-gradient(circle at 50% 0%, rgba(59, 215, 255, 0.16), transparent 58%),
@@ -1520,9 +1516,7 @@
     }
 
     .result-stat-skill span,
-    .result-stat-gain span,
-    .result-stat-tip span,
-    .result-stat-next span {
+    .result-stat-gain span {
       color: #fff3a2;
     }
 
@@ -1531,9 +1525,7 @@
       text-shadow: 0 0 12px rgba(255, 198, 41, 0.22);
     }
 
-    .result-stat-gain strong,
-    .result-stat-tip strong,
-    .result-stat-next strong {
+    .result-stat-gain strong {
       color: #7beeff;
       text-shadow: 0 0 12px rgba(59, 215, 255, 0.24);
     }
@@ -2478,7 +2470,7 @@
     }
 
     .footer::before {
-      content: "TIP";
+      content: "ヒント";
       display: inline-grid;
       place-items: center;
       min-width: 38px;
@@ -2768,9 +2760,9 @@
   <main class="app" id="app" data-screen="title">
     <header class="hud">
       <h1>RUN DASH!</h1>
-      <div class="stat" role="group" aria-label="スコア 0点"><span id="scoreLabel" data-icon="S">SCORE</span><strong id="distance">0</strong></div>
-      <div class="stat" role="group" aria-label="ベスト 0点"><span data-icon="B">BEST</span><strong id="best">0</strong></div>
-      <div class="stat" role="group" aria-label="コイン 0枚"><span data-icon="C">COINS</span><strong id="todayRank">0</strong></div>
+      <div class="stat" role="group" aria-label="スコア 0点"><span id="scoreLabel" data-icon="S">スコア</span><strong id="distance">0</strong></div>
+      <div class="stat" role="group" aria-label="ベスト 0点"><span data-icon="B">ベスト</span><strong id="best">0</strong></div>
+      <div class="stat" role="group" aria-label="コイン 0枚"><span data-icon="C">コイン</span><strong id="todayRank">0</strong></div>
     </header>
     <div class="event-toast" id="eventToast" aria-live="polite" aria-hidden="true"></div>
 
@@ -2792,9 +2784,9 @@
           <div class="result-stats" id="resultStats" hidden aria-hidden="true"></div>
           <div class="conversion" id="scoreConvert" aria-hidden="true" role="group" aria-label="コイン換算">
             <div class="convert-row">
-              <div class="convert-box"><span>COINS</span><strong id="convertCoins">0</strong></div>
+              <div class="convert-box"><span>コイン</span><strong id="convertCoins">0</strong></div>
               <div class="convert-lane" id="convertLane"></div>
-              <div class="convert-box" id="convertScoreBox"><span>SCORE</span><strong id="convertScore">0</strong></div>
+              <div class="convert-box" id="convertScoreBox"><span>スコア</span><strong id="convertScore">0</strong></div>
             </div>
           </div>
           <div class="menu-actions">
@@ -3140,7 +3132,7 @@
       }
       overlayMode = "playing";
       appEl.dataset.screen = "playing";
-      scoreLabel.textContent = "SCORE";
+      scoreLabel.textContent = "スコア";
       running = true;
       gameOver = false;
       autoPaused = false;
@@ -3256,7 +3248,7 @@
       coinFlyers = [];
       overlayMode = "result";
       appEl.dataset.screen = "result";
-      scoreLabel.textContent = "SCORE";
+      scoreLabel.textContent = "スコア";
       stageEl.classList.remove("playing");
       stageEl.classList.remove("title-screen");
       overlay.dataset.mode = "result";
@@ -3370,18 +3362,18 @@
           const isLast = lastScore > 0 && score === Math.floor(lastScore);
           return `<div class="title-rank-row${isLast ? " is-last" : ""}"><span>#${index + 1}</span><strong>${formatNumber(score)}</strong></div>`;
         }).join("")
-        : `<div class="title-rank-empty">NO SCORE</div>`;
+        : `<div class="title-rank-empty">記録なし</div>`;
       const chips = [
-        ["last", "LAST", lastScore ? `${formatNumber(lastScore)}` : "NO SCORE", "●"],
-        ["best", "BEST", best ? `${formatNumber(best)}` : "NO SCORE", "★"],
-        ["today", "TODAY", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "NO SCORE", "D"],
-        ["next", "NEXT", nextTargetScoreText(), "→"]
+        ["last", "前回", lastScore ? `${formatNumber(lastScore)}` : "記録なし", "●"],
+        ["best", "ベスト", best ? `${formatNumber(best)}` : "記録なし", "★"],
+        ["today", "今日", dailyBest.score ? `${formatNumber(dailyBest.score)}` : "記録なし", "D"],
+        ["next", "目標", nextTargetScoreText(), "→"]
       ].map(([key, label, value, icon]) => {
         const subText = key === "next" ? nextTargetScoreDetailText() : "";
         const subHtml = subText ? `<em>${escapeHtml(subText)}</em>` : "";
         return `<div class="title-chip title-chip-${escapeHtml(key)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong>${subHtml}</div>`;
       }).join("");
-      titleMeta.innerHTML = `<section class="title-ranking" aria-label="Score ranking"><h3>RANKING</h3>${rankingRows}</section>${chips}`;
+      titleMeta.innerHTML = `<section class="title-ranking" aria-label="スコアランキング"><h3>ランキング</h3>${rankingRows}</section>${chips}`;
     }
 
     function nextTargetScoreText() {
@@ -3413,41 +3405,35 @@
     function showResultStats(score, meters, coinCount, rank, previousBestValue = best, bonusScore = 0, improvementScore = 0, rankTarget = null, reason = crashReason) {
       setElementHidden(resultStats, false);
       const statIcons = {
-        SCORE: "S",
-        DISTANCE: "M",
-        COINS: "C",
-        SKILL: "+",
-        TIP: "!",
-        GAIN: "↑",
-        NEXT: ">",
-        RANK: "#",
-        BEST: "B"
+        score: "S",
+        distance: "M",
+        coins: "C",
+        skill: "+",
+        gain: "↑",
+        best: "B"
+      };
+      const statLabels = {
+        score: "スコア",
+        distance: "距離",
+        coins: "コイン",
+        skill: "ボーナス",
+        gain: "伸び",
+        best: "ベスト差"
       };
       const rows = [
-        ["SCORE", formatNumber(score)],
-        ["DISTANCE", `${formatNumber(meters)}m`],
-        ["COINS", formatNumber(coinCount)]
+        ["score", formatNumber(score)],
+        ["distance", `${formatNumber(meters)}m`],
+        ["coins", formatNumber(coinCount)]
       ];
       if (bonusScore > 0) {
-        rows.push(["SKILL", `+${formatNumber(bonusScore)}`, "result-stat-skill"]);
+        rows.push(["skill", `+${formatNumber(bonusScore)}`, "result-stat-skill"]);
       } else if (improvementScore > 0) {
-        rows.push(["GAIN", `+${formatNumber(improvementScore)}`, "result-stat-gain"]);
+        rows.push(["gain", `+${formatNumber(improvementScore)}`, "result-stat-gain"]);
       }
-      const adviceText = crashAdviceText(reason, meters);
-      if (adviceText) {
-        rows.push(["TIP", adviceText, "result-stat-tip"]);
-      }
-      const nextTargetText = resultNextTargetText(score, previousBestValue, rankTarget);
-      if (nextTargetText) {
-        rows.push(["NEXT", nextTargetText, "result-stat-next"]);
-      }
-      rows.push(
-        ["RANK", formatScoreRank(rank)],
-        ["BEST", bestDeltaText(score, previousBestValue)]
-      );
+      rows.push(["best", bestDeltaText(score, previousBestValue)]);
       resultStats.innerHTML = rows.map(([label, value, className = ""]) => {
         const icon = statIcons[label] || "";
-        return `<div class="result-stat ${escapeHtml(className)}"><span data-icon="${escapeHtml(icon)}">${label}</span><strong>${escapeHtml(value)}</strong></div>`;
+        return `<div class="result-stat ${escapeHtml(className)}"><span data-icon="${escapeHtml(icon)}">${escapeHtml(statLabels[label] || label)}</span><strong>${escapeHtml(value)}</strong></div>`;
       }).join("");
     }
 
@@ -3477,7 +3463,7 @@
         runImprovementText(score, previousRunScore),
         bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
         crashAdviceText(reason, meters),
-        needsBestTarget ? `BESTまであと${formatNumber(previousBest - score)}点` : rankTargetText(rankTarget)
+        needsBestTarget ? `ベストまであと${formatNumber(previousBest - score)}点` : rankTargetText(rankTarget)
       ].filter(Boolean).join(" / ");
       const detailText = details ? ` (${details})` : "";
       if (isBest) {
@@ -3495,7 +3481,7 @@
           bonusScore > 0 ? `NICE +${formatNumber(bonusScore)}` : "",
           crashAdviceText(reason, meters)
         ].filter(Boolean).join(" / ");
-        return `BESTまであと${formatNumber(previousBest - score)}点${subDetails ? ` (${subDetails})` : ""}`;
+        return `ベストまであと${formatNumber(previousBest - score)}点${subDetails ? ` (${subDetails})` : ""}`;
       }
       if (meters >= 1800) {
         return `いい走り。後半のペースにもついていけてる${detailText}`;
@@ -3638,7 +3624,7 @@
 
     function startScoreConversion(baseScore, coinCount, finalScore) {
       clearScoreConversion();
-      scoreLabel.textContent = "SCORE";
+      scoreLabel.textContent = "スコア";
       let remainingCoins = coinCount;
       let shownScore = baseScore;
       setHudNumber(distanceEl, shownScore);
@@ -3680,7 +3666,7 @@
     function finishScoreConversion() {
       if (!resultState.active) return;
       clearScoreConversion();
-      scoreLabel.textContent = "SCORE";
+      scoreLabel.textContent = "スコア";
       setScoreConversionOpen(true);
       convertCoinsEl.textContent = "0";
       convertScoreEl.textContent = formatNumber(resultState.finalScore);
@@ -3746,13 +3732,13 @@
         `コイン${coinCount}枚`
       ];
       if (resultState.rank) {
-        parts.push(`RANK ${formatScoreRank(resultState.rank)}`);
+        parts.push(`順位 ${formatScoreRank(resultState.rank)}`);
       }
       if (resultState.rankTarget) {
         parts.push(`次${formatScoreRank(resultState.rankTarget.rank)}まで${formatNumber(resultState.rankTarget.gap)}点`);
       }
       if (resultState.isDailyBest && !resultState.isBest) {
-        parts.push("TODAY BEST");
+        parts.push("今日のベスト");
       }
       if (resultState.isBest) {
         parts.push(shareBestDeltaText(rawScore, resultState.previousBest, true));
@@ -3760,7 +3746,7 @@
         parts.push(shareBestDeltaText(rawScore, resultState.previousBest, false));
       }
       if (resultState.skillScore > 0) {
-        parts.push(`NICE +${formatNumber(resultState.skillScore)}`);
+        parts.push(`ボーナス +${formatNumber(resultState.skillScore)}`);
       }
       if (resultState.runImprovement > 0) {
         parts.push(`前回+${formatNumber(resultState.runImprovement)}点`);
@@ -3771,9 +3757,9 @@
     function shareBestDeltaText(score, previousBestValue, isBest) {
       const delta = bestDeltaText(score, previousBestValue);
       if (isBest) {
-        return delta === "NEW" ? "NEW BEST" : `NEW BEST ${delta}`;
+        return delta === "NEW" ? "新記録" : `新記録 ${delta}`;
       }
-      return `BEST ${delta}`;
+      return `ベスト ${delta}`;
     }
 
     async function handleShareButton() {
@@ -3836,7 +3822,7 @@
         : "ブラウザのメニューからホームに追加できます";
       overlayText.textContent = message;
       setHint(message);
-      showEventToast("HOME TIP", "milestone");
+      showEventToast("ホーム追加", "milestone");
     }
 
     function flyResultCoin() {
@@ -3864,7 +3850,7 @@
 
     function updateHud() {
       const runScore = computeScore();
-      scoreLabel.textContent = "SCORE";
+      scoreLabel.textContent = "スコア";
       setHudNumber(distanceEl, runScore);
       setHudNumber(bestEl, best);
       setHudNumber(todayRankEl, coins);
@@ -4039,7 +4025,7 @@
       if (boostTimer > 0) {
         const progress = Math.max(0, Math.min(100, (boostTimer / BOOST_DURATION) * 100));
         timePill.classList.add("boost");
-        timePill.querySelector("span").textContent = "BOOST";
+        timePill.querySelector("span").textContent = "加速";
         timeStatus.textContent = `${boostTimer.toFixed(1)}s`;
         timePill.setAttribute("aria-label", `スピードアップ 残り${boostTimer.toFixed(1)}秒`);
         timePill.style.setProperty("--effect-progress", `${progress}%`);
@@ -4048,7 +4034,7 @@
       if (slowTimer > 0) {
         const progress = Math.max(0, Math.min(100, (slowTimer / SLOW_DURATION) * 100));
         timePill.classList.add("slow");
-        timePill.querySelector("span").textContent = "SLOW";
+        timePill.querySelector("span").textContent = "減速";
         timeStatus.textContent = `${slowTimer.toFixed(1)}s`;
         timePill.setAttribute("aria-label", `スピードダウン 残り${slowTimer.toFixed(1)}秒`);
         timePill.style.setProperty("--effect-progress", `${progress}%`);
@@ -4061,7 +4047,7 @@
         if (runScore >= best) {
           const lead = Math.max(0, runScore - best);
           timePill.classList.add("best", "active");
-          timePill.querySelector("span").textContent = "BEST";
+          timePill.querySelector("span").textContent = "ベスト";
           timeStatus.textContent = `+${formatHudNumber(lead)}`;
           timePill.setAttribute("aria-label", `自己ベスト更新中 ${formatNumber(lead)}点リード`);
           timePill.style.setProperty("--effect-progress", "100%");
@@ -4071,7 +4057,7 @@
         if (bestProgress >= 55 || bestGap <= 1500) {
           timePill.classList.add("best");
           if (bestProgress >= 90) timePill.classList.add("chase");
-          timePill.querySelector("span").textContent = "BEST";
+          timePill.querySelector("span").textContent = "ベスト";
           timeStatus.textContent = `${formatHudNumber(bestGap)}点`;
           timePill.setAttribute("aria-label", `自己ベストまであと${formatNumber(bestGap)}点`);
           timePill.style.setProperty("--effect-progress", `${bestProgress}%`);
@@ -4085,7 +4071,7 @@
         if (runScore >= todayScore) {
           const lead = Math.max(0, runScore - todayScore);
           timePill.classList.add("best", "active");
-          timePill.querySelector("span").textContent = "TODAY";
+          timePill.querySelector("span").textContent = "今日";
           timeStatus.textContent = `+${formatHudNumber(lead)}`;
           timePill.setAttribute("aria-label", `今日のベスト更新中 ${formatNumber(lead)}点リード`);
           timePill.style.setProperty("--effect-progress", "100%");
@@ -4095,7 +4081,7 @@
         if (todayProgress >= 48 || todayGap <= 900) {
           timePill.classList.add("best");
           if (todayProgress >= 90) timePill.classList.add("chase");
-          timePill.querySelector("span").textContent = "TODAY";
+          timePill.querySelector("span").textContent = "今日";
           timeStatus.textContent = `${formatHudNumber(todayGap)}点`;
           timePill.setAttribute("aria-label", `今日のベストまであと${formatNumber(todayGap)}点`);
           timePill.style.setProperty("--effect-progress", `${todayProgress}%`);
@@ -4109,7 +4095,7 @@
         if (runScore >= previousScore) {
           const lead = Math.max(0, runScore - previousScore);
           timePill.classList.add("last", "active");
-          timePill.querySelector("span").textContent = "LAST";
+          timePill.querySelector("span").textContent = "前回";
           timeStatus.textContent = `+${formatHudNumber(lead)}`;
           timePill.setAttribute("aria-label", `前回スコア更新中 ${formatNumber(lead)}点リード`);
           timePill.style.setProperty("--effect-progress", "100%");
@@ -4119,7 +4105,7 @@
         if (previousProgress >= 42 || previousGap <= 900) {
           timePill.classList.add("last");
           if (previousProgress >= 88) timePill.classList.add("chase");
-          timePill.querySelector("span").textContent = "LAST";
+          timePill.querySelector("span").textContent = "前回";
           timeStatus.textContent = `${formatHudNumber(previousGap)}点`;
           timePill.setAttribute("aria-label", `前回スコアまであと${formatNumber(previousGap)}点`);
           timePill.style.setProperty("--effect-progress", `${previousProgress}%`);
@@ -4133,7 +4119,7 @@
         const targetProgress = Math.max(0, Math.min(100, (runScore / scoreTarget) * 100));
         if (targetProgress >= 45 || targetGap <= 1200) {
           timePill.classList.add("progress");
-          timePill.querySelector("span").textContent = "TARGET";
+          timePill.querySelector("span").textContent = "目標";
           timeStatus.textContent = `${formatHudNumber(targetGap)}点`;
           timePill.setAttribute("aria-label", `次の目標まであと${formatNumber(targetGap)}点`);
           timePill.style.setProperty("--effect-progress", `${targetProgress}%`);
@@ -4145,7 +4131,7 @@
       const milestoneProgress = Math.max(0, Math.min(100, ((distance - previousDistanceMilestone) / milestoneSpan) * 100));
       const remainingMeters = Math.max(0, Math.ceil(nextDistanceMilestone - distance));
       timePill.classList.add("progress");
-      timePill.querySelector("span").textContent = "NEXT";
+      timePill.querySelector("span").textContent = "次";
       timeStatus.textContent = `${remainingMeters}m`;
       timePill.setAttribute("aria-label", `次の区切りまで ${remainingMeters}メートル`);
       timePill.style.setProperty("--effect-progress", `${milestoneProgress}%`);
@@ -4198,7 +4184,7 @@
       ambientPulseColor = "255, 198, 41";
       burstParticles(LANES[player.lane], PLAYER_Y - 78, "#fff3a2", 16, 0.94);
       pulseStat(coinStat, "stat-best");
-      showEventToast(`${formatNumber(milestone)} COINS!`, "milestone");
+      showEventToast(`${formatNumber(milestone)}コイン!`, "milestone");
       playSound("nice");
       vibrate(12);
       setHint(`コイン${formatNumber(milestone)}枚`);
@@ -4234,7 +4220,7 @@
       burstParticles(W - 48, PLAYER_Y - 76, "rgba(255, 198, 41, 0.78)", 8, 0.75);
       pulseStat(bestStat, "stat-best");
       pulseStat(scoreStat, "stat-best");
-      showEventToast("NEW BEST!", "milestone");
+      showEventToast("新記録!", "milestone");
       playSound("best");
       vibrate([12, 8, 18]);
       setHint(`新記録ペース ${formatNumber(runScore)}点`);
@@ -4249,7 +4235,7 @@
       ambientPulseColor = "255, 198, 41";
       burstParticles(player.x, PLAYER_Y - 78, "#f0c247", 16, 0.98);
       pulseStat(scoreStat, "stat-best");
-      showEventToast("TODAY BEST!", "milestone");
+      showEventToast("今日のベスト!", "milestone");
       playSound("nice");
       vibrate(12);
       setHint(`今日のベスト更新ペース ${formatNumber(runScore)}点`);
@@ -4266,7 +4252,7 @@
       pulseStat(scoreStat, "stat-pop");
       burstParticles(player.x, PLAYER_Y - 84, "#7beeff", 13, 0.82);
       burstParticles(W / 2, PLAYER_Y - 148, "rgba(123, 238, 255, 0.78)", 8, 0.66);
-      showEventToast("LAST CLEAR!", "near");
+      showEventToast("前回超え!", "near");
       playSound("nice");
       vibrate(8);
       setHint(`前回スコア更新 ${formatNumber(runScore)}点`);
@@ -4285,7 +4271,7 @@
         pulseStat(bestStat, percent >= 90 ? "stat-best" : "stat-pop");
         pulseStat(scoreStat, percent >= 90 ? "stat-best" : "stat-pop");
         burstParticles(player.x, PLAYER_Y - 92, percent >= 90 ? "#f0c247" : "#7beeff", percent >= 90 ? 14 : 9, 0.78);
-        showEventToast(`BEST ${percent}%`, percent >= 90 ? "milestone" : "near");
+        showEventToast(`ベスト${percent}%`, percent >= 90 ? "milestone" : "near");
         playSound(percent >= 90 ? "nice" : "coin");
         vibrate(percent >= 90 ? 12 : 6);
         setHint(`BESTまであと${formatNumber(gap)}点`);
@@ -4300,7 +4286,7 @@
       ambientPulseTimer = Math.max(ambientPulseTimer, AMBIENT_PULSE_TIME * 0.62);
       ambientPulseColor = "255, 198, 41";
       pulseStat(scoreStat, "stat-best");
-      showEventToast(`RANK ${formatScoreRank(rank)}!`, "milestone");
+      showEventToast(`順位 ${formatScoreRank(rank)}!`, "milestone");
       setHint(`ランキング${formatScoreRank(rank)}圏内`);
       playSound("nice");
       vibrate(12);
@@ -5572,7 +5558,7 @@ function checkCollisions() {
             pulseStat(scoreStat, "stat-pop");
             flashStage("boost");
             playSound("boost");
-            showEventToast(`BOOST +${BOOST_PAD_BONUS}`, "boost");
+            showEventToast(`加速 +${BOOST_PAD_BONUS}`, "boost");
             setHint(`スピードアップ +${BOOST_PAD_BONUS}`);
           } else {
             slowTimer = SLOW_DURATION;
@@ -5585,7 +5571,7 @@ function checkCollisions() {
             burstParticles(r.x + r.w / 2, r.y + r.h / 2, "#65b7d8", 12, 0.9);
             flashStage("slow");
             playSound("slow");
-            showEventToast("SLOW", "slow");
+            showEventToast("減速", "slow");
             setHint("スピードダウン");
           }
           if (panel.group === "tripleBoost") {
@@ -6823,7 +6809,7 @@ function drawObstacles() {
 
     function drawSpeedPanelLabel(panel, rect) {
       const entranceAlpha = objectEntranceAlpha(rect.y);
-      const label = panel.kind === "up" ? "BOOST" : "SLOW";
+      const label = panel.kind === "up" ? "加速" : "減速";
       const accent = panel.kind === "up" ? "#fff3a2" : "#dff9ff";
       const bg = panel.kind === "up" ? "rgba(82, 54, 0, 0.62)" : "rgba(0, 41, 62, 0.62)";
       ctx.save();
