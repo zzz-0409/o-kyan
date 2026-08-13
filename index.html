@@ -995,30 +995,6 @@
       box-shadow: none;
     }
 
-    .overlay[data-mode="title"] .dialog::before,
-    .overlay[data-mode="title"] .dialog::after {
-      content: "";
-      align-self: end;
-      justify-self: center;
-      grid-column: 1;
-      grid-row: 1;
-      width: min(88%, 330px);
-      height: 10px;
-      margin-bottom: 82px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, transparent, rgba(255, 198, 41, 0.92), transparent);
-      filter: drop-shadow(0 0 10px rgba(255, 198, 41, 0.58));
-      transform: skewX(-24deg);
-    }
-
-    .overlay[data-mode="title"] .dialog::after {
-      width: min(66%, 260px);
-      height: 7px;
-      margin-bottom: 62px;
-      background: linear-gradient(90deg, transparent, rgba(59, 215, 255, 0.86), transparent);
-      filter: drop-shadow(0 0 10px rgba(59, 215, 255, 0.48));
-    }
-
     .overlay[data-mode="title"] .dialog h2 {
       align-self: end;
       position: relative;
@@ -1999,6 +1975,7 @@
     }
 
     .overlay[data-mode="title"] .menu-actions {
+      margin-bottom: 92px;
       animation: cardIn 0.2s ease-out 0.08s both;
     }
 
@@ -2673,6 +2650,7 @@
 
       .overlay[data-mode="title"] .menu-actions {
         gap: 8px;
+        margin-bottom: 66px;
       }
 
       .overlay[data-mode="title"] .menu-actions button {
@@ -2791,7 +2769,6 @@
           </div>
           <div class="menu-actions">
             <button id="startButton" type="button">スタート</button>
-            <button id="installButton" type="button" hidden>HOME</button>
             <button id="titleButton" type="button" hidden>TITLE</button>
             <button id="shareButton" type="button" hidden>SHARE</button>
           </div>
@@ -2836,7 +2813,6 @@
     const convertScoreBox = document.getElementById("convertScoreBox");
     const menuActions = document.querySelector(".menu-actions");
     const startButton = document.getElementById("startButton");
-    const installButton = document.getElementById("installButton");
     const titleButton = document.getElementById("titleButton");
     const shareButton = document.getElementById("shareButton");
     const leftButton = document.getElementById("leftButton");
@@ -2847,7 +2823,6 @@
     const assetUrl = (path) => `${path}?v=${ASSET_VERSION}`;
     let assetsReady = false;
     let assetsReadyNotified = false;
-    let deferredInstallPrompt = null;
     const START_QUERY_PARAM = "start";
     const autoStartRequested = new URLSearchParams(window.location.search).get(START_QUERY_PARAM) === "1";
     let autoStartConsumed = false;
@@ -3228,7 +3203,6 @@
       overlay.dataset.mode = "";
       overlay.querySelector(".dialog").classList.remove("new-best");
       setPauseButtonVisible(true);
-      updateInstallButton();
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
       hideResultStats();
@@ -3537,7 +3511,7 @@
         menuActions.style.removeProperty("--result-action-columns");
         return;
       }
-      const visibleSecondaryCount = [installButton, titleButton, shareButton]
+      const visibleSecondaryCount = [titleButton, shareButton]
         .filter((button) => !button.hidden)
         .length;
       menuActions.style.setProperty("--result-action-columns", String(Math.max(1, visibleSecondaryCount)));
@@ -3555,25 +3529,6 @@
     function setPauseButtonVisible(isVisible) {
       pauseButton.hidden = !isVisible;
       pauseButton.disabled = !isVisible;
-    }
-
-    function updateInstallButton() {
-      const canShowHome = overlayMode === "title" && !isStandaloneApp();
-      installButton.hidden = !canShowHome;
-      installButton.disabled = !canShowHome;
-      if (canShowHome) {
-        setActionButton(
-          installButton,
-          "HOME",
-          "⌂",
-          deferredInstallPrompt ? "ホーム画面に追加" : "ホーム画面追加の案内"
-        );
-      }
-      updateResultActionColumns();
-    }
-
-    function isStandaloneApp() {
-      return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
     }
 
     function setShareButtonVisible(isVisible) {
@@ -3795,34 +3750,6 @@
       url.searchParams.delete(START_QUERY_PARAM);
       url.hash = "";
       return url.toString();
-    }
-
-    async function handleInstallButton() {
-      if (!deferredInstallPrompt) {
-        showHomeInstallHint();
-        return;
-      }
-      const promptEvent = deferredInstallPrompt;
-      deferredInstallPrompt = null;
-      updateInstallButton();
-      try {
-        promptEvent.prompt();
-        const choice = await promptEvent.userChoice;
-        if (choice && choice.outcome === "accepted") {
-          setHint("ホーム画面に追加しました");
-        }
-      } catch {
-        setHint("ブラウザのメニューからホームに追加できます");
-      }
-    }
-
-    function showHomeInstallHint() {
-      const message = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? "共有ボタンから「ホーム画面に追加」"
-        : "ブラウザのメニューからホームに追加できます";
-      overlayText.textContent = message;
-      setHint(message);
-      showEventToast("ホーム追加", "milestone");
     }
 
     function flyResultCoin() {
@@ -4496,7 +4423,6 @@
       setPauseButtonVisible(false);
       setTitleReturnButtonVisible(false);
       setShareButtonVisible(false);
-      updateInstallButton();
       setOverlayOpen(true);
       hideResultStats();
       updateTitleMeta();
@@ -7266,7 +7192,6 @@ function drawObstacles() {
     }
 
     startButton.addEventListener("click", handleMainButton);
-    installButton.addEventListener("click", handleInstallButton);
     titleButton.addEventListener("click", handleTitleButton);
     shareButton.addEventListener("click", handleShareButton);
     pauseButton.addEventListener("click", pauseManually);
@@ -7284,18 +7209,7 @@ function drawObstacles() {
     rightButton.addEventListener("contextmenu", suppressGameContextMenu);
     jumpButton.addEventListener("contextmenu", suppressGameContextMenu);
     pauseButton.addEventListener("contextmenu", suppressGameContextMenu);
-    installButton.addEventListener("contextmenu", suppressGameContextMenu);
     shareButton.addEventListener("contextmenu", suppressGameContextMenu);
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      deferredInstallPrompt = event;
-      updateInstallButton();
-    });
-    window.addEventListener("appinstalled", () => {
-      deferredInstallPrompt = null;
-      updateInstallButton();
-      setHint("ホーム画面に追加しました");
-    });
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", resizeCanvas);
     document.addEventListener("visibilitychange", onVisibilityChange);
