@@ -7230,11 +7230,11 @@ function drawObstacles() {
       }
       if (event.code === "ArrowLeft" || event.code === "KeyA") {
         event.preventDefault();
-        handleScreenDirection(-1, 0);
+        moveSide(-1);
       }
       if (event.code === "ArrowRight" || event.code === "KeyD") {
         event.preventDefault();
-        handleScreenDirection(1, 0);
+        moveSide(1);
       }
     }
 
@@ -7317,8 +7317,8 @@ function drawObstacles() {
     canvas.addEventListener("pointercancel", onPointerCancel);
     canvas.addEventListener("lostpointercapture", onPointerCancel);
     canvas.addEventListener("contextmenu", suppressGameContextMenu);
-    leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(-1, 0)));
-    rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => handleScreenDirection(1, 0)));
+    leftButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(-1)));
+    rightButton.addEventListener("pointerdown", (event) => onControlButton(event, () => moveSide(1)));
     jumpButton.addEventListener("pointerdown", (event) => onControlButton(event, jump));
     leftButton.addEventListener("contextmenu", suppressGameContextMenu);
     rightButton.addEventListener("contextmenu", suppressGameContextMenu);
